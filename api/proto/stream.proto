@@ -1,0 +1,131 @@
+syntax = "proto3";
+package gomsg.stream;
+option go_package = "gomsg/api/generated/stream";
+
+import "common.proto";
+
+service StreamService {
+  rpc Publish(PublishRequest) returns (PublishResponse);
+  rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse);
+  rpc Read(ReadRequest) returns (ReadResponse);
+  rpc Seek(SeekRequest) returns (SeekResponse);
+  rpc GetOffset(GetOffsetRequest) returns (GetOffsetResponse);
+  rpc CreateTopic(CreateTopicRequest) returns (CreateTopicResponse);
+  rpc DeleteTopic(DeleteTopicRequest) returns (DeleteTopicResponse);
+  rpc ListTopics(ListTopicsRequest) returns (ListTopicsResponse);
+  rpc GetTopicInfo(GetTopicInfoRequest) returns (GetTopicInfoResponse);
+}
+
+message StreamMessage {
+  string id = 1;
+  string topic = 2;
+  string partition_key = 3;
+  bytes data = 4;
+  int64 offset = 5;
+  int64 timestamp = 6;
+  map<string, string> headers = 7;
+}
+
+message TopicInfo {
+  string name = 1;
+  int32 partitions = 2;
+  int64 total_messages = 3;
+  repeated gomsg.common.Partition partition_info = 4;
+}
+
+message PublishRequest {
+  string topic = 1;
+  bytes data = 2;
+  string partition_key = 3;
+  map<string, string> headers = 4;
+}
+
+message PublishResponse {
+  string message_id = 1;
+  int64 offset = 2;
+  int32 partition = 3;
+  gomsg.common.Status status = 4;
+}
+
+message SubscribeRequest {
+  string topic = 1;
+  string consumer_group = 2;
+  string consumer_id = 3;
+  int64 from_offset = 4;
+  bool from_beginning = 5;
+}
+
+message SubscribeResponse {
+  StreamMessage message = 1;
+  gomsg.common.Status status = 2;
+}
+
+message ReadRequest {
+  string topic = 1;
+  int64 from_offset = 2;
+  int32 limit = 3;
+  int32 partition = 4;
+}
+
+message ReadResponse {
+  repeated StreamMessage messages = 1;
+  int64 next_offset = 2;
+  gomsg.common.Status status = 3;
+}
+
+message SeekRequest {
+  string topic = 1;
+  string consumer_id = 2;
+  int64 offset = 3;
+  int32 partition = 4;
+}
+
+message SeekResponse {
+  gomsg.common.Status status = 1;
+}
+
+message GetOffsetRequest {
+  string topic = 1;
+  string consumer_id = 2;
+  int32 partition = 3;
+}
+
+message GetOffsetResponse {
+  int64 offset = 1;
+  gomsg.common.Status status = 2;
+}
+
+message CreateTopicRequest {
+  string name = 1;
+  int32 partitions = 2;
+  int32 replication_factor = 3;
+}
+
+message CreateTopicResponse {
+  gomsg.common.Status status = 1;
+}
+
+message DeleteTopicRequest {
+  string name = 1;
+}
+
+message DeleteTopicResponse {
+  gomsg.common.Status status = 1;
+}
+
+message ListTopicsRequest {
+}
+
+message ListTopicsResponse {
+  repeated string topics = 1;
+  gomsg.common.Status status = 2;
+}
+
+message GetTopicInfoRequest {
+  string topic = 1;
+}
+
+message GetTopicInfoResponse {
+  TopicInfo info = 1;
+  gomsg.common.Status status = 2;
+}

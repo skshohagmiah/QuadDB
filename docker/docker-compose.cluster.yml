@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  gomsg-node1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "9000:9000"
+      - "10000:10000"
+    volumes:
+      - gomsg_node1_data:/data
+      - gomsg_node1_cluster:/cluster
+    environment:
+      - GOMSG_SERVER_HOST=0.0.0.0
+      - GOMSG_SERVER_PORT=9000
+      - GOMSG_STORAGE_DATA_DIR=/data
+      - GOMSG_CLUSTER_ENABLED=true
+      - GOMSG_CLUSTER_NODE_ID=node1
+      - GOMSG_CLUSTER_BIND_ADDR=0.0.0.0:10000
+      - GOMSG_CLUSTER_BOOTSTRAP=true
+      - GOMSG_CLUSTER_DATA_DIR=/cluster
+    command: ["./gomsg", "--cluster", "--node-id=node1", "--port=9000", "--bootstrap", "--data-dir=/data"]
+    healthcheck:
+      test: ["CMD", "./gomsg-cli", "--server=localhost:9000", "cluster", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  gomsg-node2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "9001:9000"
+      - "10001:10000"
+    volumes:
+      - gomsg_node2_data:/data
+      - gomsg_node2_cluster:/cluster
+    environment:
+      - GOMSG_SERVER_HOST=0.0.0.0
+      - GOMSG_SERVER_PORT=9000
+      - GOMSG_STORAGE_DATA_DIR=/data
+      - GOMSG_CLUSTER_ENABLED=true
+      - GOMSG_CLUSTER_NODE_ID=node2
+      - GOMSG_CLUSTER_BIND_ADDR=0.0.0.0:10000
+      - GOMSG_CLUSTER_JOIN_ADDRESSES=gomsg-node1:10000
+      - GOMSG_CLUSTER_DATA_DIR=/cluster
+    command: ["./gomsg", "--cluster", "--node-id=node2", "--port=9000", "--join=gomsg-node1:10000", "--data-dir=/data"]
+    depends_on:
+      gomsg-node1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "./gomsg-cli", "--server=localhost:9000", "cluster", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  gomsg-node3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "9002:9000"
+      - "10002:10000"
+    volumes:
+      - gomsg_node3_data:/data
+      - gomsg_node3_cluster:/cluster
+    environment:
+      - GOMSG_SERVER_HOST=0.0.0.0
+      - GOMSG_SERVER_PORT=9000
+      - GOMSG_STORAGE_DATA_DIR=/data
+      - GOMSG_CLUSTER_ENABLED=true
+      - GOMSG_CLUSTER_NODE_ID=node3
+      - GOMSG_CLUSTER_BIND_ADDR=0.0.0.0:10000
+      - GOMSG_CLUSTER_JOIN_ADDRESSES=gomsg-node1:10000
+      - GOMSG_CLUSTER_DATA_DIR=/cluster
+    command: ["./gomsg", "--cluster", "--node-id=node3", "--port=9000", "--join=gomsg-node1:10000", "--data-dir=/data"]
+    depends_on:
+      gomsg-node1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "./gomsg-cli", "--server=localhost:9000", "cluster", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  gomsg_node1_data:
+  gomsg_node1_cluster:
+  gomsg_node2_data:
+  gomsg_node2_cluster:
+  gomsg_node3_data:
+  gomsg_node3_cluster:

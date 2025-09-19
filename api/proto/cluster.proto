@@ -1,0 +1,80 @@
+syntax = "proto3";
+package gomsg.cluster;
+option go_package = "gomsg/api/generated/cluster";
+
+import "common.proto";
+
+service ClusterService {
+  rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+  rpc GetLeader(GetLeaderRequest) returns (GetLeaderResponse);
+  rpc Join(JoinRequest) returns (JoinResponse);
+  rpc Leave(LeaveRequest) returns (LeaveResponse);
+  rpc GetStats(GetStatsRequest) returns (GetStatsResponse);
+}
+
+message ClusterStatus {
+  bool healthy = 1;
+  string leader_id = 2;
+  int32 total_nodes = 3;
+  int32 active_nodes = 4;
+  string raft_state = 5;
+}
+
+message ClusterStats {
+  int64 total_operations = 1;
+  int64 keys_count = 2;
+  int64 queues_count = 3;
+  int64 topics_count = 4;
+  int64 memory_usage = 5;
+  int64 disk_usage = 6;
+}
+
+message GetNodesRequest {
+}
+
+message GetNodesResponse {
+  repeated gomsg.common.Node nodes = 1;
+  gomsg.common.Status status = 2;
+}
+
+message GetStatusRequest {
+}
+
+message GetStatusResponse {
+  ClusterStatus status = 1;
+  gomsg.common.Status response_status = 2;
+}
+
+message GetLeaderRequest {
+}
+
+message GetLeaderResponse {
+  gomsg.common.Node leader = 1;
+  gomsg.common.Status status = 2;
+}
+
+message JoinRequest {
+  string node_id = 1;
+  string address = 2;
+}
+
+message JoinResponse {
+  gomsg.common.Status status = 1;
+}
+
+message LeaveRequest {
+  string node_id = 1;
+}
+
+message LeaveResponse {
+  gomsg.common.Status status = 1;
+}
+
+message GetStatsRequest {
+}
+
+message GetStatsResponse {
+  ClusterStats stats = 1;
+  gomsg.common.Status status = 2;
+}

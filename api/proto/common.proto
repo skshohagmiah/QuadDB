@@ -1,0 +1,33 @@
+syntax = "proto3";
+package gomsg.common;
+option go_package = "gomsg/api/generated/common";
+
+// Common message types
+message Status {
+  bool success = 1;
+  string message = 2;
+  int32 code = 3;
+}
+
+message KeyValue {
+  string key = 1;
+  bytes value = 2;
+  int64 ttl = 3;
+  int64 created_at = 4;
+  int64 updated_at = 5;
+}
+
+message Partition {
+  int32 id = 1;
+  string leader = 2;
+  repeated string replicas = 3;
+  int64 offset = 4;
+}
+
+message Node {
+  string id = 1;
+  string address = 2;
+  bool is_leader = 3;
+  string state = 4;
+  int64 last_seen = 5;
+}

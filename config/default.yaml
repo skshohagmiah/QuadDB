@@ -1,0 +1,31 @@
+server:
+  host: "localhost"
+  port: 9000
+  read_timeout: 30
+  write_timeout: 30
+  max_connections: 1000
+
+storage:
+  backend: "badger"
+  data_dir: "./data"
+  backup_dir: "./backups"
+  gc_interval: 300
+
+cluster:
+  enabled: false
+  node_id: ""
+  bind_addr: ""
+  bootstrap: false
+  join_addresses: []
+  data_dir: "./cluster"
+  replicas: 3
+
+logging:
+  level: "info"
+  format: "text"
+  file: ""
+
+metrics:
+  enabled: true
+  port: 8080
+  path: "/metrics"

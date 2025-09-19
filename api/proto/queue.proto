@@ -1,0 +1,119 @@
+syntax = "proto3";
+package gomsg.queue;
+option go_package = "gomsg/api/generated/queue";
+
+import "common.proto";
+
+service QueueService {
+  rpc Push(PushRequest) returns (PushResponse);
+  rpc Pop(PopRequest) returns (PopResponse);
+  rpc Peek(PeekRequest) returns (PeekResponse);
+  rpc Ack(AckRequest) returns (AckResponse);
+  rpc Nack(NackRequest) returns (NackResponse);
+  rpc Stats(StatsRequest) returns (StatsResponse);
+  rpc Purge(PurgeRequest) returns (PurgeResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  rpc List(ListRequest) returns (ListResponse);
+}
+
+message QueueMessage {
+  string id = 1;
+  string queue = 2;
+  bytes data = 3;
+  int64 created_at = 4;
+  int64 delay_until = 5;
+  int32 retry_count = 6;
+  string consumer_id = 7;
+}
+
+message QueueStats {
+  string name = 1;
+  int64 size = 2;
+  int64 consumers = 3;
+  int64 pending = 4;
+  int64 processed = 5;
+  int64 failed = 6;
+}
+
+message PushRequest {
+  string queue = 1;
+  bytes data = 2;
+  int64 delay = 3;
+  int32 priority = 4;
+}
+
+message PushResponse {
+  string message_id = 1;
+  gomsg.common.Status status = 2;
+}
+
+message PopRequest {
+  string queue = 1;
+  int32 timeout = 2;
+  string consumer_id = 3;
+}
+
+message PopResponse {
+  QueueMessage message = 1;
+  gomsg.common.Status status = 2;
+}
+
+message PeekRequest {
+  string queue = 1;
+  int32 limit = 2;
+}
+
+message PeekResponse {
+  repeated QueueMessage messages = 1;
+  gomsg.common.Status status = 2;
+}
+
+message AckRequest {
+  string message_id = 1;
+}
+
+message AckResponse {
+  gomsg.common.Status status = 1;
+}
+
+message NackRequest {
+  string message_id = 1;
+}
+
+message NackResponse {
+  gomsg.common.Status status = 1;
+}
+
+message StatsRequest {
+  string queue = 1;
+}
+
+message StatsResponse {
+  QueueStats stats = 1;
+  gomsg.common.Status status = 2;
+}
+
+message PurgeRequest {
+  string queue = 1;
+}
+
+message PurgeResponse {
+  int64 purged_count = 1;
+  gomsg.common.Status status = 2;
+}
+
+message DeleteRequest {
+  string queue = 1;
+}
+
+message DeleteResponse {
+  gomsg.common.Status status = 1;
+}
+
+message ListRequest {
+}
+
+message ListResponse {
+  repeated string queues = 1;
+  gomsg.common.Status status = 2;
+}

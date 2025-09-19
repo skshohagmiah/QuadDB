@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  gomsg:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "9000:9000"
+      - "8080:8080"
+    volumes:
+      - gomsg_data:/data
+    environment:
+      - GOMSG_SERVER_HOST=0.0.0.0
+      - GOMSG_SERVER_PORT=9000
+      - GOMSG_STORAGE_DATA_DIR=/data
+    healthcheck:
+      test: ["CMD", "./gomsg-cli", "--server=localhost:9000", "cluster", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  gomsg_data:

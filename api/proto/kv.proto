@@ -1,0 +1,122 @@
+syntax = "proto3";
+package gomsg.kv;
+option go_package = "gomsg/api/generated/kv";
+
+import "common.proto";
+
+service KVService {
+  rpc Set(SetRequest) returns (SetResponse);
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc Del(DelRequest) returns (DelResponse);
+  rpc Exists(ExistsRequest) returns (ExistsResponse);
+  rpc Incr(IncrRequest) returns (IncrResponse);
+  rpc Decr(DecrRequest) returns (DecrResponse);
+  rpc MGet(MGetRequest) returns (MGetResponse);
+  rpc MSet(MSetRequest) returns (MSetResponse);
+  rpc Keys(KeysRequest) returns (KeysResponse);
+  rpc Expire(ExpireRequest) returns (ExpireResponse);
+  rpc TTL(TTLRequest) returns (TTLResponse);
+}
+
+message SetRequest {
+  string key = 1;
+  bytes value = 2;
+  int64 ttl = 3;
+}
+
+message SetResponse {
+  gomsg.common.Status status = 1;
+}
+
+message GetRequest {
+  string key = 1;
+}
+
+message GetResponse {
+  bytes value = 1;
+  bool found = 2;
+  gomsg.common.Status status = 3;
+}
+
+message DelRequest {
+  repeated string keys = 1;
+}
+
+message DelResponse {
+  int32 deleted_count = 1;
+  gomsg.common.Status status = 2;
+}
+
+message ExistsRequest {
+  string key = 1;
+}
+
+message ExistsResponse {
+  bool exists = 1;
+  gomsg.common.Status status = 2;
+}
+
+message IncrRequest {
+  string key = 1;
+  int64 by = 2;
+}
+
+message IncrResponse {
+  int64 value = 1;
+  gomsg.common.Status status = 2;
+}
+
+message DecrRequest {
+  string key = 1;
+  int64 by = 2;
+}
+
+message DecrResponse {
+  int64 value = 1;
+  gomsg.common.Status status = 2;
+}
+
+message MGetRequest {
+  repeated string keys = 1;
+}
+
+message MGetResponse {
+  repeated gomsg.common.KeyValue values = 1;
+  gomsg.common.Status status = 2;
+}
+
+message MSetRequest {
+  repeated gomsg.common.KeyValue values = 1;
+}
+
+message MSetResponse {
+  gomsg.common.Status status = 1;
+}
+
+message KeysRequest {
+  string pattern = 1;
+  int32 limit = 2;
+}
+
+message KeysResponse {
+  repeated string keys = 1;
+  gomsg.common.Status status = 2;
+}
+
+message ExpireRequest {
+  string key = 1;
+  int64 ttl = 2;
+}
+
+message ExpireResponse {
+  gomsg.common.Status status = 1;
+}
+
+message TTLRequest {
+  string key = 1;
+}
+
+message TTLResponse {
+  int64 ttl = 1;
+  gomsg.common.Status status = 2;
+}
