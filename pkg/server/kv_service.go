@@ -2,46 +2,24 @@ package server
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"time"
 
 	"google.golang.org/grpc/codes"
 
 	commonpb "gomsg/api/generated/common"
 	kvpb "gomsg/api/generated/kv"
-	"gomsg/pkg/cluster"
-	raftex "gomsg/pkg/cluster/raft"
 	"gomsg/storage"
 )
 
 // KVService implements the KV gRPC service
 type KVService struct {
 	kvpb.UnimplementedKVServiceServer
-	storage   storage.Storage
-	submitter *raftex.Submitter
-	cluster   *cluster.Manager
+	storage storage.Storage
 }
 
 // NewKVService creates a new KV service
-func NewKVService(store storage.Storage, submitter *raftex.Submitter, mgr *cluster.Manager) *KVService {
-	return &KVService{storage: store, submitter: submitter, cluster: mgr}
-}
-
-func (s *KVService) leaderRedirectStatus() *commonpb.Status {
-	leader := ""
-	addr := ""
-	if s.cluster != nil {
-		if ln, ok := s.cluster.GetLeader(); ok {
-			leader = ln.ID
-			addr = ln.Address
-		}
-	}
-	msg := "not leader"
-	if leader != "" {
-		msg = fmt.Sprintf("not leader; leader=%s@%s", leader, addr)
-	}
-	return &commonpb.Status{Success: false, Message: msg, Code: int32(codes.FailedPrecondition)}
+func NewKVService(store storage.Storage) *KVService {
+	return &KVService{storage: store}
 }
 
 // Set stores a key-value pair
@@ -59,23 +37,6 @@ func (s *KVService) Set(ctx context.Context, req *kvpb.SetRequest) (*kvpb.SetRes
 	var ttl time.Duration
 	if req.Ttl > 0 {
 		ttl = time.Duration(req.Ttl) * time.Second
-	}
-
-	// If raft is configured, only leader handles writes via Raft
-	if s.submitter != nil {
-		if !s.submitter.IsLeader() {
-			return &kvpb.SetResponse{Status: s.leaderRedirectStatus()}, nil
-		}
-		payload, _ := json.Marshal(struct {
-			Key string `json:"k"`
-			Value []byte `json:"v"`
-			TTLSeconds int64 `json:"ttl"`
-		}{Key: req.Key, Value: req.Value, TTLSeconds: int64(req.Ttl)})
-		cmd := raftex.Command{Version: 1, Type: raftex.CmdKVSet, Payload: payload}
-		if err := s.submitter.Submit(ctx, cmd, 0); err != nil {
-			return &kvpb.SetResponse{Status: &commonpb.Status{Success: false, Message: err.Error(), Code: int32(codes.Internal)}}, nil
-		}
-		return &kvpb.SetResponse{Status: &commonpb.Status{Success: true, Message: "OK", Code: int32(codes.OK)}}, nil
 	}
 
 	err := s.storage.Set(ctx, req.Key, req.Value, ttl)
@@ -142,19 +103,6 @@ func (s *KVService) Del(ctx context.Context, req *kvpb.DelRequest) (*kvpb.DelRes
 				Code:    int32(codes.InvalidArgument),
 			},
 		}, nil
-	}
-
-	// If raft is configured, only leader handles writes via Raft
-	if s.submitter != nil {
-		if !s.submitter.IsLeader() {
-			return &kvpb.DelResponse{Status: s.leaderRedirectStatus()}, nil
-		}
-		payload, _ := json.Marshal(struct{ Keys []string `json:"ks"` }{Keys: req.Keys})
-		cmd := raftex.Command{Version: 1, Type: raftex.CmdKVDelete, Payload: payload}
-		if err := s.submitter.Submit(ctx, cmd, 0); err != nil {
-			return &kvpb.DelResponse{Status: &commonpb.Status{Success: false, Message: err.Error(), Code: int32(codes.Internal)}}, nil
-		}
-		return &kvpb.DelResponse{DeletedCount: int32(len(req.Keys)), Status: &commonpb.Status{Success: true, Message: "OK", Code: int32(codes.OK)}}, nil
 	}
 
 	deleted, err := s.storage.Delete(ctx, req.Keys...)

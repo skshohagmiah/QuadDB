@@ -19,6 +19,8 @@ func main() {
 		Long:  `gomsg is a fast, simple data platform that replaces Redis + RabbitMQ + Kafka`,
 	}
 
+	rootCmd.SilenceUsage = true
+
 	// Global flags
 	rootCmd.PersistentFlags().StringVar(&serverAddr, "server", "localhost:9000", "Server address")
 	rootCmd.PersistentFlags().IntVar(&timeout, "timeout", 30, "Request timeout in seconds")
@@ -26,7 +28,6 @@ func main() {
 	// Add subcommands
 	rootCmd.AddCommand(kvCmd())
 	rootCmd.AddCommand(queueCmd())
-	rootCmd.AddCommand(streamCmd())
 	rootCmd.AddCommand(clusterCmd())
 
 	if err := rootCmd.Execute(); err != nil {

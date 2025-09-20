@@ -12,7 +12,6 @@ import (
 
 	"gomsg/config"
 	"gomsg/pkg/cluster"
-	raftex "gomsg/pkg/cluster/raft"
 	"gomsg/storage"
 
 	clusterpb "gomsg/api/generated/cluster"
@@ -30,8 +29,6 @@ type Server struct {
 	queueService   *QueueService
 	clusterService *ClusterService
 	clusterMgr     *cluster.Manager
-	raftNode       *raftex.Node
-	submitter      *raftex.Submitter
 }
 
 // nodeProviderAdapter adapts the in-process cluster.Manager to storage.NodeProvider
@@ -87,36 +84,24 @@ func NewServer(cfg *config.Config, store storage.Storage) (*Server, error) {
 		HeartbeatTTL: 10 * time.Second,
 	})
 
-	// Adapt cluster manager to storage.NodeProvider
+	// Adapt cluster manager to storage.NodeProvider for stream leader/replica assignment
 	if bs, ok := store.(*storage.BadgerStorage); ok {
 		bs.SetNodeProvider(nodeProviderAdapter{m: server.clusterMgr})
 		if cfg.Cluster.Replicas > 0 {
 			bs.SetReplicationFactor(cfg.Cluster.Replicas)
 		}
 	}
+	if cs, ok := store.(*storage.CompositeStorage); ok {
+		cs.SetNodeProviderIfSupported(nodeProviderAdapter{m: server.clusterMgr})
+		if cfg.Cluster.Replicas > 0 {
+			cs.SetReplicationFactorIfSupported(cfg.Cluster.Replicas)
+		}
+	}
 
 	// Initialize services
-	server.kvService = NewKVService(store, nil, server.clusterMgr)
+	server.kvService = NewKVService(store)
 	server.queueService = NewQueueService(store)
 	server.clusterService = NewClusterService(server.clusterMgr, store)
-
-	// Start Raft if clustering is enabled
-	if cfg.Cluster.Enabled {
-		rn, err := raftex.Start(raftex.Config{
-			NodeID:   cfg.Cluster.NodeID,
-			BindAddr: cfg.Cluster.BindAddr,
-			DataDir:  cfg.Cluster.DataDir,
-			Bootstrap: cfg.Cluster.Bootstrap,
-			JoinAddrs: cfg.Cluster.JoinAddresses,
-		}, raftex.NewFSM(store))
-		if err != nil {
-			return nil, fmt.Errorf("raft start: %w", err)
-		}
-		server.raftNode = rn
-		server.submitter = raftex.NewSubmitter(rn)
-		// Recreate KV service with submitter support
-		server.kvService = NewKVService(store, server.submitter, server.clusterMgr)
-	}
 
 	// Register services
 	kvpb.RegisterKVServiceServer(grpcServer, server.kvService)
@@ -156,13 +141,6 @@ func (s *Server) Start(ctx context.Context) error {
 func (s *Server) Stop() error {
 	log.Println("Stopping gomsg server...")
 	
-	// Stop Raft node if it's running
-	if s.raftNode != nil {
-		if err := s.raftNode.Shutdown(); err != nil {
-			log.Printf("raft shutdown: %v", err)
-		}
-	}
-
 	// Graceful stop with timeout
 	done := make(chan struct{})
 	go func() {

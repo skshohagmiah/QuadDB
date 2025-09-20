@@ -1,3 +1,6 @@
+//go:build raft_enabled
+// +build raft_enabled
+
 package raft
 
 import (
@@ -7,7 +10,6 @@ import (
 	"time"
 
 	hraft "github.com/hashicorp/raft"
-	"github.com/hashicorp/raft-boltdb"
 )
 
 // Config contains the minimal settings to start a Raft node.

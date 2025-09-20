@@ -57,8 +57,8 @@ func main() {
 		}
 	}
 
-	// Initialize storage
-	store, err := storage.NewBadgerStorage(cfg.Storage.DataDir)
+	// Initialize storage: KV can be memory or badger; queues/streams are badger-backed
+	store, err := storage.NewCompositeStorage(cfg.Storage.DataDir, cfg.Storage.KVBackend)
 	if err != nil {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}

@@ -1,3 +1,6 @@
+//go:build stream_enabled
+// +build stream_enabled
+
 package main
 
 import (

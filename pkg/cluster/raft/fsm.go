@@ -1,9 +1,13 @@
+//go:build raft_enabled
+// +build raft_enabled
+
 package raft
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"time"
 
 	hraft "github.com/hashicorp/raft"
@@ -83,7 +87,7 @@ func (f *FSM) Snapshot() (hraft.FSMSnapshot, error) {
 }
 
 // Restore implements hraft.FSM.
-func (f *FSM) Restore(r hraft.SnapshotRestoreReader) error {
+func (f *FSM) Restore(io.ReadCloser) error {
 	// TODO: implement restore with storage.Restore
 	return nil
 }

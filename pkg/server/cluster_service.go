@@ -1,15 +1,15 @@
 package server
 
 import (
-    "context"
-    "time"
+	"context"
+	"time"
 
-    "google.golang.org/grpc/codes"
+	"google.golang.org/grpc/codes"
 
-    clusterpb "gomsg/api/generated/cluster"
-    commonpb "gomsg/api/generated/common"
-    "gomsg/pkg/cluster"
-    "gomsg/storage"
+	clusterpb "gomsg/api/generated/cluster"
+	commonpb "gomsg/api/generated/common"
+	"gomsg/pkg/cluster"
+	"gomsg/storage"
 )
 
 // ClusterService implements the Cluster gRPC service

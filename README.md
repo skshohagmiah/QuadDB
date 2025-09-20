@@ -1,10 +1,10 @@
 # gomsg
 
-**gomsg** is a fast, simple data platform that replaces Redis + RabbitMQ + Kafka with one service.
+**gomsg** is a fast, simple distributed data platform that replaces Redis + RabbitMQ + Kafka with one service.
 
 ## 🚀 Why gomsg?
 
-**One server. Three data patterns. Built for scale.**
+**One project. Three data patterns. Built for scale.**
 
 - **Key/Value store** like Redis
 - **Message queues** like RabbitMQ  

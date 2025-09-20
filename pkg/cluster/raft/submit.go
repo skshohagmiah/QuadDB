@@ -1,3 +1,6 @@
+//go:build raft_enabled
+// +build raft_enabled
+
 package raft
 
 import (

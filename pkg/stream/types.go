@@ -46,6 +46,16 @@ type ProducerOptions struct {
 	Linger time.Duration
 	// BufferSize is the size of buffered channel for incoming records.
 	BufferSize int
+	// RetryMax is the maximum number of retries per message publish. 0 disables retries.
+	RetryMax int
+	// RetryBackoffMin is the initial backoff for retries.
+	RetryBackoffMin time.Duration
+	// RetryBackoffMax is the maximum backoff for retries.
+	RetryBackoffMax time.Duration
+	// RetryJitter is a fractional jitter [0,1] applied to backoff.
+	RetryJitter float64
+	// Idempotent adds an idempotency key to each message if not present in headers.
+	Idempotent bool
 }
 
 func (o *ProducerOptions) withDefaults() ProducerOptions {
@@ -62,6 +72,18 @@ func (o *ProducerOptions) withDefaults() ProducerOptions {
 	if res.BufferSize <= 0 {
 		res.BufferSize = 4096
 	}
+	if res.RetryMax < 0 {
+		res.RetryMax = 0
+	}
+	if res.RetryBackoffMin <= 0 {
+		res.RetryBackoffMin = 10 * time.Millisecond
+	}
+	if res.RetryBackoffMax <= 0 {
+		res.RetryBackoffMax = 2 * time.Second
+	}
+	if res.RetryJitter < 0 || res.RetryJitter > 1 {
+		res.RetryJitter = 0.2
+	}
 	return res
 }
 
@@ -75,6 +97,20 @@ type ConsumerOptions struct {
 	AutoCommitInterval time.Duration
 	// Partitions limits partitions to consume. If nil or empty, consume all by probing.
 	Partitions []int32
+	// BackoffMin is the initial backoff used on read/handler errors.
+	BackoffMin time.Duration
+	// BackoffMax is the maximum backoff used on read/handler errors.
+	BackoffMax time.Duration
+	// BackoffJitter is a fractional jitter [0,1] applied to backoff.
+	BackoffJitter float64
+	// Deduplicate skips messages with the same idempotency key if already processed.
+	Deduplicate bool
+	// DedupTTL controls how long to remember processed idempotency keys.
+	DedupTTL time.Duration
+	// SessionTimeout determines how long this consumer instance is considered alive for group membership.
+	SessionTimeout time.Duration
+	// RebalanceInterval controls how frequently group membership and partition assignments are refreshed.
+	RebalanceInterval time.Duration
 }
 
 func (o *ConsumerOptions) withDefaults() ConsumerOptions {
@@ -88,8 +124,31 @@ func (o *ConsumerOptions) withDefaults() ConsumerOptions {
 	if res.AutoCommitInterval <= 0 {
 		res.AutoCommitInterval = 500 * time.Millisecond
 	}
+	if res.BackoffMin <= 0 {
+		res.BackoffMin = 50 * time.Millisecond
+	}
+	if res.BackoffMax <= 0 {
+		res.BackoffMax = 2 * time.Second
+	}
+	if res.BackoffJitter < 0 || res.BackoffJitter > 1 {
+		res.BackoffJitter = 0.2
+	}
+	if res.Deduplicate && res.DedupTTL <= 0 {
+		res.DedupTTL = 24 * time.Hour
+	}
+	if res.SessionTimeout <= 0 {
+		res.SessionTimeout = 10 * time.Second
+	}
+	if res.RebalanceInterval <= 0 {
+		res.RebalanceInterval = 2 * time.Second
+	}
 	return res
 }
+
+const (
+	// HeaderIdempotencyKey is the message header used to carry an idempotency key.
+	HeaderIdempotencyKey = "x-idempotency-key"
+)
 
 // Record is the input to Producer.
 type Record struct {

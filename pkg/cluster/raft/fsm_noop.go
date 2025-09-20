@@ -1,6 +1,7 @@
 package raft
 
 import (
+	"io"
 	hraft "github.com/hashicorp/raft"
 )
 
@@ -9,7 +10,10 @@ type noopFSM struct{}
 
 func (n noopFSM) Apply(*hraft.Log) interface{} { return nil }
 func (n noopFSM) Snapshot() (hraft.FSMSnapshot, error) { return noopSnapshot{}, nil }
-func (n noopFSM) Restore(hraft.SnapshotRestoreReader) error { return nil }
+func (n noopFSM) Restore(r io.ReadCloser) error {
+	// Nothing to restore; just close the reader to avoid leaks
+	return r.Close()
+}
 
 type noopSnapshot struct{}
 

@@ -31,6 +31,7 @@ type StorageConfig struct {
 	DataDir   string `mapstructure:"data_dir"`
 	BackupDir string `mapstructure:"backup_dir"`
 	GCInterval int   `mapstructure:"gc_interval"`
+	KVBackend string `mapstructure:"kv_backend"` // "memory" (default) or "badger"
 }
 
 // ClusterConfig contains clustering configuration
@@ -112,6 +113,7 @@ func setDefaults() {
 	viper.SetDefault("storage.data_dir", "./data")
 	viper.SetDefault("storage.backup_dir", "./backups")
 	viper.SetDefault("storage.gc_interval", 300)
+	viper.SetDefault("storage.kv_backend", "memory")
 
 	// Cluster defaults
 	viper.SetDefault("cluster.enabled", false)

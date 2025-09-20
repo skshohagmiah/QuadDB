@@ -2,6 +2,7 @@ package stream
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"time"
 )
 
@@ -60,8 +61,41 @@ func (p *Producer) run() {
 
 	flush := func(b *batch) {
 		for _, r := range b.items {
-			// Partition selection is delegated to storage via partitionKey; storage decides mapping
-			_, _ = p.st.StreamPublish(p.ctx, r.Topic, r.PartitionKey, r.Data, r.Headers)
+			if p.opts.Idempotent {
+				if r.Headers == nil {
+					r.Headers = make(map[string]string)
+				}
+				if _, ok := r.Headers[HeaderIdempotencyKey]; !ok {
+					r.Headers[HeaderIdempotencyKey] = uuid.NewString()
+				}
+			}
+			// Publish with retry/backoff
+			var attempt int
+			backoff := p.opts.RetryBackoffMin
+			for {
+				// Partition selection is delegated to storage via partitionKey; storage decides mapping
+				_, err := p.st.StreamPublish(p.ctx, r.Topic, r.PartitionKey, r.Data, r.Headers)
+				if err == nil {
+					break
+				}
+				if p.opts.RetryMax == 0 || attempt >= p.opts.RetryMax {
+					// give up; drop record to avoid blocking pipeline
+					break
+				}
+				// sleep with jittered backoff
+				sleep := jitterDuration(backoff, p.opts.RetryJitter)
+				select {
+				case <-p.ctx.Done():
+					return
+				case <-time.After(sleep):
+				}
+				// increase backoff
+				backoff *= 2
+				if backoff > p.opts.RetryBackoffMax {
+					backoff = p.opts.RetryBackoffMax
+				}
+				attempt++
+			}
 		}
 		b.items = b.items[:0]
 	}
