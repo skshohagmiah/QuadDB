@@ -23,6 +23,8 @@ func clusterCmd() *cobra.Command {
 	cmd.AddCommand(clusterStatusCmd())
 	cmd.AddCommand(clusterStatsCmd())
 	cmd.AddCommand(clusterLeaderCmd())
+	cmd.AddCommand(clusterJoinCmd())
+	cmd.AddCommand(clusterLeaveCmd())
 
 	return cmd
 }
@@ -170,4 +172,56 @@ func clusterLeaderCmd() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func clusterJoinCmd() *cobra.Command {
+	var nodeID string
+	var address string
+	cmd := &cobra.Command{
+		Use:   "join",
+		Short: "Join a node to the cluster",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if nodeID == "" || address == "" {
+				return fmt.Errorf("--node-id and --address are required")
+			}
+			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil { return err }
+			defer conn.Close()
+			client := clusterpb.NewClusterServiceClient(conn)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+			defer cancel()
+			resp, err := client.Join(ctx, &clusterpb.JoinRequest{NodeId: nodeID, Address: address})
+			if err != nil { return err }
+			if !resp.Status.Success { return fmt.Errorf("join failed: %s", resp.Status.Message) }
+			fmt.Println("Node joined")
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&nodeID, "node-id", "", "Node ID to add")
+	cmd.Flags().StringVar(&address, "address", "", "Node address (host:port)")
+	return cmd
+}
+
+func clusterLeaveCmd() *cobra.Command {
+	var nodeID string
+	cmd := &cobra.Command{
+		Use:   "leave",
+		Short: "Remove a node from the cluster",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if nodeID == "" { return fmt.Errorf("--node-id is required") }
+			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil { return err }
+			defer conn.Close()
+			client := clusterpb.NewClusterServiceClient(conn)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+			defer cancel()
+			resp, err := client.Leave(ctx, &clusterpb.LeaveRequest{NodeId: nodeID})
+			if err != nil { return err }
+			if !resp.Status.Success { return fmt.Errorf("leave failed: %s", resp.Status.Message) }
+			fmt.Println("Node removed")
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&nodeID, "node-id", "", "Node ID to remove")
+	return cmd
 }

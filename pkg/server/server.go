@@ -77,12 +77,21 @@ func NewServer(cfg *config.Config, store storage.Storage) (*Server, error) {
 		grpc:    grpcServer,
 	}
 
-	// Initialize cluster manager (in-process stub)
-	server.clusterMgr = cluster.NewManager(cluster.Config{
-		NodeID:       cfg.Cluster.NodeID,
-		Address:      cfg.Cluster.BindAddr,
-		HeartbeatTTL: 10 * time.Second,
-	})
+	// Initialize cluster manager using Raft if enabled
+	if cfg.Cluster.Enabled {
+		mgr, err := cluster.Start(context.Background(), store, cluster.RaftConfig{
+			NodeID:    cfg.Cluster.NodeID,
+			BindAddr:  cfg.Cluster.BindAddr,
+			DataDir:   cfg.Storage.DataDir,
+			Bootstrap: cfg.Cluster.Bootstrap,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to start raft cluster: %w", err)
+		}
+		server.clusterMgr = mgr
+	} else {
+		server.clusterMgr = nil
+	}
 
 	// Adapt cluster manager to storage.NodeProvider for stream leader/replica assignment
 	if bs, ok := store.(*storage.BadgerStorage); ok {
@@ -154,6 +163,10 @@ func (s *Server) Stop() error {
 	case <-time.After(30 * time.Second):
 		log.Println("Force stopping server...")
 		s.grpc.Stop()
+	}
+
+	if s.clusterMgr != nil {
+		s.clusterMgr.Close()
 	}
 
 	return nil
