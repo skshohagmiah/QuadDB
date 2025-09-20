@@ -5,11 +5,10 @@ import (
 	"time"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
-	"gomsg/storage"
-	queuepb "gomsg/api/generated/queue"
 	commonpb "gomsg/api/generated/common"
+	queuepb "gomsg/api/generated/queue"
+	"gomsg/storage"
 )
 
 // QueueService implements the Queue gRPC service

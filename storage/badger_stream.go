@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -111,34 +110,20 @@ func (s *BadgerStorage) getTopicPartitions(topic string) int32 {
 
 // getNextOffset returns the next offset for a topic partition
 func (s *BadgerStorage) getNextOffset(topic string, partition int32) (int64, error) {
-	var nextOffset int64
-
-	err := s.db.Update(func(txn *badger.Txn) error {
-		offsetKey := fmt.Sprintf("%s%s:%d", offsetPrefix, topic, partition)
-		
-		item, err := txn.Get([]byte(offsetKey))
-		if err == nil {
-			err = item.Value(func(val []byte) error {
-				if len(val) >= 8 {
-					nextOffset = int64(binary.BigEndian.Uint64(val))
-				}
-				return nil
-			})
-			if err != nil {
-				return err
-			}
-		}
-
-		nextOffset++
-		
-		// Update offset
-		offsetBytes := make([]byte, 8)
-		binary.BigEndian.PutUint64(offsetBytes, uint64(nextOffset))
-		return txn.Set([]byte(offsetKey), offsetBytes)
-	})
-
-	return nextOffset, err
+    // Use Badger sequences for monotonic offsets per topic-partition
+    seqKey := fmt.Sprintf("seq:%s:%d", topic, partition)
+    seq, err := s.getOrCreateSeq(seqKey)
+    if err != nil {
+        return 0, err
+    }
+    v, err := seq.Next()
+    if err != nil {
+        return 0, err
+    }
+    return int64(v), nil
 }
+
+// NOTE: getOrCreateSeq is implemented in badger_kv.go and reused here.
 
 // StreamRead reads messages from a stream
 func (s *BadgerStorage) StreamRead(ctx context.Context, topic string, partition int32, offset int64, limit int32) ([]StreamMessage, error) {
@@ -222,11 +207,42 @@ func (s *BadgerStorage) StreamGetOffset(ctx context.Context, topic string, consu
 
 // StreamCreateTopic creates a new topic
 func (s *BadgerStorage) StreamCreateTopic(ctx context.Context, topic string, partitions int32) error {
-	info := TopicInfo{
-		Name:       topic,
-		Partitions: partitions,
-		TotalMessages: 0,
-	}
+    info := TopicInfo{
+        Name:          topic,
+        Partitions:    partitions,
+        TotalMessages: 0,
+        PartitionInfo: make([]PartitionInfo, 0, partitions),
+    }
+    // Assign leaders/replicas from node provider if present; fallback to single-node
+    var nodeIDs []string
+    if s.nodeProvider != nil {
+        nodes := s.nodeProvider.ListNodes()
+        for _, n := range nodes {
+            nodeIDs = append(nodeIDs, n.ID)
+        }
+    }
+    if len(nodeIDs) == 0 {
+        nodeIDs = []string{"node1"}
+    }
+    for i := int32(0); i < partitions; i++ {
+        leader := nodeIDs[int(i)%len(nodeIDs)]
+        // Build replica set capped by replicationFactor (>=1)
+        rf := s.replicationFactor
+        if rf <= 0 { rf = 1 }
+        if rf > len(nodeIDs) { rf = len(nodeIDs) }
+        replicas := make([]string, 0, rf)
+        // Start from leader's index to keep leader included and then wrap
+        start := int(i) % len(nodeIDs)
+        for k := 0; k < rf; k++ {
+            replicas = append(replicas, nodeIDs[(start+k)%len(nodeIDs)])
+        }
+        info.PartitionInfo = append(info.PartitionInfo, PartitionInfo{
+            ID:       i,
+            Leader:   leader,
+            Replicas: replicas,
+            Offset:   0,
+        })
+    }
 
 	infoData, err := json.Marshal(info)
 	if err != nil {
@@ -257,10 +273,7 @@ func (s *BadgerStorage) StreamDeleteTopic(ctx context.Context, topic string) err
 		prefix := []byte(streamPrefix + topic + ":")
 		keysToDelete := [][]byte{}
 		
-		for it.Seek(prefix); it.Valid(); it.Next() {
-			if !it.Item().HasPrefix(prefix) {
-				break
-			}
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			keysToDelete = append(keysToDelete, it.Item().KeyCopy(nil))
 		}
 
@@ -272,10 +285,7 @@ func (s *BadgerStorage) StreamDeleteTopic(ctx context.Context, topic string) err
 
 		// Delete offsets
 		offsetPrefixBytes := []byte(offsetPrefix + topic + ":")
-		for it.Seek(offsetPrefixBytes); it.Valid(); it.Next() {
-			if !it.Item().HasPrefix(offsetPrefixBytes) {
-				break
-			}
+		for it.Seek(offsetPrefixBytes); it.ValidForPrefix(offsetPrefixBytes); it.Next() {
 			keysToDelete = append(keysToDelete, it.Item().KeyCopy(nil))
 		}
 
@@ -287,10 +297,7 @@ func (s *BadgerStorage) StreamDeleteTopic(ctx context.Context, topic string) err
 
 		// Delete consumer offsets
 		consumerPrefixBytes := []byte(consumerPrefix + topic + ":")
-		for it.Seek(consumerPrefixBytes); it.Valid(); it.Next() {
-			if !it.Item().HasPrefix(consumerPrefixBytes) {
-				break
-			}
+		for it.Seek(consumerPrefixBytes); it.ValidForPrefix(consumerPrefixBytes); it.Next() {
 			keysToDelete = append(keysToDelete, it.Item().KeyCopy(nil))
 		}
 
@@ -315,11 +322,7 @@ func (s *BadgerStorage) StreamListTopics(ctx context.Context) ([]string, error) 
 		defer it.Close()
 
 		prefix := []byte(topicPrefix)
-		for it.Seek(prefix); it.Valid(); it.Next() {
-			if !it.Item().HasPrefix(prefix) {
-				break
-			}
-
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			key := string(it.Item().Key())
 			topic := key[len(topicPrefix):]
 			topics = append(topics, topic)
@@ -367,10 +370,7 @@ func (s *BadgerStorage) countTopicMessages(topic string) (int64, error) {
 		defer it.Close()
 
 		prefix := []byte(streamPrefix + topic + ":")
-		for it.Seek(prefix); it.Valid(); it.Next() {
-			if !it.Item().HasPrefix(prefix) {
-				break
-			}
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			count++
 		}
 

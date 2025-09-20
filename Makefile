@@ -77,10 +77,10 @@ run-cluster: build ## Run a 3-node cluster locally
 	@./bin/$(BINARY_NAME) --cluster --node-id=node1 --port=9000 --data-dir=./data/node1 --bootstrap &
 	@sleep 2
 	@echo "Starting node2..."
-	@./bin/$(BINARY_NAME) --cluster --node-id=node2 --port=9001 --data-dir=./data/node2 --join=localhost:10000 &
+	@./bin/$(BINARY_NAME) --cluster --node-id=node2 --port=9001 --data-dir=./data/node2 --join=localhost:9000 &
 	@sleep 2
 	@echo "Starting node3..."
-	@./bin/$(BINARY_NAME) --cluster --node-id=node3 --port=9002 --data-dir=./data/node3 --join=localhost:10000 &
+	@./bin/$(BINARY_NAME) --cluster --node-id=node3 --port=9002 --data-dir=./data/node3 --join=localhost:9000 &
 	@echo "Cluster started! Press Ctrl+C to stop."
 	@wait
 

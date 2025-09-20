@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
@@ -79,13 +81,15 @@ func (s *BadgerStorage) QueuePop(ctx context.Context, queue string, timeout time
 			defer it.Close()
 
 			prefix := []byte(queuePrefix + queue + ":")
-			for it.Seek(prefix); it.Valid(); it.Next() {
-				if !it.Item().HasPrefix(prefix) {
-					break
+			for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+				// Get message ID from index entry value
+				idxItem := it.Item()
+				val, err := idxItem.ValueCopy(nil)
+				if err != nil {
+					continue
 				}
 
-				// Get message ID
-				messageID := string(it.Item().Value())
+				messageID := string(val)
 				
 				// Get message data
 				messageKey := messagePrefix + messageID
@@ -123,12 +127,8 @@ func (s *BadgerStorage) QueuePop(ctx context.Context, queue string, timeout time
 			}
 
 			// Check delayed messages
-			delayedPrefix := []byte(delayedPrefix + queue + ":")
-			for it.Seek(delayedPrefix); it.Valid(); it.Next() {
-				if !it.Item().HasPrefix(delayedPrefix) {
-					break
-				}
-
+			delayedPref := []byte(delayedPrefix + queue + ":")
+			for it.Seek(delayedPref); it.ValidForPrefix(delayedPref); it.Next() {
 				key := string(it.Item().Key())
 				parts := strings.Split(key, ":")
 				if len(parts) < 3 {
@@ -145,7 +145,11 @@ func (s *BadgerStorage) QueuePop(ctx context.Context, queue string, timeout time
 				}
 
 				// Message is ready, move to regular queue
-				messageID := string(it.Item().Value())
+				val, err := it.Item().ValueCopy(nil)
+				if err != nil {
+					continue
+				}
+				messageID := string(val)
 				queueKey := queuePrefix + queue + ":" + messageID
 
 				if err := txn.Set([]byte(queueKey), []byte(messageID)); err != nil {
@@ -191,13 +195,13 @@ func (s *BadgerStorage) QueuePeek(ctx context.Context, queue string, limit int) 
 		count := 0
 		prefix := []byte(queuePrefix + queue + ":")
 		
-		for it.Seek(prefix); it.Valid() && count < limit; it.Next() {
-			if !it.Item().HasPrefix(prefix) {
-				break
-			}
-
+		for it.Seek(prefix); it.ValidForPrefix(prefix) && count < limit; it.Next() {
 			// Get message ID
-			messageID := string(it.Item().Value())
+			val, err := it.Item().ValueCopy(nil)
+			if err != nil {
+				continue
+			}
+			messageID := string(val)
 			
 			// Get message data
 			messageKey := messagePrefix + messageID
@@ -289,10 +293,7 @@ func (s *BadgerStorage) QueueStats(ctx context.Context, queue string) (QueueStat
 		defer it.Close()
 
 		prefix := []byte(queuePrefix + queue + ":")
-		for it.Seek(prefix); it.Valid(); it.Next() {
-			if !it.Item().HasPrefix(prefix) {
-				break
-			}
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			stats.Size++
 		}
 
@@ -323,8 +324,10 @@ func (s *BadgerStorage) QueueStats(ctx context.Context, queue string) (QueueStat
 
 // updateQueueStats updates queue statistics
 func (s *BadgerStorage) updateQueueStats(ctx context.Context, queue string, deltaSize, deltaProcessed, deltaFailed, deltaConsumers int64) error {
-	return s.db.Update(func(txn *badger.Txn) error {
-		statsKey := statsPrefix + queue
+    // Note: ctx is reserved for future use (deadline/cancellation hook)
+    _ = ctx
+    return s.db.Update(func(txn *badger.Txn) error {
+        statsKey := statsPrefix + queue
 		
 		var stats QueueStats
 		item, err := txn.Get([]byte(statsKey))
@@ -359,23 +362,18 @@ func (s *BadgerStorage) QueuePurge(ctx context.Context, queue string) (int64, er
 		defer it.Close()
 
 		prefix := []byte(queuePrefix + queue + ":")
-		keysToDelete := [][]byte{}
+		wb := s.db.NewWriteBatch()
+		defer wb.Cancel()
 		
-		for it.Seek(prefix); it.Valid(); it.Next() {
-			if !it.Item().HasPrefix(prefix) {
-				break
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			keyCopy := it.Item().KeyCopy(nil)
+			if err := wb.Delete(keyCopy); err != nil {
+				return err
 			}
-			keysToDelete = append(keysToDelete, it.Item().KeyCopy(nil))
 			purged++
 		}
 
-		for _, key := range keysToDelete {
-			if err := txn.Delete(key); err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return wb.Flush()
 	})
 
 	return purged, err
@@ -406,10 +404,7 @@ func (s *BadgerStorage) QueueList(ctx context.Context) ([]string, error) {
 		defer it.Close()
 
 		prefix := []byte(queuePrefix)
-		for it.Seek(prefix); it.Valid(); it.Next() {
-			if !it.Item().HasPrefix(prefix) {
-				break
-			}
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 
 			key := string(it.Item().Key())
 			parts := strings.Split(key[len(queuePrefix):], ":")

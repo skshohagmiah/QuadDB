@@ -1,3 +1,7 @@
+//go:build stream_enabled
+// +build stream_enabled
+
+// Package server provides the Stream gRPC service implementation.
 package server
 
 import (
