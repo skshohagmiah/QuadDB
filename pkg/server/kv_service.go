@@ -430,3 +430,60 @@ func (s *KVService) TTL(ctx context.Context, req *kvpb.TTLRequest) (*kvpb.TTLRes
 		},
 	}, nil
 }
+
+// DelPattern deletes keys matching a pattern
+func (s *KVService) DelPattern(ctx context.Context, req *kvpb.DelPatternRequest) (*kvpb.DelPatternResponse, error) {
+	if req.Pattern == "" {
+		return &kvpb.DelPatternResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: "pattern cannot be empty",
+				Code:    int32(codes.InvalidArgument),
+			},
+		}, nil
+	}
+
+	// First get all keys matching the pattern
+	keys, err := s.storage.Keys(ctx, req.Pattern, 10000) // Large limit for deletion
+	if err != nil {
+		return &kvpb.DelPatternResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: err.Error(),
+				Code:    int32(codes.Internal),
+			},
+		}, nil
+	}
+
+	if len(keys) == 0 {
+		return &kvpb.DelPatternResponse{
+			DeletedCount: 0,
+			Status: &commonpb.Status{
+				Success: true,
+				Message: "OK",
+				Code:    int32(codes.OK),
+			},
+		}, nil
+	}
+
+	// Delete all matching keys
+	deleted, err := s.storage.Delete(ctx, keys...)
+	if err != nil {
+		return &kvpb.DelPatternResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: err.Error(),
+				Code:    int32(codes.Internal),
+			},
+		}, nil
+	}
+
+	return &kvpb.DelPatternResponse{
+		DeletedCount: int32(deleted),
+		Status: &commonpb.Status{
+			Success: true,
+			Message: "OK",
+			Code:    int32(codes.OK),
+		},
+	}, nil
+}

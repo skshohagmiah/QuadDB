@@ -423,3 +423,119 @@ func (s *BadgerStorage) QueueList(ctx context.Context) ([]string, error) {
 
 	return queues, err
 }
+
+// QueuePushBatch adds multiple messages to a queue
+func (s *BadgerStorage) QueuePushBatch(ctx context.Context, queue string, messages [][]byte, delays []time.Duration) ([]string, error) {
+	if len(messages) == 0 {
+		return []string{}, nil
+	}
+	
+	// Ensure delays slice has same length as messages
+	if len(delays) == 0 {
+		delays = make([]time.Duration, len(messages))
+	} else if len(delays) != len(messages) {
+		return nil, fmt.Errorf("delays length (%d) must match messages length (%d)", len(delays), len(messages))
+	}
+	
+	messageIDs := make([]string, len(messages))
+	now := time.Now()
+	
+	err := s.db.Update(func(txn *badger.Txn) error {
+		for i, data := range messages {
+			messageID := uuid.New().String()
+			messageIDs[i] = messageID
+			
+			message := QueueMessage{
+				ID:         messageID,
+				Queue:      queue,
+				Data:       data,
+				CreatedAt:  now,
+				DelayUntil: now.Add(delays[i]),
+				RetryCount: 0,
+			}
+
+			messageData, err := json.Marshal(message)
+			if err != nil {
+				return err
+			}
+
+			// Store message
+			messageKey := messagePrefix + messageID
+			if err := txn.Set([]byte(messageKey), messageData); err != nil {
+				return err
+			}
+
+			// Add to queue index
+			queueKey := queuePrefix + queue + ":" + messageID
+			if delays[i] > 0 {
+				// Delayed message
+				delayKey := delayedPrefix + queue + ":" + strconv.FormatInt(message.DelayUntil.Unix(), 10) + ":" + messageID
+				if err := txn.Set([]byte(delayKey), []byte(messageID)); err != nil {
+					return err
+				}
+			} else {
+				// Immediate message
+				if err := txn.Set([]byte(queueKey), []byte(messageID)); err != nil {
+					return err
+				}
+			}
+
+			// Update queue stats
+			statsKey := statsPrefix + queue
+			stats := QueueStats{Name: queue, Size: 1}
+			if item, err := txn.Get([]byte(statsKey)); err == nil {
+				if err := item.Value(func(val []byte) error {
+					return json.Unmarshal(val, &stats)
+				}); err == nil {
+					stats.Size++
+				}
+			}
+			
+			statsData, _ := json.Marshal(stats)
+			if err := txn.Set([]byte(statsKey), statsData); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	return messageIDs, nil
+}
+
+// QueuePopBatch removes and returns multiple messages from a queue
+func (s *BadgerStorage) QueuePopBatch(ctx context.Context, queue string, limit int, timeout time.Duration) ([]QueueMessage, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	
+	messages := make([]QueueMessage, 0, limit)
+	deadline := time.Now().Add(timeout)
+	
+	for len(messages) < limit && time.Now().Before(deadline) {
+		message, err := s.QueuePop(ctx, queue, time.Until(deadline))
+		if err != nil {
+			if len(messages) > 0 {
+				break // Return what we have
+			}
+			return nil, err
+		}
+		
+		// Check if we got an empty message (timeout)
+		if message.ID == "" {
+			break
+		}
+		
+		messages = append(messages, message)
+		
+		// Small delay to prevent tight loop
+		if len(messages) < limit {
+			time.Sleep(1 * time.Millisecond)
+		}
+	}
+	
+	return messages, nil
+}

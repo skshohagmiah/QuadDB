@@ -354,3 +354,113 @@ func (s *QueueService) List(ctx context.Context, req *queuepb.ListRequest) (*que
 		},
 	}, nil
 }
+
+// PushBatch adds multiple messages to a queue
+func (s *QueueService) PushBatch(ctx context.Context, req *queuepb.PushBatchRequest) (*queuepb.PushBatchResponse, error) {
+	if req.Queue == "" {
+		return &queuepb.PushBatchResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: "queue name cannot be empty",
+				Code:    int32(codes.InvalidArgument),
+			},
+		}, nil
+	}
+
+	if len(req.Messages) == 0 {
+		return &queuepb.PushBatchResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: "at least one message required",
+				Code:    int32(codes.InvalidArgument),
+			},
+		}, nil
+	}
+
+	// Convert messages and delays
+	messages := make([][]byte, len(req.Messages))
+	delays := make([]time.Duration, len(req.Messages))
+	
+	for i, msg := range req.Messages {
+		messages[i] = msg.Data
+		if msg.Delay > 0 {
+			delays[i] = time.Duration(msg.Delay) * time.Second
+		}
+	}
+
+	messageIDs, err := s.storage.QueuePushBatch(ctx, req.Queue, messages, delays)
+	if err != nil {
+		return &queuepb.PushBatchResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: err.Error(),
+				Code:    int32(codes.Internal),
+			},
+		}, nil
+	}
+
+	return &queuepb.PushBatchResponse{
+		MessageIds: messageIDs,
+		Status: &commonpb.Status{
+			Success: true,
+			Message: "OK",
+			Code:    int32(codes.OK),
+		},
+	}, nil
+}
+
+// PopBatch removes and returns multiple messages from a queue
+func (s *QueueService) PopBatch(ctx context.Context, req *queuepb.PopBatchRequest) (*queuepb.PopBatchResponse, error) {
+	if req.Queue == "" {
+		return &queuepb.PopBatchResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: "queue name cannot be empty",
+				Code:    int32(codes.InvalidArgument),
+			},
+		}, nil
+	}
+
+	limit := int(req.Limit)
+	if limit <= 0 {
+		limit = 10
+	}
+
+	timeout := time.Duration(req.Timeout) * time.Second
+	if timeout <= 0 {
+		timeout = 30 * time.Second
+	}
+
+	messages, err := s.storage.QueuePopBatch(ctx, req.Queue, limit, timeout)
+	if err != nil {
+		return &queuepb.PopBatchResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: err.Error(),
+				Code:    int32(codes.Internal),
+			},
+		}, nil
+	}
+
+	var queueMsgs []*queuepb.QueueMessage
+	for _, message := range messages {
+		queueMsgs = append(queueMsgs, &queuepb.QueueMessage{
+			Id:         message.ID,
+			Queue:      message.Queue,
+			Data:       message.Data,
+			CreatedAt:  message.CreatedAt.Unix(),
+			DelayUntil: message.DelayUntil.Unix(),
+			RetryCount: message.RetryCount,
+			ConsumerId: message.ConsumerID,
+		})
+	}
+
+	return &queuepb.PopBatchResponse{
+		Messages: queueMsgs,
+		Status: &commonpb.Status{
+			Success: true,
+			Message: "OK",
+			Code:    int32(codes.OK),
+		},
+	}, nil
+}
