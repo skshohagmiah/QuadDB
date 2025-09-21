@@ -379,3 +379,159 @@ func (s *BadgerStorage) countTopicMessages(topic string) (int64, error) {
 
 	return count, err
 }
+
+// StreamReadFrom reads messages from a stream starting from a timestamp
+func (s *BadgerStorage) StreamReadFrom(ctx context.Context, topic string, partition int32, timestamp time.Time, limit int32) ([]StreamMessage, error) {
+	var messages []StreamMessage
+	
+	err := s.db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		prefix := []byte(fmt.Sprintf("%s%s:%d:", streamPrefix, topic, partition))
+		
+		for it.Seek(prefix); it.ValidForPrefix(prefix) && int32(len(messages)) < limit; it.Next() {
+			item := it.Item()
+			
+			err := item.Value(func(val []byte) error {
+				var message StreamMessage
+				if err := json.Unmarshal(val, &message); err != nil {
+					return err
+				}
+				
+				// Filter by timestamp
+				if message.Timestamp.After(timestamp) || message.Timestamp.Equal(timestamp) {
+					messages = append(messages, message)
+				}
+				
+				return nil
+			})
+			
+			if err != nil {
+				return err
+			}
+		}
+		
+		return nil
+	})
+	
+	return messages, err
+}
+
+// StreamPurge removes all messages from a topic
+func (s *BadgerStorage) StreamPurge(ctx context.Context, topic string) (int64, error) {
+	var purgedCount int64
+	
+	err := s.db.Update(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		// Delete all stream messages
+		prefix := []byte(streamPrefix + topic + ":")
+		var keysToDelete [][]byte
+		
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			key := make([]byte, len(it.Item().Key()))
+			copy(key, it.Item().Key())
+			keysToDelete = append(keysToDelete, key)
+			purgedCount++
+		}
+		
+		// Delete all keys
+		for _, key := range keysToDelete {
+			if err := txn.Delete(key); err != nil {
+				return err
+			}
+		}
+		
+		// Reset offsets for all partitions
+		offsetPrefix := []byte(offsetPrefix + topic + ":")
+		keysToDelete = keysToDelete[:0] // Reset slice
+		
+		for it.Seek(offsetPrefix); it.ValidForPrefix(offsetPrefix); it.Next() {
+			key := make([]byte, len(it.Item().Key()))
+			copy(key, it.Item().Key())
+			keysToDelete = append(keysToDelete, key)
+		}
+		
+		for _, key := range keysToDelete {
+			if err := txn.Delete(key); err != nil {
+				return err
+			}
+		}
+		
+		return nil
+	})
+	
+	return purgedCount, err
+}
+
+// StreamSubscribeGroup subscribes a consumer to a consumer group
+func (s *BadgerStorage) StreamSubscribeGroup(ctx context.Context, topic string, groupID string, consumerID string) error {
+	groupKey := fmt.Sprintf("cg:%s:%s:%s", topic, groupID, consumerID)
+	
+	return s.db.Update(func(txn *badger.Txn) error {
+		groupData := map[string]interface{}{
+			"topic":      topic,
+			"group_id":   groupID,
+			"consumer_id": consumerID,
+			"joined_at":  time.Now().Unix(),
+		}
+		
+		data, err := json.Marshal(groupData)
+		if err != nil {
+			return err
+		}
+		
+		return txn.Set([]byte(groupKey), data)
+	})
+}
+
+// StreamUnsubscribeGroup unsubscribes a consumer from a consumer group
+func (s *BadgerStorage) StreamUnsubscribeGroup(ctx context.Context, topic string, groupID string, consumerID string) error {
+	groupKey := fmt.Sprintf("cg:%s:%s:%s", topic, groupID, consumerID)
+	
+	return s.db.Update(func(txn *badger.Txn) error {
+		return txn.Delete([]byte(groupKey))
+	})
+}
+
+// StreamGetGroupOffset gets the current offset for a consumer group
+func (s *BadgerStorage) StreamGetGroupOffset(ctx context.Context, topic string, groupID string, partition int32) (int64, error) {
+	offsetKey := fmt.Sprintf("cgo:%s:%s:%d", topic, groupID, partition)
+	
+	var offset int64
+	err := s.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get([]byte(offsetKey))
+		if err != nil {
+			if err == badger.ErrKeyNotFound {
+				offset = 0 // Start from beginning if no offset stored
+				return nil
+			}
+			return err
+		}
+		
+		return item.Value(func(val []byte) error {
+			if len(val) >= 8 {
+				offset = int64(binary.BigEndian.Uint64(val))
+			}
+			return nil
+		})
+	})
+	
+	return offset, err
+}
+
+// StreamCommitGroupOffset commits the current offset for a consumer group
+func (s *BadgerStorage) StreamCommitGroupOffset(ctx context.Context, topic string, groupID string, partition int32, offset int64) error {
+	offsetKey := fmt.Sprintf("cgo:%s:%s:%d", topic, groupID, partition)
+	
+	return s.db.Update(func(txn *badger.Txn) error {
+		offsetBytes := make([]byte, 8)
+		binary.BigEndian.PutUint64(offsetBytes, uint64(offset))
+		return txn.Set([]byte(offsetKey), offsetBytes)
+	})
+}

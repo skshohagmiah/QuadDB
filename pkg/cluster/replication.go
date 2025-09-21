@@ -9,10 +9,12 @@ import (
 type CommandType string
 
 const (
-	CmdKVSet        CommandType = "KV_SET"
-	CmdKVDelete     CommandType = "KV_DELETE"
-	CmdStreamCreate CommandType = "STREAM_CREATE_TOPIC"
-	CmdStreamDelete CommandType = "STREAM_DELETE_TOPIC"
+	CmdKVSet            CommandType = "KV_SET"
+	CmdKVDelete         CommandType = "KV_DELETE"
+	CmdStreamCreate     CommandType = "STREAM_CREATE_TOPIC"
+	CmdStreamDelete     CommandType = "STREAM_DELETE_TOPIC"
+	CmdPartitionAssign  CommandType = "PARTITION_ASSIGN"
+	CmdPartitionMigrate CommandType = "PARTITION_MIGRATE"
 )
 
 // Command is the envelope replicated via Raft.

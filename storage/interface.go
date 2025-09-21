@@ -34,16 +34,28 @@ type Storage interface {
 	QueuePurge(ctx context.Context, queue string) (int64, error)
 	QueueDelete(ctx context.Context, queue string) error
 	QueueList(ctx context.Context) ([]string, error)
+	
+	// Queue batch operations
+	QueuePushBatch(ctx context.Context, queue string, messages [][]byte, delays []time.Duration) ([]string, error)
+	QueuePopBatch(ctx context.Context, queue string, limit int, timeout time.Duration) ([]QueueMessage, error)
 
 	// Stream operations
 	StreamPublish(ctx context.Context, topic string, partitionKey string, data []byte, headers map[string]string) (StreamMessage, error)
 	StreamRead(ctx context.Context, topic string, partition int32, offset int64, limit int32) ([]StreamMessage, error)
+	StreamReadFrom(ctx context.Context, topic string, partition int32, timestamp time.Time, limit int32) ([]StreamMessage, error)
 	StreamSeek(ctx context.Context, topic string, consumerID string, partition int32, offset int64) error
 	StreamGetOffset(ctx context.Context, topic string, consumerID string, partition int32) (int64, error)
 	StreamCreateTopic(ctx context.Context, topic string, partitions int32) error
 	StreamDeleteTopic(ctx context.Context, topic string) error
 	StreamListTopics(ctx context.Context) ([]string, error)
 	StreamGetTopicInfo(ctx context.Context, topic string) (TopicInfo, error)
+	StreamPurge(ctx context.Context, topic string) (int64, error)
+	
+	// Stream consumer group operations
+	StreamSubscribeGroup(ctx context.Context, topic string, groupID string, consumerID string) error
+	StreamUnsubscribeGroup(ctx context.Context, topic string, groupID string, consumerID string) error
+	StreamGetGroupOffset(ctx context.Context, topic string, groupID string, partition int32) (int64, error)
+	StreamCommitGroupOffset(ctx context.Context, topic string, groupID string, partition int32, offset int64) error
 
 	// Lifecycle
 	Close() error

@@ -1,18 +1,17 @@
-//go:build stream_enabled
-// +build stream_enabled
-
 // Package server provides the Stream gRPC service implementation.
 package server
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"gomsg/storage"
-	streampb "gomsg/api/generated/stream"
 	commonpb "gomsg/api/generated/common"
+	streampb "gomsg/api/generated/stream"
+	"gomsg/storage"
 )
 
 // StreamService implements the Stream gRPC service
@@ -352,6 +351,254 @@ func (s *StreamService) GetTopicInfo(ctx context.Context, req *streampb.GetTopic
 
 	return &streampb.GetTopicInfoResponse{
 		Info: topicInfo,
+		Status: &commonpb.Status{
+			Success: true,
+			Message: "OK",
+			Code:    int32(codes.OK),
+		},
+	}, nil
+}
+
+// ReadFrom reads messages from a stream starting from a timestamp
+func (s *StreamService) ReadFrom(ctx context.Context, req *streampb.ReadFromRequest) (*streampb.ReadFromResponse, error) {
+	if req.Topic == "" {
+		return &streampb.ReadFromResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: "topic cannot be empty",
+				Code:    int32(codes.InvalidArgument),
+			},
+		}, nil
+	}
+
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+
+	timestamp := time.Unix(req.Timestamp, 0)
+	messages, err := s.storage.StreamReadFrom(ctx, req.Topic, req.Partition, timestamp, limit)
+	if err != nil {
+		return &streampb.ReadFromResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: err.Error(),
+				Code:    int32(codes.Internal),
+			},
+		}, nil
+	}
+
+	var streamMsgs []*streampb.StreamMessage
+	var nextOffset int64
+
+	for _, message := range messages {
+		streamMsgs = append(streamMsgs, &streampb.StreamMessage{
+			Id:           message.ID,
+			Topic:        message.Topic,
+			PartitionKey: message.PartitionKey,
+			Data:         message.Data,
+			Offset:       message.Offset,
+			Timestamp:    message.Timestamp.Unix(),
+			Headers:      message.Headers,
+		})
+		
+		if message.Offset > nextOffset {
+			nextOffset = message.Offset
+		}
+	}
+
+	return &streampb.ReadFromResponse{
+		Messages:   streamMsgs,
+		NextOffset: nextOffset + 1,
+		Status: &commonpb.Status{
+			Success: true,
+			Message: "OK",
+			Code:    int32(codes.OK),
+		},
+	}, nil
+}
+
+// Purge removes all messages from a topic
+func (s *StreamService) Purge(ctx context.Context, req *streampb.PurgeRequest) (*streampb.PurgeResponse, error) {
+	if req.Topic == "" {
+		return &streampb.PurgeResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: "topic cannot be empty",
+				Code:    int32(codes.InvalidArgument),
+			},
+		}, nil
+	}
+
+	purgedCount, err := s.storage.StreamPurge(ctx, req.Topic)
+	if err != nil {
+		return &streampb.PurgeResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: err.Error(),
+				Code:    int32(codes.Internal),
+			},
+		}, nil
+	}
+
+	return &streampb.PurgeResponse{
+		PurgedCount: purgedCount,
+		Status: &commonpb.Status{
+			Success: true,
+			Message: "OK",
+			Code:    int32(codes.OK),
+		},
+	}, nil
+}
+
+// SubscribeGroup subscribes to a stream with consumer group
+func (s *StreamService) SubscribeGroup(req *streampb.SubscribeGroupRequest, stream streampb.StreamService_SubscribeGroupServer) error {
+	if req.Topic == "" {
+		return status.Error(codes.InvalidArgument, "topic cannot be empty")
+	}
+	
+	if req.GroupId == "" {
+		return status.Error(codes.InvalidArgument, "group ID cannot be empty")
+	}
+	
+	if req.ConsumerId == "" {
+		return status.Error(codes.InvalidArgument, "consumer ID cannot be empty")
+	}
+
+	ctx := stream.Context()
+	
+	// Subscribe to the consumer group
+	err := s.storage.StreamSubscribeGroup(ctx, req.Topic, req.GroupId, req.ConsumerId)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("failed to subscribe to group: %v", err))
+	}
+
+	// Cleanup on disconnect
+	defer func() {
+		s.storage.StreamUnsubscribeGroup(context.Background(), req.Topic, req.GroupId, req.ConsumerId)
+	}()
+
+	// Start consuming messages
+	ticker := time.NewTicker(100 * time.Millisecond) // Poll every 100ms
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			// Get current group offset for partition 0 (simplified)
+			offset, err := s.storage.StreamGetGroupOffset(ctx, req.Topic, req.GroupId, 0)
+			if err != nil {
+				continue
+			}
+
+			// Read messages from current offset
+			messages, err := s.storage.StreamRead(ctx, req.Topic, 0, offset, 10)
+			if err != nil {
+				continue
+			}
+
+			// Send messages to client
+			for _, message := range messages {
+				streamMsg := &streampb.StreamMessage{
+					Id:           message.ID,
+					Topic:        message.Topic,
+					PartitionKey: message.PartitionKey,
+					Data:         message.Data,
+					Offset:       message.Offset,
+					Timestamp:    message.Timestamp.Unix(),
+					Headers:      message.Headers,
+				}
+
+				if err := stream.Send(streamMsg); err != nil {
+					return err
+				}
+
+				// Commit offset after successful send
+				s.storage.StreamCommitGroupOffset(ctx, req.Topic, req.GroupId, 0, message.Offset+1)
+			}
+		}
+	}
+}
+
+// CommitGroupOffset commits the offset for a consumer group
+func (s *StreamService) CommitGroupOffset(ctx context.Context, req *streampb.CommitGroupOffsetRequest) (*streampb.CommitGroupOffsetResponse, error) {
+	if req.Topic == "" {
+		return &streampb.CommitGroupOffsetResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: "topic cannot be empty",
+				Code:    int32(codes.InvalidArgument),
+			},
+		}, nil
+	}
+
+	if req.GroupId == "" {
+		return &streampb.CommitGroupOffsetResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: "group ID cannot be empty",
+				Code:    int32(codes.InvalidArgument),
+			},
+		}, nil
+	}
+
+	err := s.storage.StreamCommitGroupOffset(ctx, req.Topic, req.GroupId, req.Partition, req.Offset)
+	if err != nil {
+		return &streampb.CommitGroupOffsetResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: err.Error(),
+				Code:    int32(codes.Internal),
+			},
+		}, nil
+	}
+
+	return &streampb.CommitGroupOffsetResponse{
+		Status: &commonpb.Status{
+			Success: true,
+			Message: "OK",
+			Code:    int32(codes.OK),
+		},
+	}, nil
+}
+
+// GetGroupOffset gets the current offset for a consumer group
+func (s *StreamService) GetGroupOffset(ctx context.Context, req *streampb.GetGroupOffsetRequest) (*streampb.GetGroupOffsetResponse, error) {
+	if req.Topic == "" {
+		return &streampb.GetGroupOffsetResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: "topic cannot be empty",
+				Code:    int32(codes.InvalidArgument),
+			},
+		}, nil
+	}
+
+	if req.GroupId == "" {
+		return &streampb.GetGroupOffsetResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: "group ID cannot be empty",
+				Code:    int32(codes.InvalidArgument),
+			},
+		}, nil
+	}
+
+	offset, err := s.storage.StreamGetGroupOffset(ctx, req.Topic, req.GroupId, req.Partition)
+	if err != nil {
+		return &streampb.GetGroupOffsetResponse{
+			Status: &commonpb.Status{
+				Success: false,
+				Message: err.Error(),
+				Code:    int32(codes.Internal),
+			},
+		}, nil
+	}
+
+	return &streampb.GetGroupOffsetResponse{
+		Offset: offset,
 		Status: &commonpb.Status{
 			Success: true,
 			Message: "OK",

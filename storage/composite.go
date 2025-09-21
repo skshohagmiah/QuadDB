@@ -141,6 +141,15 @@ func (c *CompositeStorage) QueueList(ctx context.Context) ([]string, error) {
 	return c.badger.QueueList(ctx)
 }
 
+// Queue batch operations
+func (c *CompositeStorage) QueuePushBatch(ctx context.Context, queue string, messages [][]byte, delays []time.Duration) ([]string, error) {
+	return c.badger.QueuePushBatch(ctx, queue, messages, delays)
+}
+
+func (c *CompositeStorage) QueuePopBatch(ctx context.Context, queue string, limit int, timeout time.Duration) ([]QueueMessage, error) {
+	return c.badger.QueuePopBatch(ctx, queue, limit, timeout)
+}
+
 // ------- Stream operations (Badger) -------
 
 func (c *CompositeStorage) StreamPublish(ctx context.Context, topic string, partitionKey string, data []byte, headers map[string]string) (StreamMessage, error) {
@@ -173,6 +182,31 @@ func (c *CompositeStorage) StreamListTopics(ctx context.Context) ([]string, erro
 
 func (c *CompositeStorage) StreamGetTopicInfo(ctx context.Context, topic string) (TopicInfo, error) {
 	return c.badger.StreamGetTopicInfo(ctx, topic)
+}
+
+func (c *CompositeStorage) StreamReadFrom(ctx context.Context, topic string, partition int32, timestamp time.Time, limit int32) ([]StreamMessage, error) {
+	return c.badger.StreamReadFrom(ctx, topic, partition, timestamp, limit)
+}
+
+func (c *CompositeStorage) StreamPurge(ctx context.Context, topic string) (int64, error) {
+	return c.badger.StreamPurge(ctx, topic)
+}
+
+// Stream consumer group operations
+func (c *CompositeStorage) StreamSubscribeGroup(ctx context.Context, topic string, groupID string, consumerID string) error {
+	return c.badger.StreamSubscribeGroup(ctx, topic, groupID, consumerID)
+}
+
+func (c *CompositeStorage) StreamUnsubscribeGroup(ctx context.Context, topic string, groupID string, consumerID string) error {
+	return c.badger.StreamUnsubscribeGroup(ctx, topic, groupID, consumerID)
+}
+
+func (c *CompositeStorage) StreamGetGroupOffset(ctx context.Context, topic string, groupID string, partition int32) (int64, error) {
+	return c.badger.StreamGetGroupOffset(ctx, topic, groupID, partition)
+}
+
+func (c *CompositeStorage) StreamCommitGroupOffset(ctx context.Context, topic string, groupID string, partition int32, offset int64) error {
+	return c.badger.StreamCommitGroupOffset(ctx, topic, groupID, partition, offset)
 }
 
 // Helpers to expose Badger-only capabilities where needed.
