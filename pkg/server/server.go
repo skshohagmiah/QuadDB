@@ -13,10 +13,10 @@ import (
 	"gomsg/config"
 	"gomsg/pkg/cluster"
 	"gomsg/storage"
-	// TODO: Uncomment after generating gRPC code
-	// clusterpb "gomsg/api/generated/cluster"
-	// kvpb "gomsg/api/generated/kv"
-	// queuepb "gomsg/api/generated/queue"
+	clusterpb "gomsg/api/generated/cluster"
+	kvpb "gomsg/api/generated/kv"
+	queuepb "gomsg/api/generated/queue"
+	streampb "gomsg/api/generated/stream"
 )
 
 // Server represents the gRPC server
@@ -27,6 +27,7 @@ type Server struct {
 
 	kvService      *KVService
 	queueService   *QueueService
+	streamService  *StreamService
 	clusterService *ClusterService
 	cluster        *cluster.Cluster
 }
@@ -121,14 +122,14 @@ func NewServer(cfg *config.Config, store storage.Storage) (*Server, error) {
 	// Initialize services
 	server.kvService = NewKVService(store)
 	server.queueService = NewQueueService(store)
+	server.streamService = NewStreamService(store)
 	server.clusterService = NewClusterService(server.cluster, store)
 
 	// Register services
-	// TODO: Uncomment after generating gRPC code with: protoc --go_out=. --go-grpc_out=. api/proto/*.proto
-	// kvpb.RegisterKVServiceServer(grpcServer, server.kvService)
-	// queuepb.RegisterQueueServiceServer(grpcServer, server.queueService)
-	// streampb.RegisterStreamServiceServer(grpcServer, server.streamService)
-	// clusterpb.RegisterClusterServiceServer(grpcServer, server.clusterService)
+	kvpb.RegisterKVServiceServer(grpcServer, server.kvService)
+	queuepb.RegisterQueueServiceServer(grpcServer, server.queueService)
+	streampb.RegisterStreamServiceServer(grpcServer, server.streamService)
+	clusterpb.RegisterClusterServiceServer(grpcServer, server.clusterService)
 
 	return server, nil
 }

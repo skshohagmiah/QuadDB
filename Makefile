@@ -40,8 +40,23 @@ build: deps proto ## Build the server and CLI binaries
 	@echo "Building CLI..."
 	go build -ldflags="-s -w" -o bin/$(CLI_BINARY_NAME) cmd/cli/*.go
 
-test: ## Run tests
-	go test -v -race -coverprofile=coverage.out ./...
+test: ## Run all tests
+	cd tests && ./run_tests.sh all
+
+test-unit: ## Run unit tests only
+	cd tests && ./run_tests.sh unit
+
+test-integration: ## Run integration tests only
+	cd tests && ./run_tests.sh integration
+
+test-performance: ## Run performance benchmarks
+	cd tests && ./run_tests.sh performance
+
+test-report: ## Generate test coverage report
+	cd tests && ./run_tests.sh report
+
+test-quick: ## Run quick tests (unit only)
+	go test -v -race ./tests/unit/...
 
 bench: ## Run benchmarks
 	go test -bench=. -benchmem ./...

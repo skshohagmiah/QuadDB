@@ -511,7 +511,15 @@ func (s *StreamService) SubscribeGroup(req *streampb.SubscribeGroupRequest, stre
 					Headers:      message.Headers,
 				}
 
-				if err := stream.Send(streamMsg); err != nil {
+				response := &streampb.SubscribeResponse{
+					Message: streamMsg,
+					Status: &commonpb.Status{
+						Success: true,
+						Message: "OK",
+					},
+				}
+				
+				if err := stream.Send(response); err != nil {
 					return err
 				}
 
