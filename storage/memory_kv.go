@@ -3,17 +3,32 @@ package storage
 import (
 	"context"
 	"strconv"
-	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
+	"unsafe"
 )
 
-// MemoryKV provides an in-memory KV store with TTL and basic ops.
+// MemoryKV provides a Redis-like high-performance in-memory KV store with sharding
 type MemoryKV struct {
-	mu   sync.RWMutex
-	data map[string]memEntry
+	// Sharded maps to reduce lock contention (Redis-like approach)
+	shards    []*kvShard
+	shardMask uint64
+	
+	// Performance counters
+	ops   uint64 // atomic counter for operations
+	hits  uint64 // atomic counter for cache hits
+	misses uint64 // atomic counter for cache misses
+	
 	stop chan struct{}
 }
+
+type kvShard struct {
+	mu   sync.RWMutex
+	data map[string]memEntry
+}
+
+const numShards = 256 // Use 256 shards for better concurrency
 
 type memEntry struct {
 	val       []byte
@@ -21,9 +36,35 @@ type memEntry struct {
 }
 
 func NewMemoryKV() *MemoryKV {
-	m := &MemoryKV{data: make(map[string]memEntry), stop: make(chan struct{})}
+	m := &MemoryKV{
+		shards:    make([]*kvShard, numShards),
+		shardMask: numShards - 1,
+		stop:      make(chan struct{}),
+	}
+	
+	// Initialize shards
+	for i := 0; i < numShards; i++ {
+		m.shards[i] = &kvShard{
+			data: make(map[string]memEntry),
+		}
+	}
+	
 	go m.janitor()
 	return m
+}
+
+// Fast hash function (FNV-1a) for sharding - similar to Redis
+func (m *MemoryKV) hash(key string) uint64 {
+	h := uint64(14695981039346656037) // FNV offset basis
+	for i := 0; i < len(key); i++ {
+		h ^= uint64(key[i])
+		h *= 1099511628211 // FNV prime
+	}
+	return h
+}
+
+func (m *MemoryKV) getShard(key string) *kvShard {
+	return m.shards[m.hash(key)&m.shardMask]
 }
 
 func (m *MemoryKV) Close() error {
@@ -32,7 +73,8 @@ func (m *MemoryKV) Close() error {
 }
 
 func (m *MemoryKV) janitor() {
-	t := time.NewTicker(1 * time.Second)
+	// Reduced frequency for better performance - Redis uses adaptive expiry
+	t := time.NewTicker(5 * time.Second)
 	defer t.Stop()
 	for {
 		select {
@@ -40,13 +82,16 @@ func (m *MemoryKV) janitor() {
 			return
 		case <-t.C:
 			now := time.Now()
-			m.mu.Lock()
-			for k, e := range m.data {
-				if !e.expiresAt.IsZero() && now.After(e.expiresAt) {
-					delete(m.data, k)
+			// Process each shard separately to reduce lock contention
+			for _, shard := range m.shards {
+				shard.mu.Lock()
+				for k, e := range shard.data {
+					if !e.expiresAt.IsZero() && now.After(e.expiresAt) {
+						delete(shard.data, k)
+					}
 				}
+				shard.mu.Unlock()
 			}
-			m.mu.Unlock()
 		}
 	}
 }
@@ -55,43 +100,70 @@ func (m *MemoryKV) janitor() {
 
 func (m *MemoryKV) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
 	_ = ctx
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	atomic.AddUint64(&m.ops, 1)
+	
+	shard := m.getShard(key)
 	var exp time.Time
 	if ttl > 0 {
 		exp = time.Now().Add(ttl)
 	}
-	m.data[key] = memEntry{val: append([]byte(nil), value...), expiresAt: exp}
+	
+	shard.mu.Lock()
+	// Avoid unnecessary memory copy - store reference directly
+	shard.data[key] = memEntry{val: value, expiresAt: exp}
+	shard.mu.Unlock()
 	return nil
 }
 
 func (m *MemoryKV) Get(ctx context.Context, key string) ([]byte, bool, error) {
 	_ = ctx
-	m.mu.RLock()
-	e, ok := m.data[key]
-	m.mu.RUnlock()
+	atomic.AddUint64(&m.ops, 1)
+	
+	shard := m.getShard(key)
+	shard.mu.RLock()
+	e, ok := shard.data[key]
+	shard.mu.RUnlock()
+	
 	if !ok {
+		atomic.AddUint64(&m.misses, 1)
 		return nil, false, nil
 	}
+	
+	// Lazy expiry check - Redis approach
 	if !e.expiresAt.IsZero() && time.Now().After(e.expiresAt) {
-		m.mu.Lock()
-		delete(m.data, key)
-		m.mu.Unlock()
+		shard.mu.Lock()
+		delete(shard.data, key)
+		shard.mu.Unlock()
+		atomic.AddUint64(&m.misses, 1)
 		return nil, false, nil
 	}
+	
+	atomic.AddUint64(&m.hits, 1)
+	// Return copy to prevent external modification
 	return append([]byte(nil), e.val...), true, nil
 }
 
 func (m *MemoryKV) Delete(ctx context.Context, keys ...string) (int, error) {
 	_ = ctx
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	atomic.AddUint64(&m.ops, 1)
+	
+	// Group keys by shard to minimize lock acquisitions
+	shardKeys := make(map[*kvShard][]string)
+	for _, key := range keys {
+		shard := m.getShard(key)
+		shardKeys[shard] = append(shardKeys[shard], key)
+	}
+	
 	cnt := 0
-	for _, k := range keys {
-		if _, ok := m.data[k]; ok {
-			delete(m.data, k)
-			cnt++
+	for shard, keyList := range shardKeys {
+		shard.mu.Lock()
+		for _, key := range keyList {
+			if _, ok := shard.data[key]; ok {
+				delete(shard.data, key)
+				cnt++
+			}
 		}
+		shard.mu.Unlock()
 	}
 	return cnt, nil
 }
@@ -103,46 +175,57 @@ func (m *MemoryKV) Exists(ctx context.Context, key string) (bool, error) {
 
 func (m *MemoryKV) Keys(ctx context.Context, pattern string, limit int) ([]string, error) {
 	_ = ctx
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	atomic.AddUint64(&m.ops, 1)
+	
+	var res []string
+	count := 0
+	
+	// Optimize for common patterns
 	if pattern == "" || pattern == "*" {
-		res := make([]string, 0, min(limit, len(m.data)))
-		for k := range m.data {
-			res = append(res, k)
-			if limit > 0 && len(res) >= limit {
-				break
+		// Return all keys from all shards
+		for _, shard := range m.shards {
+			shard.mu.RLock()
+			for k := range shard.data {
+				if limit > 0 && count >= limit {
+					shard.mu.RUnlock()
+					return res, nil
+				}
+				res = append(res, k)
+				count++
 			}
+			shard.mu.RUnlock()
 		}
 		return res, nil
 	}
-	// simple contains/wildcard match
-	p := strings.Trim(pattern, "*")
-	prefix := strings.HasPrefix(pattern, "*") == false
-	suffix := strings.HasSuffix(pattern, "*") == false
-	res := make([]string, 0, limit)
-	for k := range m.data {
-		ok := true
-		if prefix && !strings.HasPrefix(k, p) {
-			ok = false
-		}
-		if suffix && !strings.HasSuffix(k, p) {
-			ok = false
-		}
-		if strings.Contains(k, p) && ok {
-			res = append(res, k)
-			if limit > 0 && len(res) >= limit {
-				break
+	
+	// Pattern matching across all shards
+	for _, shard := range m.shards {
+		shard.mu.RLock()
+		for k := range shard.data {
+			if limit > 0 && count >= limit {
+				shard.mu.RUnlock()
+				return res, nil
+			}
+			if matchesPattern(k, pattern) {
+				res = append(res, k)
+				count++
 			}
 		}
+		shard.mu.RUnlock()
 	}
 	return res, nil
 }
 
+
 func (m *MemoryKV) Expire(ctx context.Context, key string, ttl time.Duration) error {
 	_ = ctx
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	e, ok := m.data[key]
+	atomic.AddUint64(&m.ops, 1)
+	
+	shard := m.getShard(key)
+	shard.mu.Lock()
+	defer shard.mu.Unlock()
+	
+	e, ok := shard.data[key]
 	if !ok {
 		return nil
 	}
@@ -151,15 +234,19 @@ func (m *MemoryKV) Expire(ctx context.Context, key string, ttl time.Duration) er
 	} else {
 		e.expiresAt = time.Now().Add(ttl)
 	}
-	m.data[key] = e
+	shard.data[key] = e
 	return nil
 }
 
 func (m *MemoryKV) TTL(ctx context.Context, key string) (time.Duration, error) {
 	_ = ctx
-	m.mu.RLock()
-	e, ok := m.data[key]
-	m.mu.RUnlock()
+	atomic.AddUint64(&m.ops, 1)
+	
+	shard := m.getShard(key)
+	shard.mu.RLock()
+	e, ok := shard.data[key]
+	shard.mu.RUnlock()
+	
 	if !ok || e.expiresAt.IsZero() {
 		return 0, nil
 	}
@@ -171,18 +258,23 @@ func (m *MemoryKV) TTL(ctx context.Context, key string) (time.Duration, error) {
 
 func (m *MemoryKV) Increment(ctx context.Context, key string, delta int64) (int64, error) {
 	_ = ctx
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	e := m.data[key]
+	atomic.AddUint64(&m.ops, 1)
+	
+	shard := m.getShard(key)
+	shard.mu.Lock()
+	defer shard.mu.Unlock()
+	
+	e := shard.data[key]
 	cur := int64(0)
 	if len(e.val) > 0 {
-		if v, err := strconv.ParseInt(string(e.val), 10, 64); err == nil {
+		// Use unsafe string conversion for better performance
+		if v, err := strconv.ParseInt(*(*string)(unsafe.Pointer(&e.val)), 10, 64); err == nil {
 			cur = v
 		}
 	}
 	cur += delta
 	e.val = []byte(strconv.FormatInt(cur, 10))
-	m.data[key] = e
+	shard.data[key] = e
 	return cur, nil
 }
 
@@ -192,25 +284,54 @@ func (m *MemoryKV) Decrement(ctx context.Context, key string, delta int64) (int6
 
 func (m *MemoryKV) MSet(ctx context.Context, pairs map[string][]byte) error {
 	_ = ctx
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for k, v := range pairs {
-		m.data[k] = memEntry{val: append([]byte(nil), v...)}
+	atomic.AddUint64(&m.ops, 1)
+	
+	// Group pairs by shard to minimize lock acquisitions
+	shardPairs := make(map[*kvShard]map[string][]byte)
+	for key, value := range pairs {
+		shard := m.getShard(key)
+		if shardPairs[shard] == nil {
+			shardPairs[shard] = make(map[string][]byte)
+		}
+		shardPairs[shard][key] = value
+	}
+	
+	// Set in each shard with single lock acquisition
+	for shard, pairMap := range shardPairs {
+		shard.mu.Lock()
+		for key, value := range pairMap {
+			shard.data[key] = memEntry{val: value}
+		}
+		shard.mu.Unlock()
 	}
 	return nil
 }
 
 func (m *MemoryKV) MGet(ctx context.Context, keys []string) (map[string][]byte, error) {
 	_ = ctx
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	atomic.AddUint64(&m.ops, 1)
+	
 	res := make(map[string][]byte, len(keys))
-	for _, k := range keys {
-		if e, ok := m.data[k]; ok {
-			if e.expiresAt.IsZero() || time.Now().Before(e.expiresAt) {
-				res[k] = append([]byte(nil), e.val...)
+	now := time.Now()
+	
+	// Group keys by shard to minimize lock acquisitions
+	shardKeys := make(map[*kvShard][]string)
+	for _, key := range keys {
+		shard := m.getShard(key)
+		shardKeys[shard] = append(shardKeys[shard], key)
+	}
+	
+	// Get from each shard with single lock acquisition
+	for shard, keyList := range shardKeys {
+		shard.mu.RLock()
+		for _, key := range keyList {
+			if e, ok := shard.data[key]; ok {
+				if e.expiresAt.IsZero() || now.Before(e.expiresAt) {
+					res[key] = append([]byte(nil), e.val...)
+				}
 			}
 		}
+		shard.mu.RUnlock()
 	}
 	return res, nil
 }

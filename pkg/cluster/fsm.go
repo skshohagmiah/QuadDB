@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
 
@@ -40,6 +41,22 @@ func (f *fsm) Apply(l *hraft.Log) interface{} {
 		var req struct{ Topic string `json:"topic"` }
 		if err := json.Unmarshal(cmd.Payload, &req); err != nil { return err }
 		return f.st.StreamDeleteTopic(ctx, req.Topic)
+	case CmdPartitionAssign:
+		var req struct{ Partition int32 `json:"partition"`; Owners []string `json:"owners"` }
+		if err := json.Unmarshal(cmd.Payload, &req); err != nil { return err }
+		// Apply partition assignment - this would update the partition map
+		// For now, we'll store it as a special key in storage
+		assignmentKey := fmt.Sprintf("__partition_assignment_%d", req.Partition)
+		assignmentData, _ := json.Marshal(req.Owners)
+		return f.st.Set(ctx, assignmentKey, assignmentData, 0)
+	case CmdPartitionMigrate:
+		var req struct{ Partition int32 `json:"partition"`; FromNode string `json:"from"`; ToNode string `json:"to"` }
+		if err := json.Unmarshal(cmd.Payload, &req); err != nil { return err }
+		// Apply partition migration - this would trigger data movement
+		// For now, we'll store the migration record
+		migrationKey := fmt.Sprintf("__partition_migration_%d", req.Partition)
+		migrationData, _ := json.Marshal(req)
+		return f.st.Set(ctx, migrationKey, migrationData, 0)
 	default:
 		return nil
 	}
