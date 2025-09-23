@@ -6,18 +6,18 @@ import (
 	"log"
 	"time"
 
-	gomsg "github.com/shohag2100/gomsg-go-sdk"
+	fluxdl "github.com/skshohagmiah/fluxdl-go-sdk"
 )
 
 func main() {
 	// Create client configuration
-	config := &gomsg.Config{
-		Address: "localhost:9000", // GoMsg Docker container
+	config := &fluxdl.Config{
+		Address: "localhost:9000", // fluxdl Docker container
 		Timeout: 10 * time.Second,
 	}
 
-	// Connect to GoMsg
-	client, err := gomsg.NewClient(config)
+	// Connect to fluxdl
+	client, err := fluxdl.NewClient(config)
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
@@ -26,11 +26,11 @@ func main() {
 	ctx := context.Background()
 
 	// Test connection
-	fmt.Println("Testing connection to GoMsg...")
+	fmt.Println("Testing connection to fluxdl...")
 	if err := client.Ping(ctx); err != nil {
 		log.Fatalf("Failed to ping server: %v", err)
 	}
-	fmt.Println("✅ Connected to GoMsg successfully!")
+	fmt.Println("✅ Connected to fluxdl successfully!")
 
 	// Key-Value operations
 	fmt.Println("\n🔑 Testing Key-Value operations...")
@@ -89,6 +89,6 @@ func main() {
 		fmt.Println("✅ Message published to stream")
 	}
 
-	fmt.Println("\n🎉 GoMsg Go SDK example completed!")
+	fmt.Println("\n🎉 fluxdl Go SDK example completed!")
 	fmt.Println("Note: Full implementation requires protobuf client generation")
 }

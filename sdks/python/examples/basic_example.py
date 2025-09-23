@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-GoMsg Python SDK Basic Example
+fluxdl Python SDK Basic Example
 
-This example demonstrates how to use the GoMsg Python SDK to connect to a GoMsg Docker container
+This example demonstrates how to use the fluxdl Python SDK to connect to a fluxdl Docker container
 and perform key-value, queue, and stream operations.
 """
 
 import asyncio
-from gomsg_sdk import GoMsgClient
+from fluxdl_sdk import fluxdlClient
 
 
 async def main():
-    print("🐍 GoMsg Python SDK Example\n")
+    print("🐍 fluxdl Python SDK Example\n")
 
-    # Connect to GoMsg Docker container
-    client = await GoMsgClient.create(
+    # Connect to fluxdl Docker container
+    client = await fluxdlClient.create(
         address="localhost:9000",
         timeout=10.0
     )
@@ -45,7 +45,7 @@ async def main():
 
         # Queue operations (RabbitMQ-like)
         print("📬 Queue Operations:")
-        await client.queue.push("notifications", "Welcome to GoMsg!")
+        await client.queue.push("notifications", "Welcome to fluxdl!")
         print(f"   Pushed message to notifications queue")
         
         message = await client.queue.pop("notifications")

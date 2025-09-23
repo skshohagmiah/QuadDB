@@ -6,9 +6,9 @@ import (
 
 	"google.golang.org/grpc/codes"
 
-	commonpb "gomsg/api/generated/common"
-	kvpb "gomsg/api/generated/kv"
-	"gomsg/storage"
+	commonpb "github.com/skshohagmiah/fluxdl/api/generated/common"
+	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
+	"github.com/skshohagmiah/fluxdl/storage"
 )
 
 // KVService implements the KV gRPC service
@@ -19,7 +19,10 @@ type KVService struct {
 
 // NewKVService creates a new KV service
 func NewKVService(store storage.Storage) *KVService {
-	return &KVService{storage: store}
+	return &KVService{
+		UnimplementedKVServiceServer: kvpb.UnimplementedKVServiceServer{},
+		storage:                      store,
+	}
 }
 
 // Set stores a key-value pair

@@ -7,15 +7,15 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	commonpb "gomsg/api/generated/common"
-	kvpb "gomsg/api/generated/kv"
-	"gomsg/tests/testutil"
+	commonpb "github.com/skshohagmiah/fluxdl/api/generated/common"
+	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
+	"github.com/skshohagmiah/fluxdl/tests/testutil"
 )
 
 func setupKVClient(t *testing.T) kvpb.KVServiceClient {
 	// Start test server automatically
 	testServer := testutil.StartTestServer(t)
-	
+
 	conn, err := grpc.Dial(testServer.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to connect to server: %v", err)

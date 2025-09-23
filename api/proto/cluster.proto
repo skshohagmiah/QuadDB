@@ -1,6 +1,6 @@
 syntax = "proto3";
-package gomsg.cluster;
-option go_package = "gomsg/api/generated/cluster";
+package fluxdl.cluster;
+option go_package = "github.com/skshohagmiah/fluxdl/api/generated/cluster";
 
 import "common.proto";
 
@@ -37,8 +37,8 @@ message GetNodesRequest {
 }
 
 message GetNodesResponse {
-  repeated gomsg.common.Node nodes = 1;
-  gomsg.common.Status status = 2;
+  repeated fluxdl.common.Node nodes = 1;
+  fluxdl.common.Status status = 2;
 }
 
 message GetStatusRequest {
@@ -46,15 +46,15 @@ message GetStatusRequest {
 
 message GetStatusResponse {
   ClusterStatus status = 1;
-  gomsg.common.Status response_status = 2;
+  fluxdl.common.Status response_status = 2;
 }
 
 message GetLeaderRequest {
 }
 
 message GetLeaderResponse {
-  gomsg.common.Node leader = 1;
-  gomsg.common.Status status = 2;
+  fluxdl.common.Node leader = 1;
+  fluxdl.common.Status status = 2;
 }
 
 message JoinRequest {
@@ -63,7 +63,7 @@ message JoinRequest {
 }
 
 message JoinResponse {
-  gomsg.common.Status status = 1;
+  fluxdl.common.Status status = 1;
 }
 
 message LeaveRequest {
@@ -71,7 +71,7 @@ message LeaveRequest {
 }
 
 message LeaveResponse {
-  gomsg.common.Status status = 1;
+  fluxdl.common.Status status = 1;
 }
 
 message GetStatsRequest {
@@ -79,7 +79,7 @@ message GetStatsRequest {
 
 message GetStatsResponse {
   ClusterStats stats = 1;
-  gomsg.common.Status status = 2;
+  fluxdl.common.Status status = 2;
 }
 
 message PartitionInfo {
@@ -102,7 +102,7 @@ message GetClusterInfoRequest {
 
 message GetClusterInfoResponse {
   ClusterInfo cluster_info = 1;
-  gomsg.common.Status status = 2;
+  fluxdl.common.Status status = 2;
 }
 
 message KeyValuePair {
@@ -117,7 +117,7 @@ message MigrateDataRequest {
 }
 
 message MigrateDataResponse {
-  gomsg.common.Status status = 1;
+  fluxdl.common.Status status = 1;
 }
 
 message ReplicateDataRequest {
@@ -127,5 +127,5 @@ message ReplicateDataRequest {
 }
 
 message ReplicateDataResponse {
-  gomsg.common.Status status = 1;
+  fluxdl.common.Status status = 1;
 }

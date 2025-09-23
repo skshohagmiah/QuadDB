@@ -3,11 +3,11 @@ package queue
 import (
 	"context"
 
-	"gomsg/storage"
+	"github.com/skshohagmiah/fluxdl/storage"
 )
 
 // Acker acknowledges or requeues messages using IDs.
-type Acker struct { s storage.Storage }
+type Acker struct{ s storage.Storage }
 
 func NewAcker(s storage.Storage) *Acker { return &Acker{s: s} }
 

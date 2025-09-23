@@ -1,5 +1,5 @@
 import * as grpc from '@grpc/grpc-js';
-import { QueueStats, QueueMessage, GoMsgError } from './types';
+import { QueueStats, QueueMessage, fluxdlError } from './types';
 
 export class QueueClient {
   constructor(private connection?: grpc.Client) {}
@@ -15,7 +15,7 @@ export class QueueClient {
         if (queue && message) {
           resolve();
         } else {
-          reject(new GoMsgError('Invalid queue name or message'));
+          reject(new fluxdlError('Invalid queue name or message'));
         }
       }, 10);
     });
@@ -32,7 +32,7 @@ export class QueueClient {
         if (queue) {
           resolve(`message-from-${queue}`);
         } else {
-          reject(new GoMsgError('Invalid queue name'));
+          reject(new fluxdlError('Invalid queue name'));
         }
       }, 10);
     });
@@ -49,7 +49,7 @@ export class QueueClient {
         if (queue) {
           resolve(`peeked-message-from-${queue}`);
         } else {
-          reject(new GoMsgError('Invalid queue name'));
+          reject(new fluxdlError('Invalid queue name'));
         }
       }, 10);
     });
@@ -83,7 +83,7 @@ export class QueueClient {
             size: 1024
           });
         } else {
-          reject(new GoMsgError('Invalid queue name'));
+          reject(new fluxdlError('Invalid queue name'));
         }
       }, 10);
     });
@@ -100,7 +100,7 @@ export class QueueClient {
         if (queue) {
           resolve(10); // Number of messages purged
         } else {
-          reject(new GoMsgError('Invalid queue name'));
+          reject(new fluxdlError('Invalid queue name'));
         }
       }, 10);
     });
@@ -117,7 +117,7 @@ export class QueueClient {
         if (queue && messages.length > 0) {
           resolve();
         } else {
-          reject(new GoMsgError('Invalid queue name or empty messages'));
+          reject(new fluxdlError('Invalid queue name or empty messages'));
         }
       }, 10);
     });
@@ -136,7 +136,7 @@ export class QueueClient {
             (_, i) => `batch-message-${i + 1}`);
           resolve(messages);
         } else {
-          reject(new GoMsgError('Invalid queue name or count'));
+          reject(new fluxdlError('Invalid queue name or count'));
         }
       }, 10);
     });

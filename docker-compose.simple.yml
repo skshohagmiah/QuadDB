@@ -1,24 +1,24 @@
 version: '3.8'
 
 services:
-  # Single GoMsg node for simple deployment
-  gomsg:
-    image: shohag2100/gomsg:latest
-    container_name: gomsg
+  # Single fluxdl node for simple deployment
+  fluxdl:
+    image: shohag2100/fluxdl:latest
+    container_name: fluxdl
     ports:
       - "9000:9000"  # gRPC API port
       - "7000:7000"  # Raft port (for future clustering)
     environment:
-      - GOMSG_NODE_ID=gomsg-single
-      - GOMSG_BIND_ADDR=0.0.0.0:9000
-      - GOMSG_DATA_DIR=/data
-      - GOMSG_BOOTSTRAP=true
-      - GOMSG_PARTITIONS=16
-      - GOMSG_REPLICATION_FACTOR=1
+      - fluxdl_NODE_ID=fluxdl-single
+      - fluxdl_BIND_ADDR=0.0.0.0:9000
+      - fluxdl_DATA_DIR=/data
+      - fluxdl_BOOTSTRAP=true
+      - fluxdl_PARTITIONS=16
+      - fluxdl_REPLICATION_FACTOR=1
     volumes:
-      - gomsg-data:/data
+      - fluxdl-data:/data
     networks:
-      - gomsg-network
+      - fluxdl-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
@@ -27,23 +27,23 @@ services:
       retries: 3
       start_period: 10s
 
-  # Optional: GoMsg CLI for administration
-  gomsg-cli:
-    image: shohag2100/gomsg:latest
-    container_name: gomsg-cli
-    entrypoint: ["./gomsg-cli"]
+  # Optional: fluxdl CLI for administration
+  fluxdl-cli:
+    image: shohag2100/fluxdl:latest
+    container_name: fluxdl-cli
+    entrypoint: ["./fluxdl-cli"]
     command: ["--help"]
     networks:
-      - gomsg-network
+      - fluxdl-network
     profiles:
       - cli
     depends_on:
-      - gomsg
+      - fluxdl
 
 volumes:
-  gomsg-data:
+  fluxdl-data:
     driver: local
 
 networks:
-  gomsg-network:
+  fluxdl-network:
     driver: bridge

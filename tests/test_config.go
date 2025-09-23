@@ -28,7 +28,7 @@ type TestConfig struct {
 
 // GetTestConfig returns test configuration from environment or defaults
 func GetTestConfig() *TestConfig {
-	addr := os.Getenv("GOMSG_TEST_ADDR")
+	addr := os.Getenv("fluxdl_TEST_ADDR")
 	if addr == "" {
 		addr = DefaultServerAddr
 	}
@@ -39,7 +39,7 @@ func GetTestConfig() *TestConfig {
 	}
 }
 
-// WaitForServer waits for the GoMsg server to be ready
+// WaitForServer waits for the fluxdl server to be ready
 func WaitForServer(addr string) error {
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -69,10 +69,10 @@ func WaitForServer(addr string) error {
 // SetupTest performs common test setup
 func SetupTest(t *testing.T) *TestConfig {
 	config := GetTestConfig()
-	
+
 	// Check if server is running
 	if err := WaitForServer(config.ServerAddr); err != nil {
-		t.Skipf("GoMsg server not available at %s: %v", config.ServerAddr, err)
+		t.Skipf("fluxdl server not available at %s: %v", config.ServerAddr, err)
 	}
 
 	return config
@@ -88,7 +88,7 @@ func CleanupTest(t *testing.T, config *TestConfig) {
 func TestMain(m *testing.M) {
 	// Setup
 	log.Println("Setting up test suite...")
-	
+
 	config := GetTestConfig()
 	log.Printf("Testing against server: %s", config.ServerAddr)
 
@@ -103,6 +103,6 @@ func TestMain(m *testing.M) {
 
 	// Teardown
 	log.Println("Test suite completed")
-	
+
 	os.Exit(code)
 }

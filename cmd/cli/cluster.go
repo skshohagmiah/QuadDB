@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	clusterpb "gomsg/api/generated/cluster"
+	clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
 )
 
 func clusterCmd() *cobra.Command {
@@ -34,7 +34,7 @@ func clusterNodesCmd() *cobra.Command {
 		Use:   "nodes",
 		Short: "List all cluster nodes",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -56,7 +56,7 @@ func clusterNodesCmd() *cobra.Command {
 					if node.IsLeader {
 						leader = " (Leader)"
 					}
-					fmt.Printf("%d) %s - %s - %s%s\n", 
+					fmt.Printf("%d) %s - %s - %s%s\n",
 						i+1, node.Id, node.Address, node.State, leader)
 				}
 			} else {
@@ -73,7 +73,7 @@ func clusterStatusCmd() *cobra.Command {
 		Use:   "status",
 		Short: "Get cluster status",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -109,7 +109,7 @@ func clusterStatsCmd() *cobra.Command {
 		Use:   "stats",
 		Short: "Get cluster statistics",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -146,7 +146,7 @@ func clusterLeaderCmd() *cobra.Command {
 		Use:   "leader",
 		Short: "Get current leader node",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -184,15 +184,21 @@ func clusterJoinCmd() *cobra.Command {
 			if nodeID == "" || address == "" {
 				return fmt.Errorf("--node-id and --address are required")
 			}
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-			if err != nil { return err }
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				return err
+			}
 			defer conn.Close()
 			client := clusterpb.NewClusterServiceClient(conn)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 			defer cancel()
 			resp, err := client.Join(ctx, &clusterpb.JoinRequest{NodeId: nodeID, Address: address})
-			if err != nil { return err }
-			if !resp.Status.Success { return fmt.Errorf("join failed: %s", resp.Status.Message) }
+			if err != nil {
+				return err
+			}
+			if !resp.Status.Success {
+				return fmt.Errorf("join failed: %s", resp.Status.Message)
+			}
 			fmt.Println("Node joined")
 			return nil
 		},
@@ -208,16 +214,24 @@ func clusterLeaveCmd() *cobra.Command {
 		Use:   "leave",
 		Short: "Remove a node from the cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if nodeID == "" { return fmt.Errorf("--node-id is required") }
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-			if err != nil { return err }
+			if nodeID == "" {
+				return fmt.Errorf("--node-id is required")
+			}
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				return err
+			}
 			defer conn.Close()
 			client := clusterpb.NewClusterServiceClient(conn)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 			defer cancel()
 			resp, err := client.Leave(ctx, &clusterpb.LeaveRequest{NodeId: nodeID})
-			if err != nil { return err }
-			if !resp.Status.Success { return fmt.Errorf("leave failed: %s", resp.Status.Message) }
+			if err != nil {
+				return err
+			}
+			if !resp.Status.Success {
+				return fmt.Errorf("leave failed: %s", resp.Status.Message)
+			}
 			fmt.Println("Node removed")
 			return nil
 		},

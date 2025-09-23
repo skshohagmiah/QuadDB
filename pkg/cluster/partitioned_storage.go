@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"gomsg/storage"
+	"github.com/skshohagmiah/fluxdl/storage"
 	// TODO: Uncomment after generating gRPC code with: protoc --go_out=. --go-grpc_out=. api/proto/*.proto
-	// clusterpb "gomsg/api/generated/cluster"
+	// clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
 	// "google.golang.org/grpc"
 	// "google.golang.org/grpc/credentials/insecure"
 )

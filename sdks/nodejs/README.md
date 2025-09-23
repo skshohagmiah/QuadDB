@@ -1,23 +1,23 @@
-# GoMsg Node.js SDK
+# fluxdl Node.js SDK
 
-Node.js/TypeScript client library for connecting to GoMsg Docker containers.
+Node.js/TypeScript client library for connecting to fluxdl Docker containers.
 
 ## Installation
 
 ```bash
-npm install @shohag2100/gomsg-nodejs-sdk
+npm install @skshohagmiah/fluxdl-nodejs-sdk
 # or
-yarn add @shohag2100/gomsg-nodejs-sdk
+yarn add @skshohagmiah/fluxdl-nodejs-sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { GoMsgClient } from '@shohag2100/gomsg-nodejs-sdk';
+import { fluxdlClient } from '@skshohagmiah/fluxdl-nodejs-sdk';
 
 async function main() {
-  // Connect to GoMsg Docker container
-  const client = await GoMsgClient.connect({
+  // Connect to fluxdl Docker container
+  const client = await fluxdlClient.connect({
     address: 'localhost:9000',
     timeout: 10000
   });
@@ -47,18 +47,18 @@ main().catch(console.error);
 - **🌊 Event Streams**: Kafka-like streaming with partitions
 - **🔌 Easy Connection**: Simple connection management
 - **📝 TypeScript**: Full TypeScript support with type definitions
-- **🐳 Docker Ready**: Works seamlessly with GoMsg containers
+- **🐳 Docker Ready**: Works seamlessly with fluxdl containers
 
 ## Docker Integration
 
-Perfect for GoMsg Docker containers:
+Perfect for fluxdl Docker containers:
 
 ```bash
-# Run GoMsg container
-docker run -d -p 9000:9000 -v gomsg-data:/data --name gomsg shohag2100/gomsg:latest
+# Run fluxdl container
+docker run -d -p 9000:9000 -v fluxdl-data:/data --name fluxdl shohag2100/fluxdl:latest
 
 # Your Node.js app connects automatically
-const client = await GoMsgClient.connect({ address: 'localhost:9000' });
+const client = await fluxdlClient.connect({ address: 'localhost:9000' });
 ```
 
 ## API Reference
@@ -67,11 +67,11 @@ const client = await GoMsgClient.connect({ address: 'localhost:9000' });
 
 ```typescript
 // Create client
-const client = new GoMsgClient({ address: 'localhost:9000' });
+const client = new fluxdlClient({ address: 'localhost:9000' });
 await client.connect();
 
 // Or connect in one step
-const client = await GoMsgClient.connect({ address: 'localhost:9000' });
+const client = await fluxdlClient.connect({ address: 'localhost:9000' });
 
 // Test connection
 const isConnected = await client.ping();
@@ -145,7 +145,7 @@ const messages = await client.stream.getMessages('stream-name', 0, 0, 10);
 ## Configuration Options
 
 ```typescript
-interface GoMsgConfig {
+interface fluxdlConfig {
   address?: string;     // Server address (default: 'localhost:9000')
   timeout?: number;     // Request timeout in ms (default: 30000)
   credentials?: any;    // gRPC credentials (default: insecure)
@@ -155,7 +155,7 @@ interface GoMsgConfig {
 ## Error Handling
 
 ```typescript
-import { GoMsgError, ConnectionError, TimeoutError } from '@shohag2100/gomsg-nodejs-sdk';
+import { fluxdlError, ConnectionError, TimeoutError } from '@skshohagmiah/fluxdl-nodejs-sdk';
 
 try {
   await client.kv.set('key', 'value');
@@ -164,8 +164,8 @@ try {
     console.log('Connection failed');
   } else if (error instanceof TimeoutError) {
     console.log('Request timed out');
-  } else if (error instanceof GoMsgError) {
-    console.log('GoMsg error:', error.message);
+  } else if (error instanceof fluxdlError) {
+    console.log('fluxdl error:', error.message);
   }
 }
 ```
@@ -187,17 +187,17 @@ npm run example
 
 ## Development Status
 
-🚧 **Work in Progress**: This SDK provides a complete TypeScript interface. For full functionality:
+🚧🚀 **Work in Progress**: This SDK provides a complete TypeScript interface. For full functionality:
 
-1. Copy protobuf files from main GoMsg project
+1. Copy protobuf files from main fluxdl project
 2. Generate Node.js gRPC clients
 3. Replace placeholder implementations with actual gRPC calls
 
 ## Building from Source
 
 ```bash
-git clone https://github.com/shohag2100/gomsg-nodejs-sdk.git
-cd gomsg-nodejs-sdk
+git clone https://github.com/skshohagmiah/fluxdl-nodejs-sdk.git
+cd fluxdl-nodejs-sdk
 npm install
 npm run build
 ```
@@ -216,6 +216,6 @@ MIT License - see LICENSE file for details.
 
 ## Support
 
-- 📖 [Documentation](https://github.com/shohag2100/gomsg-nodejs-sdk/wiki)
-- 🐛 [Issues](https://github.com/shohag2100/gomsg-nodejs-sdk/issues)
-- 💬 [Discussions](https://github.com/shohag2100/gomsg-nodejs-sdk/discussions)
+- 📖 [Documentation](https://github.com/shohag2100/fluxdl-nodejs-sdk/wiki)
+- 🐛 [Issues](https://github.com/shohag2100/fluxdl-nodejs-sdk/issues)
+- 💬 [Discussions](https://github.com/shohag2100/fluxdl-nodejs-sdk/discussions)

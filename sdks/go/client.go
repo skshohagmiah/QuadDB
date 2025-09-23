@@ -1,4 +1,4 @@
-package gomsg
+package fluxdl
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// Client represents a GoMsg client connection
+// Client represents a fluxdl client connection
 type Client struct {
 	conn   *grpc.ClientConn
 	KV     KVClient
@@ -31,19 +31,19 @@ func DefaultConfig() *Config {
 	}
 }
 
-// NewClient creates a new GoMsg client
+// NewClient creates a new fluxdl client
 func NewClient(config *Config) (*Client, error) {
 	if config == nil {
 		config = DefaultConfig()
 	}
 
 	// Create gRPC connection
-	conn, err := grpc.Dial(config.Address,
+	conn, err := grpc.NewClient(config.Address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithTimeout(config.Timeout),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to GoMsg server: %w", err)
+		return nil, fmt.Errorf("failed to connect to fluxdl server: %w", err)
 	}
 
 	client := &Client{
@@ -63,7 +63,6 @@ func (c *Client) Close() error {
 	}
 	return nil
 }
-
 
 // Ping tests the connection to the server
 func (c *Client) Ping(ctx context.Context) error {

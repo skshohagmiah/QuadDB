@@ -1,6 +1,6 @@
-# GoMsg SDKs
+# fluxdl SDKs
 
-Client libraries for connecting to GoMsg Docker containers in multiple programming languages.
+Client libraries for connecting to fluxdl Docker containers in multiple programming languages.
 
 📖 **For complete installation instructions, see [INSTALLATION.md](../INSTALLATION.md)**
 
@@ -10,9 +10,9 @@ Client libraries for connecting to GoMsg Docker containers in multiple programmi
 **Location**: `./go/`
 
 ```go
-import "github.com/shohag2100/gomsg-go-sdk"
+import "github.com/skshohagmiah/fluxdl-go-sdk"
 
-client, _ := gomsg.NewClient(&gomsg.Config{Address: "localhost:9000"})
+client, _ := fluxdl.NewClient(&fluxdl.Config{Address: "localhost:9000"})
 client.KV.Set(ctx, "key", "value")
 ```
 
@@ -20,9 +20,9 @@ client.KV.Set(ctx, "key", "value")
 **Location**: `./nodejs/`
 
 ```typescript
-import { GoMsgClient } from '@shohag2100/gomsg-nodejs-sdk';
+import { fluxdlClient } from '@skshohagmiah/fluxdl-nodejs-sdk';
 
-const client = await GoMsgClient.connect({ address: 'localhost:9000' });
+const client = await fluxdlClient.connect({ address: 'localhost:9000' });
 await client.kv.set('key', 'value');
 ```
 
@@ -30,17 +30,17 @@ await client.kv.set('key', 'value');
 **Location**: `./python/`
 
 ```python
-from gomsg_sdk import GoMsgClient
+from fluxdl_sdk import fluxdlClient
 
-client = await GoMsgClient.create(address="localhost:9000")
+client = await fluxdlClient.create(address="localhost:9000")
 await client.kv.set("key", "value")
 ```
 
 ## Quick Start with Docker
 
-1. **Run GoMsg Container**:
+1. **Run fluxdl Container**:
 ```bash
-docker run -d -p 9000:9000 -v gomsg-data:/data --name gomsg shohag2100/gomsg:latest
+docker run -d -p 9000:9000 -v fluxdl-data:/data --name fluxdl shohag2100/fluxdl:latest
 ```
 
 2. **Choose Your SDK**:
@@ -70,7 +70,7 @@ docker run -d -p 9000:9000 -v gomsg-data:/data --name gomsg shohag2100/gomsg:lat
 
 🚧 **Current Status**: Interface Complete, Implementation Pending
 
-All SDKs provide complete, type-safe interfaces for all GoMsg operations. To make them fully functional:
+All SDKs provide complete, type-safe interfaces for all fluxdl operations. To make them fully functional:
 
 1. **Copy Protobuf Files**: Copy `.proto` files from `../api/proto/` to each SDK
 2. **Generate gRPC Clients**: Use protoc to generate language-specific clients
@@ -79,7 +79,7 @@ All SDKs provide complete, type-safe interfaces for all GoMsg operations. To mak
 ## Architecture
 
 ```
-GoMsg Docker Container (port 9000)
+fluxdl Docker Container (port 9000)
     ↕ gRPC
 ┌─────────────────┬─────────────────┬─────────────────┐
 │   Go SDK        │   Node.js SDK   │   Python SDK    │
@@ -179,8 +179,8 @@ python examples/basic_example.py
 
 - 📖 [Main Documentation](../README.md)
 - 🐳 [Docker Guide](../DOCKER_SIMPLE.md)
-- 🐛 [Issues](https://github.com/shohag2100/gomsg/issues)
+- 🐛 [Issues](https://github.com/skshohagmiah/fluxdl/issues)
 
 ---
 
-**GoMsg**: One service to replace Redis + RabbitMQ + Kafka 🚀
+**fluxdl**: One service to replace Redis + RabbitMQ + Kafka 🚀

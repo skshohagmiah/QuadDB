@@ -1,6 +1,3 @@
-//go:build stream_enabled
-// +build stream_enabled
-
 package main
 
 import (
@@ -12,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	streampb "gomsg/api/generated/stream"
+	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
 )
 
 func streamCmd() *cobra.Command {
@@ -33,13 +30,13 @@ func streamCmd() *cobra.Command {
 
 func streamPublishCmd() *cobra.Command {
 	var partitionKey string
-	
+
 	cmd := &cobra.Command{
 		Use:   "publish <topic> <message>",
 		Short: "Publish a message to a stream",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -81,13 +78,13 @@ func streamReadCmd() *cobra.Command {
 	var offset int64
 	var limit int32
 	var partition int32
-	
+
 	cmd := &cobra.Command{
 		Use:   "read <topic>",
 		Short: "Read messages from a stream",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -111,7 +108,7 @@ func streamReadCmd() *cobra.Command {
 
 			if resp.Status.Success {
 				for i, msg := range resp.Messages {
-					fmt.Printf("%d) ID: %s, Offset: %d, Data: %s\n", 
+					fmt.Printf("%d) ID: %s, Offset: %d, Data: %s\n",
 						i+1, msg.Id, msg.Offset, string(msg.Data))
 				}
 				fmt.Printf("Next offset: %d\n", resp.NextOffset)
@@ -132,13 +129,13 @@ func streamReadCmd() *cobra.Command {
 
 func streamCreateCmd() *cobra.Command {
 	var partitions int32
-	
+
 	cmd := &cobra.Command{
 		Use:   "create <topic>",
 		Short: "Create a new topic",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -178,7 +175,7 @@ func streamListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List all topics",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -213,7 +210,7 @@ func streamInfoCmd() *cobra.Command {
 		Short: "Get information about a topic",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}

@@ -1,78 +1,78 @@
 version: '3.8'
 
 services:
-  # GoMsg Node 1 (Bootstrap node)
-  gomsg-node1:
+  # fluxdl Node 1 (Bootstrap node)
+  fluxdl-node1:
     build: .
-    container_name: gomsg-node1
+    container_name: fluxdl-node1
     ports:
       - "9000:9000"
       - "7000:7000"  # Raft port
     environment:
-      - GOMSG_NODE_ID=node1
-      - GOMSG_BIND_ADDR=0.0.0.0:9000
-      - GOMSG_DATA_DIR=/data
-      - GOMSG_BOOTSTRAP=true
-      - GOMSG_PARTITIONS=32
-      - GOMSG_REPLICATION_FACTOR=3
+      - fluxdl_NODE_ID=node1
+      - fluxdl_BIND_ADDR=0.0.0.0:9000
+      - fluxdl_DATA_DIR=/data
+      - fluxdl_BOOTSTRAP=true
+      - fluxdl_PARTITIONS=32
+      - fluxdl_REPLICATION_FACTOR=3
     volumes:
-      - gomsg-node1-data:/data
+      - fluxdl-node1-data:/data
     networks:
-      - gomsg-network
+      - fluxdl-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # GoMsg Node 2
-  gomsg-node2:
+  # fluxdl Node 2
+  fluxdl-node2:
     build: .
-    container_name: gomsg-node2
+    container_name: fluxdl-node2
     ports:
       - "9001:9000"
       - "7001:7000"  # Raft port
     environment:
-      - GOMSG_NODE_ID=node2
-      - GOMSG_BIND_ADDR=0.0.0.0:9000
-      - GOMSG_DATA_DIR=/data
-      - GOMSG_BOOTSTRAP=false
-      - GOMSG_SEED_NODES=gomsg-node1:9000
-      - GOMSG_PARTITIONS=32
-      - GOMSG_REPLICATION_FACTOR=3
+      - fluxdl_NODE_ID=node2
+      - fluxdl_BIND_ADDR=0.0.0.0:9000
+      - fluxdl_DATA_DIR=/data
+      - fluxdl_BOOTSTRAP=false
+      - fluxdl_SEED_NODES=fluxdl-node1:9000
+      - fluxdl_PARTITIONS=32
+      - fluxdl_REPLICATION_FACTOR=3
     volumes:
-      - gomsg-node2-data:/data
+      - fluxdl-node2-data:/data
     networks:
-      - gomsg-network
+      - fluxdl-network
     depends_on:
-      - gomsg-node1
+      - fluxdl-node1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # GoMsg Node 3
-  gomsg-node3:
+  # fluxdl Node 3
+  fluxdl-node3:
     build: .
-    container_name: gomsg-node3
+    container_name: fluxdl-node3
     ports:
       - "9002:9000"
       - "7002:7000"  # Raft port
     environment:
-      - GOMSG_NODE_ID=node3
-      - GOMSG_BIND_ADDR=0.0.0.0:9000
-      - GOMSG_DATA_DIR=/data
-      - GOMSG_BOOTSTRAP=false
-      - GOMSG_SEED_NODES=gomsg-node1:9000
-      - GOMSG_PARTITIONS=32
-      - GOMSG_REPLICATION_FACTOR=3
+      - fluxdl_NODE_ID=node3
+      - fluxdl_BIND_ADDR=0.0.0.0:9000
+      - fluxdl_DATA_DIR=/data
+      - fluxdl_BOOTSTRAP=false
+      - fluxdl_SEED_NODES=fluxdl-node1:9000
+      - fluxdl_PARTITIONS=32
+      - fluxdl_REPLICATION_FACTOR=3
     volumes:
-      - gomsg-node3-data:/data
+      - fluxdl-node3-data:/data
     networks:
-      - gomsg-network
+      - fluxdl-network
     depends_on:
-      - gomsg-node1
+      - fluxdl-node1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
       interval: 30s
@@ -82,20 +82,20 @@ services:
   # Optional: Monitoring with Prometheus
   prometheus:
     image: prom/prometheus:latest
-    container_name: gomsg-prometheus
+    container_name: fluxdl-prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
-      - gomsg-network
+      - fluxdl-network
     profiles:
       - monitoring
 
   # Optional: Grafana for dashboards
   grafana:
     image: grafana/grafana:latest
-    container_name: gomsg-grafana
+    container_name: fluxdl-grafana
     ports:
       - "3000:3000"
     environment:
@@ -105,16 +105,16 @@ services:
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
       - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
     networks:
-      - gomsg-network
+      - fluxdl-network
     profiles:
       - monitoring
 
 volumes:
-  gomsg-node1-data:
-  gomsg-node2-data:
-  gomsg-node3-data:
+  fluxdl-node1-data:
+  fluxdl-node2-data:
+  fluxdl-node3-data:
   grafana-data:
 
 networks:
-  gomsg-network:
+  fluxdl-network:
     driver: bridge

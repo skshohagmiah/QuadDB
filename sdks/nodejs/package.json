@@ -1,7 +1,7 @@
 {
-  "name": "@shohag2100/gomsg-nodejs-sdk",
+  "name": "@shohag2100/fluxdl-nodejs-sdk",
   "version": "1.0.0",
-  "description": "Node.js client library for GoMsg - distributed data platform",
+  "description": "Node.js client library for fluxdl - distributed data platform",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -12,7 +12,7 @@
     "prepare": "npm run build"
   },
   "keywords": [
-    "gomsg",
+    "fluxdl",
     "redis",
     "rabbitmq", 
     "kafka",
@@ -42,10 +42,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/shohag2100/gomsg-nodejs-sdk.git"
+    "url": "https://github.com/shohag2100/fluxdl-nodejs-sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/shohag2100/gomsg-nodejs-sdk/issues"
+    "url": "https://github.com/shohag2100/fluxdl-nodejs-sdk/issues"
   },
-  "homepage": "https://github.com/shohag2100/gomsg-nodejs-sdk#readme"
+  "homepage": "https://github.com/shohag2100/fluxdl-nodejs-sdk#readme"
 }

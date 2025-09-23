@@ -7,20 +7,20 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	queuepb "gomsg/api/generated/queue"
-	"gomsg/tests/testutil"
+	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
+	"github.com/skshohagmiah/fluxdl/tests/testutil"
 )
 
 func setupQueueClient(t *testing.T) queuepb.QueueServiceClient {
 	// Start test server automatically
 	testServer := testutil.StartTestServer(t)
-	
+
 	conn, err := grpc.Dial(testServer.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to connect to server: %v", err)
 	}
 	t.Cleanup(func() { conn.Close() })
-	
+
 	return queuepb.NewQueueServiceClient(conn)
 }
 

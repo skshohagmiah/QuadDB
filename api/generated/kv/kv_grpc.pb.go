@@ -19,18 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	KVService_Set_FullMethodName        = "/gomsg.kv.KVService/Set"
-	KVService_Get_FullMethodName        = "/gomsg.kv.KVService/Get"
-	KVService_Del_FullMethodName        = "/gomsg.kv.KVService/Del"
-	KVService_DelPattern_FullMethodName = "/gomsg.kv.KVService/DelPattern"
-	KVService_Exists_FullMethodName     = "/gomsg.kv.KVService/Exists"
-	KVService_Incr_FullMethodName       = "/gomsg.kv.KVService/Incr"
-	KVService_Decr_FullMethodName       = "/gomsg.kv.KVService/Decr"
-	KVService_MGet_FullMethodName       = "/gomsg.kv.KVService/MGet"
-	KVService_MSet_FullMethodName       = "/gomsg.kv.KVService/MSet"
-	KVService_Keys_FullMethodName       = "/gomsg.kv.KVService/Keys"
-	KVService_Expire_FullMethodName     = "/gomsg.kv.KVService/Expire"
-	KVService_TTL_FullMethodName        = "/gomsg.kv.KVService/TTL"
+	KVService_Set_FullMethodName        = "/fluxdl.kv.KVService/Set"
+	KVService_Get_FullMethodName        = "/fluxdl.kv.KVService/Get"
+	KVService_Del_FullMethodName        = "/fluxdl.kv.KVService/Del"
+	KVService_DelPattern_FullMethodName = "/fluxdl.kv.KVService/DelPattern"
+	KVService_Exists_FullMethodName     = "/fluxdl.kv.KVService/Exists"
+	KVService_Incr_FullMethodName       = "/fluxdl.kv.KVService/Incr"
+	KVService_Decr_FullMethodName       = "/fluxdl.kv.KVService/Decr"
+	KVService_MGet_FullMethodName       = "/fluxdl.kv.KVService/MGet"
+	KVService_MSet_FullMethodName       = "/fluxdl.kv.KVService/MSet"
+	KVService_Keys_FullMethodName       = "/fluxdl.kv.KVService/Keys"
+	KVService_Expire_FullMethodName     = "/fluxdl.kv.KVService/Expire"
+	KVService_TTL_FullMethodName        = "/fluxdl.kv.KVService/TTL"
 )
 
 // KVServiceClient is the client API for KVService service.
@@ -482,7 +482,7 @@ func _KVService_TTL_Handler(srv interface{}, ctx context.Context, dec func(inter
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var KVService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "gomsg.kv.KVService",
+	ServiceName: "fluxdl.kv.KVService",
 	HandlerType: (*KVServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

@@ -10,25 +10,25 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	kvpb "gomsg/api/generated/kv"
-	queuepb "gomsg/api/generated/queue"
-	streampb "gomsg/api/generated/stream"
-	"gomsg/tests/testutil"
+	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
+	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
+	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
+	"github.com/skshohagmiah/fluxdl/tests/testutil"
 )
 
 func setupClients(t *testing.T) (kvpb.KVServiceClient, queuepb.QueueServiceClient, streampb.StreamServiceClient) {
 	// Start test server automatically
 	testServer := testutil.StartTestServer(t)
-	
+
 	conn, err := grpc.Dial(testServer.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to connect to server: %v", err)
 	}
 	t.Cleanup(func() { conn.Close() })
-	
-	return kvpb.NewKVServiceClient(conn), 
-		   queuepb.NewQueueServiceClient(conn), 
-		   streampb.NewStreamServiceClient(conn)
+
+	return kvpb.NewKVServiceClient(conn),
+		queuepb.NewQueueServiceClient(conn),
+		streampb.NewStreamServiceClient(conn)
 }
 
 func TestUserRegistrationWorkflow(t *testing.T) {
@@ -181,7 +181,7 @@ func TestConcurrentOperations(t *testing.T) {
 
 			for j := 0; j < operationsPerWorker; j++ {
 				key := fmt.Sprintf("worker_%d_op_%d", workerID, j)
-				
+
 				// KV operations
 				_, err := kvClient.Set(ctx, &kvpb.SetRequest{
 					Key:   key,
@@ -252,7 +252,7 @@ func TestConcurrentOperations(t *testing.T) {
 	}
 
 	expectedCount := numWorkers * operationsPerWorker
-	t.Logf("✅ Concurrent operations completed. Expected %d operations, counter shows: %s", 
+	t.Logf("✅ Concurrent operations completed. Expected %d operations, counter shows: %s",
 		expectedCount, string(getResp.Value))
 }
 
@@ -284,7 +284,7 @@ func TestDataConsistency(t *testing.T) {
 			t.Fatalf("Key not found on read %d", i)
 		}
 		if string(getResp.Value) != testValue {
-			t.Fatalf("Value mismatch on read %d: expected %s, got %s", 
+			t.Fatalf("Value mismatch on read %d: expected %s, got %s",
 				i, testValue, string(getResp.Value))
 		}
 	}
@@ -317,7 +317,7 @@ func TestDataConsistency(t *testing.T) {
 			t.Fatalf("No message received at position %d", i)
 		}
 		if string(popResp.Message.Data) != expectedMsg {
-			t.Fatalf("Message order violation at position %d: expected %s, got %s", 
+			t.Fatalf("Message order violation at position %d: expected %s, got %s",
 				i, expectedMsg, string(popResp.Message.Data))
 		}
 	}
@@ -365,11 +365,11 @@ func TestDataConsistency(t *testing.T) {
 		}
 		msg := readResp.Messages[i]
 		if string(msg.Data) != expectedMsg {
-			t.Fatalf("Stream order violation at position %d: expected %s, got %s", 
+			t.Fatalf("Stream order violation at position %d: expected %s, got %s",
 				i, expectedMsg, string(msg.Data))
 		}
 		if msg.Offset != offsets[i] {
-			t.Fatalf("Offset mismatch at position %d: expected %d, got %d", 
+			t.Fatalf("Offset mismatch at position %d: expected %d, got %d",
 				i, offsets[i], msg.Offset)
 		}
 	}
@@ -379,11 +379,11 @@ func TestDataConsistency(t *testing.T) {
 
 // Helper function
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || 
-		(len(s) > len(substr) && 
-		 (s[:len(substr)] == substr || 
-		  s[len(s)-len(substr):] == substr || 
-		  containsInMiddle(s, substr))))
+	return len(s) >= len(substr) && (s == substr ||
+		(len(s) > len(substr) &&
+			(s[:len(substr)] == substr ||
+				s[len(s)-len(substr):] == substr ||
+				containsInMiddle(s, substr))))
 }
 
 func containsInMiddle(s, substr string) bool {

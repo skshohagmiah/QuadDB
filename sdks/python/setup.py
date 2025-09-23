@@ -4,14 +4,14 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="gomsg-python-sdk",
+    name="fluxdl-python-sdk",
     version="1.0.0",
     author="Shohag",
     author_email="shohag2100@example.com",
-    description="Python client library for GoMsg - distributed data platform",
+    description="Python client library for fluxdl - distributed data platform",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/shohag2100/gomsg-python-sdk",
+    url="https://github.com/shohag2100/fluxdl-python-sdk",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -45,7 +45,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "gomsg-cli=gomsg_sdk.cli:main",
+            "fluxdl-cli=fluxdl_sdk.cli:main",
         ],
     },
 )

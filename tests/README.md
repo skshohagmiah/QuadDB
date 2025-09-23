@@ -1,6 +1,6 @@
-# GoMsg Test Suite
+# fluxdl Test Suite
 
-Comprehensive test suite for GoMsg - covering unit tests, integration tests, and performance benchmarks.
+Comprehensive test suite for fluxdl - covering unit tests, integration tests, and performance benchmarks.
 
 ## 🚀 Quick Start
 
@@ -52,15 +52,15 @@ tests/
 ## 🔧 Running Tests
 
 ### Prerequisites
-1. **GoMsg Server Running**: The server must be running on `localhost:9000`
+1. **fluxdl Server Running**: The server must be running on `localhost:9000`
 2. **Go 1.21+**: Required for running tests
 3. **Generated Protobuf**: Run `make proto` if needed
 
 ### Manual Test Execution
 
 ```bash
-# Start GoMsg server (in separate terminal)
-./bin/gomsg --port=9000
+# Start fluxdl server (in separate terminal)
+./bin/fluxdl --port=9000
 
 # Run tests
 cd tests
@@ -112,14 +112,14 @@ make test-performance   # Benchmarks only
 ```bash
 Error: dial tcp [::1]:9000: connect: connection refused
 ```
-Solution: Start the GoMsg server first:
+Solution: Start the fluxdl server first:
 ```bash
-./bin/gomsg --port=9000
+./bin/fluxdl --port=9000
 ```
 
 **Import Path Issues**
 ```bash
-Error: package gomsg/api/generated/kv is not in GOPATH
+Error: package fluxdl/api/generated/kv is not in GOPATH
 ```
 Solution: Run from project root and ensure protobuf files are generated:
 ```bash
@@ -137,7 +137,7 @@ export TEST_TIMEOUT=60s
 
 ### Environment Variables
 
-- `GOMSG_TEST_ADDR`: Server address (default: localhost:9000)
+- `fluxdl_TEST_ADDR`: Server address (default: localhost:9000)
 - `TEST_TIMEOUT`: Test timeout duration (default: 30s)
 - `VERBOSE`: Enable verbose output (default: false)
 
@@ -157,7 +157,7 @@ jobs:
         with:
           go-version: '1.21'
       
-      - name: Build GoMsg
+      - name: Build fluxdl
         run: make build
       
       - name: Run Tests
@@ -234,4 +234,4 @@ dlv test ./tests/unit/ -- -test.run TestKVSetGet
 
 ---
 
-**Your GoMsg test suite is comprehensive and ready for development!** 🚀
+**Your fluxdl test suite is comprehensive and ready for development!** 🚀

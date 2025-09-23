@@ -8,14 +8,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	streampb "gomsg/api/generated/stream"
-	"gomsg/tests/testutil"
+	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
+	"github.com/skshohagmiah/fluxdl/tests/testutil"
 )
 
 func setupStreamDemoClient(t *testing.T) streampb.StreamServiceClient {
 	// Start test server automatically
 	testServer := testutil.StartTestServer(t)
-	
+
 	conn, err := grpc.Dial(testServer.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to connect to server: %v", err)
@@ -29,7 +29,7 @@ func TestStreamPubSubDemo(t *testing.T) {
 	client := setupStreamDemoClient(t)
 	ctx := context.Background()
 
-	t.Log("🚀 GoMsg Streams & Pub/Sub Functionality Demonstration")
+	t.Log("🚀 fluxdl Streams & Pub/Sub Functionality Demonstration")
 	t.Log("=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=" + "=")
 
 	// Test 1: Basic Event Streaming (Kafka-like)
@@ -44,7 +44,7 @@ func TestStreamPubSubDemo(t *testing.T) {
 	t.Log("\n📋 Test 3: Event Replay & Offset Management - Transaction Log")
 	testTransactionLogReplay(t, ctx, client)
 
-	t.Log("\n🎉 GoMsg Streams & Pub/Sub Demo Completed Successfully!")
+	t.Log("\n🎉 fluxdl Streams & Pub/Sub Demo Completed Successfully!")
 	t.Log("✅ Demonstrated Kafka-like capabilities:")
 	t.Log("   • Event streaming with persistent logs")
 	t.Log("   • Multi-partition topics for scalability")
@@ -80,7 +80,7 @@ func testUserActivityStreaming(t *testing.T, ctx context.Context, client streamp
 	}
 
 	t.Logf("   📤 Publishing %d user activity events...", len(userEvents))
-	
+
 	// Publish events
 	var publishedOffsets []int64
 	for i, event := range userEvents {
@@ -103,10 +103,10 @@ func testUserActivityStreaming(t *testing.T, ctx context.Context, client streamp
 
 	// Simulate different consumers reading the same events
 	consumers := []string{"analytics_service", "recommendation_engine", "fraud_detection"}
-	
+
 	for _, consumer := range consumers {
 		t.Logf("   📥 Consumer '%s' processing events:", consumer)
-		
+
 		readResp, err := client.Read(ctx, &streampb.ReadRequest{
 			Topic:      topicName,
 			Partition:  0,
@@ -155,7 +155,7 @@ func testOrderProcessingStreaming(t *testing.T, ctx context.Context, client stre
 	}
 
 	t.Logf("   📤 Publishing %d order events across partitions...", len(orders))
-	
+
 	partitionCounts := make(map[int32]int)
 	for i, order := range orders {
 		publishResp, err := client.Publish(ctx, &streampb.PublishRequest{
@@ -172,7 +172,7 @@ func testOrderProcessingStreaming(t *testing.T, ctx context.Context, client stre
 			t.Fatalf("Failed to publish order event %d: %v", i, err)
 		}
 		partitionCounts[publishResp.Partition]++
-		t.Logf("      [%d] %s %s -> partition %d, offset %d", 
+		t.Logf("      [%d] %s %s -> partition %d, offset %d",
 			i+1, order.region, order.status, publishResp.Partition, publishResp.Offset)
 	}
 
@@ -233,12 +233,12 @@ func testTransactionLogReplay(t *testing.T, ctx context.Context, client streampb
 	}
 
 	t.Logf("   📤 Recording %d financial transactions in order...", len(transactions))
-	
+
 	var offsets []int64
 	for i, tx := range transactions {
 		data := fmt.Sprintf(`{"tx_id":"tx_%03d","type":"%s","account":"%s","amount":%.2f,"balance":%.2f}`,
 			i+1, tx.txType, tx.account, tx.amount, tx.balance)
-		
+
 		publishResp, err := client.Publish(ctx, &streampb.PublishRequest{
 			Topic:        topicName,
 			PartitionKey: tx.account,
@@ -252,7 +252,7 @@ func testTransactionLogReplay(t *testing.T, ctx context.Context, client streampb
 			t.Fatalf("Failed to publish transaction %d: %v", i, err)
 		}
 		offsets = append(offsets, publishResp.Offset)
-		t.Logf("      [%d] %s $%.2f -> offset %d (balance: $%.2f)", 
+		t.Logf("      [%d] %s $%.2f -> offset %d (balance: $%.2f)",
 			i+1, tx.txType, tx.amount, publishResp.Offset, tx.balance)
 	}
 
@@ -270,7 +270,7 @@ func testTransactionLogReplay(t *testing.T, ctx context.Context, client streampb
 	if err != nil {
 		t.Fatalf("Failed to read full history: %v", err)
 	}
-	
+
 	for _, msg := range readResp.Messages {
 		txType := msg.Headers["transaction_type"]
 		t.Logf("         [offset:%d] %s transaction", msg.Offset, txType)
@@ -289,7 +289,7 @@ func testTransactionLogReplay(t *testing.T, ctx context.Context, client streampb
 		if err != nil {
 			t.Fatalf("Failed to read from offset %d: %v", midOffset, err)
 		}
-		
+
 		for _, msg := range readResp.Messages {
 			txType := msg.Headers["transaction_type"]
 			t.Logf("         [offset:%d] %s transaction", msg.Offset, txType)

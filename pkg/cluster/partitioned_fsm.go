@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"gomsg/storage"
+	"github.com/skshohagmiah/fluxdl/storage"
 
 	hraft "github.com/hashicorp/raft"
 )
@@ -18,11 +18,11 @@ import (
 type PartitionedFSM struct {
 	st          storage.Storage
 	partitioner *Partitioner
-	
+
 	// Partition ownership tracking
-	mu             sync.RWMutex
+	mu              sync.RWMutex
 	ownedPartitions map[int32]bool // partitionID -> owned
-	nodeID         string
+	nodeID          string
 	totalPartitions int32
 }
 
@@ -37,7 +37,7 @@ func NewPartitionedFSM(st storage.Storage, nodeID string, totalPartitions int32)
 	if totalPartitions <= 0 {
 		totalPartitions = 16 // default
 	}
-	
+
 	return &PartitionedFSM{
 		st:              st,
 		partitioner:     NewPartitioner(totalPartitions, 16), // 16 virtual nodes
@@ -51,10 +51,10 @@ func NewPartitionedFSM(st storage.Storage, nodeID string, totalPartitions int32)
 func (f *PartitionedFSM) SetOwnedPartitions(partitions []int32) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	
+
 	// Clear existing ownership
 	f.ownedPartitions = make(map[int32]bool)
-	
+
 	// Set new ownership
 	for _, p := range partitions {
 		f.ownedPartitions[p] = true
@@ -65,7 +65,7 @@ func (f *PartitionedFSM) SetOwnedPartitions(partitions []int32) {
 func (f *PartitionedFSM) GetOwnedPartitions() []int32 {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
-	
+
 	partitions := make([]int32, 0, len(f.ownedPartitions))
 	for p := range f.ownedPartitions {
 		partitions = append(partitions, p)
@@ -92,9 +92,9 @@ func (f *PartitionedFSM) Apply(l *hraft.Log) interface{} {
 	if err := json.Unmarshal(l.Data, &cmd); err != nil {
 		return err
 	}
-	
+
 	ctx := context.TODO()
-	
+
 	switch cmd.Type {
 	case CmdKVSet:
 		return f.applyKVSet(ctx, cmd.Payload)
@@ -122,17 +122,17 @@ func (f *PartitionedFSM) applyKVSet(ctx context.Context, payload json.RawMessage
 	if err := json.Unmarshal(payload, &req); err != nil {
 		return err
 	}
-	
+
 	// Only store if we own this key's partition
 	if !f.OwnsKey(req.Key) {
 		return nil // Not an error, just not our responsibility
 	}
-	
+
 	var ttl time.Duration
 	if req.TTLSeconds > 0 {
 		ttl = time.Duration(req.TTLSeconds) * time.Second
 	}
-	
+
 	return f.st.Set(ctx, req.Key, req.Value, ttl)
 }
 
@@ -143,7 +143,7 @@ func (f *PartitionedFSM) applyKVDelete(ctx context.Context, payload json.RawMess
 	if err := json.Unmarshal(payload, &req); err != nil {
 		return err
 	}
-	
+
 	// Filter keys to only those we own
 	ownedKeys := make([]string, 0, len(req.Keys))
 	for _, key := range req.Keys {
@@ -151,11 +151,11 @@ func (f *PartitionedFSM) applyKVDelete(ctx context.Context, payload json.RawMess
 			ownedKeys = append(ownedKeys, key)
 		}
 	}
-	
+
 	if len(ownedKeys) == 0 {
 		return nil // No keys to delete
 	}
-	
+
 	_, err := f.st.Delete(ctx, ownedKeys...)
 	return err
 }
@@ -168,13 +168,13 @@ func (f *PartitionedFSM) applyStreamCreate(ctx context.Context, payload json.Raw
 	if err := json.Unmarshal(payload, &req); err != nil {
 		return err
 	}
-	
+
 	// For streams, we need to check if we own the topic's partition
 	// Topics are partitioned by topic name
 	if !f.OwnsKey(req.Topic) {
 		return nil // Not our responsibility
 	}
-	
+
 	return f.st.StreamCreateTopic(ctx, req.Topic, req.Partitions)
 }
 
@@ -185,12 +185,12 @@ func (f *PartitionedFSM) applyStreamDelete(ctx context.Context, payload json.Raw
 	if err := json.Unmarshal(payload, &req); err != nil {
 		return err
 	}
-	
+
 	// For streams, check if we own the topic's partition
 	if !f.OwnsKey(req.Topic) {
 		return nil // Not our responsibility
 	}
-	
+
 	return f.st.StreamDeleteTopic(ctx, req.Topic)
 }
 
@@ -201,7 +201,7 @@ func (f *PartitionedFSM) applyPartitionAssign(ctx context.Context, payload json.
 	if err := json.Unmarshal(payload, &req); err != nil {
 		return err
 	}
-	
+
 	// Find our assignment
 	for _, assignment := range req.Assignments {
 		if assignment.NodeID == f.nodeID {
@@ -209,7 +209,7 @@ func (f *PartitionedFSM) applyPartitionAssign(ctx context.Context, payload json.
 			break
 		}
 	}
-	
+
 	return nil
 }
 
@@ -223,27 +223,27 @@ func (f *PartitionedFSM) applyPartitionMigrate(ctx context.Context, payload json
 	if err := json.Unmarshal(payload, &req); err != nil {
 		return err
 	}
-	
+
 	// If we're the target node, accept the partition
 	if req.ToNode == f.nodeID {
 		f.mu.Lock()
 		f.ownedPartitions[req.Partition] = true
 		f.mu.Unlock()
-		
+
 		// TODO: Deserialize and restore partition data if provided
 		// This would involve restoring keys that belong to this partition
 	}
-	
+
 	// If we're the source node, release the partition
 	if req.FromNode == f.nodeID {
 		f.mu.Lock()
 		delete(f.ownedPartitions, req.Partition)
 		f.mu.Unlock()
-		
+
 		// TODO: Clean up keys that belong to this partition
 		// This would involve deleting keys that hash to this partition
 	}
-	
+
 	return nil
 }
 
@@ -251,47 +251,47 @@ func (f *PartitionedFSM) applyPartitionMigrate(ctx context.Context, payload json
 func (f *PartitionedFSM) Snapshot() (hraft.FSMSnapshot, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
-	
+
 	// Create a snapshot that includes partition ownership
 	snapshot := &PartitionedSnapshot{
 		nodeID:          f.nodeID,
 		ownedPartitions: make(map[int32]bool),
 		totalPartitions: f.totalPartitions,
 	}
-	
+
 	// Copy owned partitions
 	for p, owned := range f.ownedPartitions {
 		snapshot.ownedPartitions[p] = owned
 	}
-	
+
 	return snapshot, nil
 }
 
 // Restore restores the FSM state from a snapshot
 func (f *PartitionedFSM) Restore(r io.ReadCloser) error {
 	defer r.Close()
-	
+
 	var snapshot struct {
-		NodeID          string           `json:"node_id"`
-		OwnedPartitions map[int32]bool   `json:"owned_partitions"`
-		TotalPartitions int32            `json:"total_partitions"`
+		NodeID          string         `json:"node_id"`
+		OwnedPartitions map[int32]bool `json:"owned_partitions"`
+		TotalPartitions int32          `json:"total_partitions"`
 	}
-	
+
 	decoder := json.NewDecoder(r)
 	if err := decoder.Decode(&snapshot); err != nil {
 		return err
 	}
-	
+
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	
+
 	f.nodeID = snapshot.NodeID
 	f.ownedPartitions = snapshot.OwnedPartitions
 	f.totalPartitions = snapshot.TotalPartitions
-	
+
 	// Recreate partitioner with correct settings
 	f.partitioner = NewPartitioner(f.totalPartitions, 16)
-	
+
 	return nil
 }
 
@@ -313,13 +313,13 @@ func (s *PartitionedSnapshot) Persist(sink hraft.SnapshotSink) error {
 		OwnedPartitions: s.ownedPartitions,
 		TotalPartitions: s.totalPartitions,
 	}
-	
+
 	encoder := json.NewEncoder(sink)
 	if err := encoder.Encode(data); err != nil {
 		sink.Cancel()
 		return err
 	}
-	
+
 	return sink.Close()
 }
 

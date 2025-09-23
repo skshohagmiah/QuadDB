@@ -1,16 +1,16 @@
 import * as grpc from '@grpc/grpc-js';
-import { GoMsgConfig, ConnectionError } from './types';
+import { fluxdlConfig, ConnectionError } from './types';
 import { KVClient } from './kv';
 import { QueueClient } from './queue';
 import { StreamClient } from './stream';
 
-export class GoMsgClient {
+export class fluxdlClient {
   private connection?: grpc.Client;
   private _kv?: KVClient;
   private _queue?: QueueClient;
   private _stream?: StreamClient;
   
-  constructor(private config: GoMsgConfig = {}) {
+  constructor(private config: fluxdlConfig = {}) {
     // Set defaults
     this.config = {
       address: 'localhost:9000',
@@ -20,34 +20,34 @@ export class GoMsgClient {
   }
 
   /**
-   * Connect to GoMsg server
+   * Connect to fluxdl server
    */
   async connect(): Promise<void> {
     try {
       // For now, we'll create a placeholder connection
       // In a real implementation, this would establish the gRPC connection
-      console.log(`Connecting to GoMsg at ${this.config.address}...`);
+      console.log(`Connecting to fluxdl at ${this.config.address}...`);
       
       // Initialize clients
       this._kv = new KVClient(this.connection);
       this._queue = new QueueClient(this.connection);
       this._stream = new StreamClient(this.connection);
       
-      console.log('✅ Connected to GoMsg successfully!');
+      console.log('✅ Connected to fluxdl successfully!');
     } catch (error) {
-      throw new ConnectionError(`Failed to connect to GoMsg: ${error}`);
+      throw new ConnectionError(`Failed to connect to fluxdl: ${error}`);
     }
   }
 
   /**
-   * Disconnect from GoMsg server
+   * Disconnect from fluxdl server
    */
   async disconnect(): Promise<void> {
     if (this.connection) {
       this.connection.close();
       this.connection = undefined;
     }
-    console.log('Disconnected from GoMsg');
+    console.log('Disconnected from fluxdl');
   }
 
   /**
@@ -97,15 +97,15 @@ export class GoMsgClient {
   /**
    * Create a new client instance with configuration
    */
-  static create(config?: GoMsgConfig): GoMsgClient {
-    return new GoMsgClient(config);
+  static create(config?: fluxdlConfig): fluxdlClient {
+    return new fluxdlClient(config);
   }
 
   /**
-   * Create and connect to GoMsg in one step
+   * Create and connect to fluxdl in one step
    */
-  static async connect(config?: GoMsgConfig): Promise<GoMsgClient> {
-    const client = new GoMsgClient(config);
+  static async connect(config?: fluxdlConfig): Promise<fluxdlClient> {
+    const client = new fluxdlClient(config);
     await client.connect();
     return client;
   }

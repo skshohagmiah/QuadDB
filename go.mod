@@ -1,4 +1,4 @@
-module gomsg
+module github.com/skshohagmiah/fluxdl
 
 go 1.24
 

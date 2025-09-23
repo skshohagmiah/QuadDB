@@ -1,4 +1,4 @@
-package gomsg
+package fluxdl
 
 import (
 	"context"

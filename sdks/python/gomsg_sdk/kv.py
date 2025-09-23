@@ -1,12 +1,12 @@
 """
-GoMsg Key-Value Client
+fluxdl Key-Value Client
 
 Redis-like key-value operations.
 """
 
 from typing import Optional, List, Dict, Union
 import grpc
-from .exceptions import GoMsgError, KeyNotFoundError, TimeoutError
+from .exceptions import fluxdlError, KeyNotFoundError, TimeoutError
 
 
 class KVClient:
@@ -43,7 +43,7 @@ class KVClient:
         # Placeholder implementation
         # In real implementation, make gRPC call
         if not key or not value:
-            raise GoMsgError("Invalid key or value")
+            raise fluxdlError("Invalid key or value")
         
         return "OK"
 
@@ -60,7 +60,7 @@ class KVClient:
         print(f"KV GET: {key}")
         
         if not key:
-            raise GoMsgError("Invalid key")
+            raise fluxdlError("Invalid key")
         
         # Placeholder implementation
         return f"value-for-{key}"
@@ -78,7 +78,7 @@ class KVClient:
         print(f"KV DELETE: {key}")
         
         if not key:
-            raise GoMsgError("Invalid key")
+            raise fluxdlError("Invalid key")
         
         return True
 
@@ -95,7 +95,7 @@ class KVClient:
         print(f"KV EXISTS: {key}")
         
         if not key:
-            raise GoMsgError("Invalid key")
+            raise fluxdlError("Invalid key")
         
         return True
 
@@ -128,7 +128,7 @@ class KVClient:
         print(f"KV INCR: {key} by {by}")
         
         if not key:
-            raise GoMsgError("Invalid key")
+            raise fluxdlError("Invalid key")
         
         return by  # Placeholder
 
@@ -146,7 +146,7 @@ class KVClient:
         print(f"KV DECR: {key} by {by}")
         
         if not key:
-            raise GoMsgError("Invalid key")
+            raise fluxdlError("Invalid key")
         
         return -by  # Placeholder
 
@@ -163,7 +163,7 @@ class KVClient:
         print(f"KV MSET: {len(pairs)} pairs")
         
         if not pairs:
-            raise GoMsgError("No key-value pairs provided")
+            raise fluxdlError("No key-value pairs provided")
         
         return "OK"
 
@@ -180,7 +180,7 @@ class KVClient:
         print(f"KV MGET: {len(keys)} keys")
         
         if not keys:
-            raise GoMsgError("No keys provided")
+            raise fluxdlError("No keys provided")
         
         return [f"value-for-{key}" for key in keys]
 
@@ -197,7 +197,7 @@ class KVClient:
         print(f"KV TTL: {key}")
         
         if not key:
-            raise GoMsgError("Invalid key")
+            raise fluxdlError("Invalid key")
         
         return -1  # No TTL
 
@@ -215,7 +215,7 @@ class KVClient:
         print(f"KV EXPIRE: {key} in {seconds}s")
         
         if not key or seconds < 0:
-            raise GoMsgError("Invalid key or TTL")
+            raise fluxdlError("Invalid key or TTL")
         
         return True
 
@@ -232,6 +232,6 @@ class KVClient:
         print(f"KV PERSIST: {key}")
         
         if not key:
-            raise GoMsgError("Invalid key")
+            raise fluxdlError("Invalid key")
         
         return True

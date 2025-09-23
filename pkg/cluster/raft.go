@@ -10,7 +10,7 @@ import (
 	hraft "github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
 
-	"gomsg/storage"
+	"github.com/skshohagmiah/fluxdl/storage"
 )
 
 // RaftConfig defines how to start the local raft node
@@ -55,9 +55,13 @@ func Start(ctx context.Context, st storage.Storage, cfg RaftConfig) (*Manager, e
 
 	// Transport
 	addr, err := net.ResolveTCPAddr("tcp", cfg.BindAddr)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	trans, err := hraft.NewTCPTransport(cfg.BindAddr, addr, 3, 10*time.Second, nil)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 
 	// Raft config
 	rcfg := hraft.DefaultConfig()
@@ -70,7 +74,9 @@ func Start(ctx context.Context, st storage.Storage, cfg RaftConfig) (*Manager, e
 	// FSM
 	fsm := NewFSM(st)
 	ra, err := hraft.NewRaft(rcfg, fsm, store, store, snap, trans)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 
 	m := &Manager{raft: ra, store: store, stable: stable, snap: snap, trans: trans, st: st}
 
@@ -87,19 +93,44 @@ func Start(ctx context.Context, st storage.Storage, cfg RaftConfig) (*Manager, e
 }
 
 // Raft returns the underlying raft instance
-func (m *Manager) Raft() *hraft.Raft { if m == nil { return nil }; return m.raft }
+func (m *Manager) Raft() *hraft.Raft {
+	if m == nil {
+		return nil
+	}
+	return m.raft
+}
 
 // LeaderID returns the current leader ID if known
-func (m *Manager) LeaderID() string { if m == nil || m.raft == nil { return "" }; return string(m.raft.Leader()) }
+func (m *Manager) LeaderID() string {
+	if m == nil || m.raft == nil {
+		return ""
+	}
+	return string(m.raft.Leader())
+}
 
 // IsLeader reports whether this node is the current leader
-func (m *Manager) IsLeader() bool { if m == nil || m.raft == nil { return false }; return m.raft.State() == hraft.Leader }
+func (m *Manager) IsLeader() bool {
+	if m == nil || m.raft == nil {
+		return false
+	}
+	return m.raft.State() == hraft.Leader
+}
 
 // Close shuts down raft and closes stores
 func (m *Manager) Close() {
-	if m == nil { return }
-	if m.raft != nil { m.raft.Shutdown() }
-	if m.trans != nil { m.trans.Close() }
-	if m.store != nil { _ = m.store.Close() }
-	if m.stable != nil { _ = m.stable.Close() }
+	if m == nil {
+		return
+	}
+	if m.raft != nil {
+		m.raft.Shutdown()
+	}
+	if m.trans != nil {
+		m.trans.Close()
+	}
+	if m.store != nil {
+		_ = m.store.Close()
+	}
+	if m.stable != nil {
+		_ = m.stable.Close()
+	}
 }

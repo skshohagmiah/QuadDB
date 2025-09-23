@@ -19,15 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ClusterService_GetNodes_FullMethodName       = "/gomsg.cluster.ClusterService/GetNodes"
-	ClusterService_GetStatus_FullMethodName      = "/gomsg.cluster.ClusterService/GetStatus"
-	ClusterService_GetLeader_FullMethodName      = "/gomsg.cluster.ClusterService/GetLeader"
-	ClusterService_Join_FullMethodName           = "/gomsg.cluster.ClusterService/Join"
-	ClusterService_Leave_FullMethodName          = "/gomsg.cluster.ClusterService/Leave"
-	ClusterService_GetStats_FullMethodName       = "/gomsg.cluster.ClusterService/GetStats"
-	ClusterService_GetClusterInfo_FullMethodName = "/gomsg.cluster.ClusterService/GetClusterInfo"
-	ClusterService_MigrateData_FullMethodName    = "/gomsg.cluster.ClusterService/MigrateData"
-	ClusterService_ReplicateData_FullMethodName  = "/gomsg.cluster.ClusterService/ReplicateData"
+	ClusterService_GetNodes_FullMethodName       = "/fluxdl.cluster.ClusterService/GetNodes"
+	ClusterService_GetStatus_FullMethodName      = "/fluxdl.cluster.ClusterService/GetStatus"
+	ClusterService_GetLeader_FullMethodName      = "/fluxdl.cluster.ClusterService/GetLeader"
+	ClusterService_Join_FullMethodName           = "/fluxdl.cluster.ClusterService/Join"
+	ClusterService_Leave_FullMethodName          = "/fluxdl.cluster.ClusterService/Leave"
+	ClusterService_GetStats_FullMethodName       = "/fluxdl.cluster.ClusterService/GetStats"
+	ClusterService_GetClusterInfo_FullMethodName = "/fluxdl.cluster.ClusterService/GetClusterInfo"
+	ClusterService_MigrateData_FullMethodName    = "/fluxdl.cluster.ClusterService/MigrateData"
+	ClusterService_ReplicateData_FullMethodName  = "/fluxdl.cluster.ClusterService/ReplicateData"
 )
 
 // ClusterServiceClient is the client API for ClusterService service.
@@ -380,7 +380,7 @@ func _ClusterService_ReplicateData_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ClusterService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "gomsg.cluster.ClusterService",
+	ServiceName: "fluxdl.cluster.ClusterService",
 	HandlerType: (*ClusterServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

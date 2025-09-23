@@ -1,10 +1,10 @@
 """
-GoMsg SDK Exceptions
+fluxdl SDK Exceptions
 """
 
 
-class GoMsgError(Exception):
-    """Base exception for all GoMsg SDK errors."""
+class fluxdlError(Exception):
+    """Base exception for all fluxdl SDK errors."""
     
     def __init__(self, message: str, code: str = None):
         super().__init__(message)
@@ -12,28 +12,28 @@ class GoMsgError(Exception):
         self.code = code
 
 
-class ConnectionError(GoMsgError):
-    """Raised when connection to GoMsg server fails."""
+class ConnectionError(fluxdlError):
+    """Raised when connection to fluxdl server fails."""
     
     def __init__(self, message: str):
         super().__init__(message, "CONNECTION_ERROR")
 
 
-class TimeoutError(GoMsgError):
+class TimeoutError(fluxdlError):
     """Raised when request times out."""
     
     def __init__(self, message: str):
         super().__init__(message, "TIMEOUT_ERROR")
 
 
-class AuthenticationError(GoMsgError):
+class AuthenticationError(fluxdlError):
     """Raised when authentication fails."""
     
     def __init__(self, message: str):
         super().__init__(message, "AUTH_ERROR")
 
 
-class KeyNotFoundError(GoMsgError):
+class KeyNotFoundError(fluxdlError):
     """Raised when a key is not found in KV store."""
     
     def __init__(self, key: str):
@@ -41,7 +41,7 @@ class KeyNotFoundError(GoMsgError):
         self.key = key
 
 
-class QueueEmptyError(GoMsgError):
+class QueueEmptyError(fluxdlError):
     """Raised when trying to pop from an empty queue."""
     
     def __init__(self, queue: str):
@@ -49,7 +49,7 @@ class QueueEmptyError(GoMsgError):
         self.queue = queue
 
 
-class StreamNotFoundError(GoMsgError):
+class StreamNotFoundError(fluxdlError):
     """Raised when a stream is not found."""
     
     def __init__(self, stream: str):
