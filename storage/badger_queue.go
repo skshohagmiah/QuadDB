@@ -12,29 +12,28 @@ import (
 )
 
 const (
-	queuePrefix     = "q:"
-	messagePrefix   = "m:"
-	consumerPrefix  = "c:"
-	statsPrefix     = "s:"
-	delayedPrefix   = "d:"
-	
+	queuePrefix    = "q:"
+	messagePrefix  = "m:"
+	consumerPrefix = "c:"
+	statsPrefix    = "s:"
+
 	// Optimization constants
-	maxBatchSize    = 1000
-	defaultTimeout  = 30 * time.Second
-	pollInterval    = 10 * time.Millisecond
+	maxBatchSize   = 1000
+	defaultTimeout = 30 * time.Second
+	pollInterval   = 10 * time.Millisecond
 )
 
-// QueuePush adds a message to a queue with optimized single transaction
-func (s *BadgerStorage) QueuePush(ctx context.Context, queue string, data []byte, delay time.Duration) (string, error) {
+// QueuePush adds a message to a queue
+func (s *BadgerStorage) QueuePush(ctx context.Context, queue string, data []byte) (string, error) {
 	messageID := uuid.New().String()
 	now := time.Now()
-	
+
 	message := QueueMessage{
 		ID:         messageID,
 		Queue:      queue,
 		Data:       data,
 		CreatedAt:  now,
-		DelayUntil: now.Add(delay),
+		DelayUntil: now, // No delay
 		RetryCount: 0,
 	}
 
@@ -51,21 +50,12 @@ func (s *BadgerStorage) QueuePush(ctx context.Context, queue string, data []byte
 			return err
 		}
 
-		// Add to appropriate index
-		if delay > 0 {
-			// Delayed message - use timestamp for ordering
-			delayedKey := delayedPrefix + queue + ":" + fmt.Sprintf("%016d", message.DelayUntil.UnixNano()) + ":" + messageID
-			if err := txn.Set([]byte(delayedKey), []byte(messageID)); err != nil {
-				return err
-			}
-		} else {
-			// Immediate message
-			queueKey := queuePrefix + queue + ":" + fmt.Sprintf("%016d", now.UnixNano()) + ":" + messageID
-			if err := txn.Set([]byte(queueKey), []byte(messageID)); err != nil {
-				return err
-			}
+		// Add to queue index (immediate message only)
+		queueKey := queuePrefix + queue + ":" + fmt.Sprintf("%016d", now.UnixNano()) + ":" + messageID
+		if err := txn.Set([]byte(queueKey), []byte(messageID)); err != nil {
+			return err
 		}
-		
+
 		// Update stats in same transaction
 		statsKey := statsPrefix + queue
 		stats := QueueStats{Name: queue, Size: 1}
@@ -76,7 +66,7 @@ func (s *BadgerStorage) QueuePush(ctx context.Context, queue string, data []byte
 				stats.Size++
 			}
 		}
-		
+
 		statsData, _ := json.Marshal(stats)
 		return txn.Set([]byte(statsKey), statsData)
 	})
@@ -88,11 +78,7 @@ func (s *BadgerStorage) QueuePush(ctx context.Context, queue string, data []byte
 func (s *BadgerStorage) QueuePop(ctx context.Context, queue string, timeout time.Duration) (QueueMessage, error) {
 	var message QueueMessage
 	var found bool
-	now := time.Now()
-	deadline := now.Add(timeout)
-
-	// Process delayed messages first (move ready ones to main queue)
-	s.processDelayedMessages(ctx, queue)
+	deadline := time.Now().Add(timeout)
 
 	for time.Now().Before(deadline) {
 		err := s.db.Update(func(txn *badger.Txn) error {
@@ -105,7 +91,7 @@ func (s *BadgerStorage) QueuePop(ctx context.Context, queue string, timeout time
 			// Seek to first message in queue (ordered by timestamp)
 			prefix := []byte(queuePrefix + queue + ":")
 			it.Seek(prefix)
-			
+
 			if !it.ValidForPrefix(prefix) {
 				return nil // No messages
 			}
@@ -118,7 +104,7 @@ func (s *BadgerStorage) QueuePop(ctx context.Context, queue string, timeout time
 			}
 
 			messageID := string(val)
-			
+
 			// Get message data
 			messageKey := messagePrefix + messageID
 			item, err := txn.Get([]byte(messageKey))
@@ -142,11 +128,19 @@ func (s *BadgerStorage) QueuePop(ctx context.Context, queue string, timeout time
 				return err
 			}
 
+			// Skip messages with invalid timestamps (zero values)
+			if message.CreatedAt.IsZero() || message.DelayUntil.IsZero() {
+				// Delete the orphaned message and index
+				txn.Delete([]byte(messageKey))
+				txn.Delete(idxItem.Key())
+				return nil // Try next message
+			}
+
 			// Remove from queue index
 			if err := txn.Delete(idxItem.Key()); err != nil {
 				return err
 			}
-			
+
 			// Update stats
 			statsKey := statsPrefix + queue
 			stats := QueueStats{Name: queue}
@@ -183,7 +177,8 @@ func (s *BadgerStorage) QueuePop(ctx context.Context, queue string, timeout time
 	}
 
 	if !found {
-		return message, fmt.Errorf("no message available in queue %s", queue)
+		// Return empty message (not an error) when no message is available
+		return QueueMessage{}, nil
 	}
 
 	return message, nil
@@ -200,7 +195,7 @@ func (s *BadgerStorage) QueuePeek(ctx context.Context, queue string, limit int) 
 
 		count := 0
 		prefix := []byte(queuePrefix + queue + ":")
-		
+
 		for it.Seek(prefix); it.ValidForPrefix(prefix) && count < limit; it.Next() {
 			// Get message ID
 			val, err := it.Item().ValueCopy(nil)
@@ -208,7 +203,7 @@ func (s *BadgerStorage) QueuePeek(ctx context.Context, queue string, limit int) 
 				continue
 			}
 			messageID := string(val)
-			
+
 			// Get message data
 			messageKey := messagePrefix + messageID
 			item, err := txn.Get([]byte(messageKey))
@@ -330,11 +325,11 @@ func (s *BadgerStorage) QueueStats(ctx context.Context, queue string) (QueueStat
 
 // updateQueueStats updates queue statistics
 func (s *BadgerStorage) updateQueueStats(ctx context.Context, queue string, deltaSize, deltaProcessed, deltaFailed, deltaConsumers int64) error {
-    // Note: ctx is reserved for future use (deadline/cancellation hook)
-    _ = ctx
-    return s.db.Update(func(txn *badger.Txn) error {
-        statsKey := statsPrefix + queue
-		
+	// Note: ctx is reserved for future use (deadline/cancellation hook)
+	_ = ctx
+	return s.db.Update(func(txn *badger.Txn) error {
+		statsKey := statsPrefix + queue
+
 		var stats QueueStats
 		item, err := txn.Get([]byte(statsKey))
 		if err == nil {
@@ -362,27 +357,81 @@ func (s *BadgerStorage) updateQueueStats(ctx context.Context, queue string, delt
 func (s *BadgerStorage) QueuePurge(ctx context.Context, queue string) (int64, error) {
 	var purged int64
 
-	err := s.db.Update(func(txn *badger.Txn) error {
+	// Use multiple smaller transactions to avoid issues with large transactions
+	
+	// First, collect all message IDs
+	var messageIDs []string
+	err := s.db.View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = true
 		it := txn.NewIterator(opts)
 		defer it.Close()
 
 		prefix := []byte(queuePrefix + queue + ":")
-		wb := s.db.NewWriteBatch()
-		defer wb.Cancel()
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			val, err := it.Item().ValueCopy(nil)
+			if err != nil {
+				continue
+			}
+			messageID := string(val)
+			messageIDs = append(messageIDs, messageID)
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	// Delete queue index entries
+	err = s.db.Update(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		prefix := []byte(queuePrefix + queue + ":")
+		keysToDelete := make([][]byte, 0)
 		
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			keyCopy := it.Item().KeyCopy(nil)
-			if err := wb.Delete(keyCopy); err != nil {
+			keysToDelete = append(keysToDelete, it.Item().KeyCopy(nil))
+		}
+		
+		for _, key := range keysToDelete {
+			if err := txn.Delete(key); err != nil {
 				return err
 			}
 			purged++
 		}
-
-		return wb.Flush()
+		return nil
 	})
+	if err != nil {
+		return 0, err
+	}
 
-	return purged, err
+	// Delete all message data
+	err = s.db.Update(func(txn *badger.Txn) error {
+		for _, messageID := range messageIDs {
+			messageKey := messagePrefix + messageID
+			if err := txn.Delete([]byte(messageKey)); err != nil && err != badger.ErrKeyNotFound {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	
+	// Reset queue stats
+	err = s.db.Update(func(txn *badger.Txn) error {
+		statsKey := statsPrefix + queue
+		return txn.Delete([]byte(statsKey))
+	})
+	if err != nil && err != badger.ErrKeyNotFound {
+		return 0, err
+	}
+
+	return purged, nil
 }
 
 // QueueDelete removes an entire queue
@@ -431,42 +480,35 @@ func (s *BadgerStorage) QueueList(ctx context.Context) ([]string, error) {
 }
 
 // QueuePushBatch adds multiple messages to a queue with optimized batch processing
-func (s *BadgerStorage) QueuePushBatch(ctx context.Context, queue string, messages [][]byte, delays []time.Duration) ([]string, error) {
+func (s *BadgerStorage) QueuePushBatch(ctx context.Context, queue string, messages [][]byte) ([]string, error) {
 	if len(messages) == 0 {
 		return []string{}, nil
 	}
-	
+
 	// Limit batch size for memory efficiency
 	if len(messages) > maxBatchSize {
 		return nil, fmt.Errorf("batch size %d exceeds maximum %d", len(messages), maxBatchSize)
 	}
-	
-	// Ensure delays slice has same length as messages
-	if len(delays) == 0 {
-		delays = make([]time.Duration, len(messages))
-	} else if len(delays) != len(messages) {
-		return nil, fmt.Errorf("delays length (%d) must match messages length (%d)", len(delays), len(messages))
-	}
-	
+
 	messageIDs := make([]string, len(messages))
 	now := time.Now()
-	
+
 	// Use write batch for better performance
 	wb := s.db.NewWriteBatch()
 	defer wb.Cancel()
-	
+
 	// Pre-generate all message IDs and data
 	var statsUpdate int64
 	for i, data := range messages {
 		messageID := uuid.New().String()
 		messageIDs[i] = messageID
-		
+
 		message := QueueMessage{
 			ID:         messageID,
 			Queue:      queue,
 			Data:       data,
 			CreatedAt:  now,
-			DelayUntil: now.Add(delays[i]),
+			DelayUntil: now, // No delay
 			RetryCount: 0,
 		}
 
@@ -481,23 +523,15 @@ func (s *BadgerStorage) QueuePushBatch(ctx context.Context, queue string, messag
 			return nil, err
 		}
 
-		// Add to appropriate index with timestamp ordering
-		if delays[i] > 0 {
-			// Delayed message
-			delayKey := delayedPrefix + queue + ":" + fmt.Sprintf("%016d", message.DelayUntil.UnixNano()) + ":" + messageID
-			if err := wb.Set([]byte(delayKey), []byte(messageID)); err != nil {
-				return nil, err
-			}
-		} else {
-			// Immediate message with timestamp ordering
-			queueKey := queuePrefix + queue + ":" + fmt.Sprintf("%016d", now.UnixNano()+int64(i)) + ":" + messageID
-			if err := wb.Set([]byte(queueKey), []byte(messageID)); err != nil {
-				return nil, err
-			}
+		// Add to queue index (immediate message only)
+		queueKey := queuePrefix + queue + ":" + fmt.Sprintf("%016d", now.UnixNano()+int64(i)) + ":" + messageID
+		if err := wb.Set([]byte(queueKey), []byte(messageID)); err != nil {
+			return nil, err
 		}
+
 		statsUpdate++
 	}
-	
+
 	// Update stats once at the end
 	err := s.db.Update(func(txn *badger.Txn) error {
 		statsKey := statsPrefix + queue
@@ -509,19 +543,19 @@ func (s *BadgerStorage) QueuePushBatch(ctx context.Context, queue string, messag
 				stats.Size += statsUpdate
 			}
 		}
-		
+
 		statsData, _ := json.Marshal(stats)
 		return txn.Set([]byte(statsKey), statsData)
 	})
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Flush the batch
 	if err := wb.Flush(); err != nil {
 		return nil, err
 	}
-	
+
 	return messageIDs, nil
 }
 
@@ -533,13 +567,10 @@ func (s *BadgerStorage) QueuePopBatch(ctx context.Context, queue string, limit i
 	if limit > 100 {
 		limit = 100 // Cap batch size for memory efficiency
 	}
-	
+
 	messages := make([]QueueMessage, 0, limit)
 	deadline := time.Now().Add(timeout)
-	
-	// Process delayed messages first
-	s.processDelayedMessages(ctx, queue)
-	
+
 	// Single transaction to get multiple messages
 	err := s.db.Update(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
@@ -550,7 +581,7 @@ func (s *BadgerStorage) QueuePopBatch(ctx context.Context, queue string, limit i
 		// Seek to first message in queue
 		prefix := []byte(queuePrefix + queue + ":")
 		count := 0
-		
+
 		for it.Seek(prefix); it.ValidForPrefix(prefix) && count < limit; it.Next() {
 			// Get message ID from index entry
 			idxItem := it.Item()
@@ -560,7 +591,7 @@ func (s *BadgerStorage) QueuePopBatch(ctx context.Context, queue string, limit i
 			}
 
 			messageID := string(val)
-			
+
 			// Get message data
 			messageKey := messagePrefix + messageID
 			item, err := txn.Get([]byte(messageKey))
@@ -589,11 +620,11 @@ func (s *BadgerStorage) QueuePopBatch(ctx context.Context, queue string, limit i
 			if err := txn.Delete(idxItem.Key()); err != nil {
 				continue
 			}
-			
+
 			messages = append(messages, message)
 			count++
 		}
-		
+
 		// Update stats once for all messages
 		if len(messages) > 0 {
 			statsKey := statsPrefix + queue
@@ -609,14 +640,14 @@ func (s *BadgerStorage) QueuePopBatch(ctx context.Context, queue string, limit i
 			statsData, _ := json.Marshal(stats)
 			txn.Set([]byte(statsKey), statsData)
 		}
-		
+
 		return nil
 	})
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// If we didn't get enough messages and still have time, try again
 	if len(messages) == 0 && time.Now().Before(deadline) {
 		select {
@@ -627,69 +658,6 @@ func (s *BadgerStorage) QueuePopBatch(ctx context.Context, queue string, limit i
 			return s.QueuePopBatch(ctx, queue, limit, time.Until(deadline))
 		}
 	}
-	
+
 	return messages, nil
-}
-
-// processDelayedMessages moves ready delayed messages to the main queue
-func (s *BadgerStorage) processDelayedMessages(ctx context.Context, queue string) {
-	now := time.Now()
-	
-	s.db.Update(func(txn *badger.Txn) error {
-		opts := badger.DefaultIteratorOptions
-		opts.PrefetchSize = 50
-		it := txn.NewIterator(opts)
-		defer it.Close()
-
-		// Check delayed messages
-		delayedPrefix := []byte(delayedPrefix + queue + ":")
-		for it.Seek(delayedPrefix); it.ValidForPrefix(delayedPrefix); it.Next() {
-			key := string(it.Item().Key())
-			parts := strings.Split(key, ":")
-			if len(parts) < 4 {
-				continue
-			}
-
-			// Parse nanosecond timestamp
-			timestampStr := parts[2]
-			if len(timestampStr) != 16 {
-				continue
-			}
-			
-			// Convert from formatted timestamp
-			var timestamp int64
-			for i, c := range timestampStr {
-				if c >= '0' && c <= '9' {
-					timestamp = timestamp*10 + int64(c-'0')
-				} else {
-					break
-				}
-				if i == 15 {
-					break
-				}
-			}
-
-			if time.Unix(0, timestamp).After(now) {
-				break // Not ready yet (ordered by timestamp)
-			}
-
-			// Message is ready, move to regular queue
-			val, err := it.Item().ValueCopy(nil)
-			if err != nil {
-				continue
-			}
-			messageID := string(val)
-			queueKey := queuePrefix + queue + ":" + fmt.Sprintf("%016d", now.UnixNano()) + ":" + messageID
-
-			if err := txn.Set([]byte(queueKey), []byte(messageID)); err != nil {
-				continue
-			}
-
-			if err := txn.Delete(it.Item().Key()); err != nil {
-				continue
-			}
-		}
-
-		return nil
-	})
 }

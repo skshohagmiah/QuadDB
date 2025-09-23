@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gomsg/storage"
-	
 	// TODO: Uncomment after generating gRPC code with: protoc --go_out=. --go-grpc_out=. api/proto/*.proto
 	// clusterpb "gomsg/api/generated/cluster"
 	// "google.golang.org/grpc"
@@ -32,7 +31,7 @@ func (ps *PartitionedStorage) Set(ctx context.Context, key string, value []byte,
 	if !ps.cluster.OwnsKey(key) {
 		return fmt.Errorf("key %s not owned by this node", key)
 	}
-	
+
 	return ps.storage.Set(ctx, key, value, ttl)
 }
 
@@ -41,12 +40,12 @@ func (ps *PartitionedStorage) Get(ctx context.Context, key string) ([]byte, bool
 	if !ps.cluster.OwnsKey(key) {
 		return nil, false, fmt.Errorf("key %s not owned by this node", key)
 	}
-	
+
 	value, found, err := ps.storage.Get(ctx, key)
 	if err != nil {
 		return nil, false, err
 	}
-	
+
 	return value, found, nil
 }
 
@@ -59,11 +58,11 @@ func (ps *PartitionedStorage) Delete(ctx context.Context, keys ...string) (int, 
 			ownedKeys = append(ownedKeys, key)
 		}
 	}
-	
+
 	if len(ownedKeys) == 0 {
 		return 0, nil
 	}
-	
+
 	return ps.storage.Delete(ctx, ownedKeys...)
 }
 
@@ -72,7 +71,7 @@ func (ps *PartitionedStorage) Exists(ctx context.Context, key string) (bool, err
 	if !ps.cluster.OwnsKey(key) {
 		return false, fmt.Errorf("key %s not owned by this node", key)
 	}
-	
+
 	return ps.storage.Exists(ctx, key)
 }
 
@@ -81,8 +80,8 @@ func (ps *PartitionedStorage) QueuePush(ctx context.Context, queue string, messa
 	if !ps.cluster.OwnsKey(queue) {
 		return "", fmt.Errorf("queue %s not owned by this node", queue)
 	}
-	
-	return ps.storage.QueuePush(ctx, queue, message, delay)
+
+	return ps.storage.QueuePush(ctx, queue, message)
 }
 
 // QueuePop pops a message from a queue if this node owns the queue's partition
@@ -90,7 +89,7 @@ func (ps *PartitionedStorage) QueuePop(ctx context.Context, queue string, timeou
 	if !ps.cluster.OwnsKey(queue) {
 		return storage.QueueMessage{}, fmt.Errorf("queue %s not owned by this node", queue)
 	}
-	
+
 	return ps.storage.QueuePop(ctx, queue, timeout)
 }
 
@@ -99,7 +98,7 @@ func (ps *PartitionedStorage) StreamCreateTopic(ctx context.Context, topic strin
 	if !ps.cluster.OwnsKey(topic) {
 		return fmt.Errorf("topic %s not owned by this node", topic)
 	}
-	
+
 	return ps.storage.StreamCreateTopic(ctx, topic, partitions)
 }
 
@@ -108,7 +107,7 @@ func (ps *PartitionedStorage) StreamDeleteTopic(ctx context.Context, topic strin
 	if !ps.cluster.OwnsKey(topic) {
 		return fmt.Errorf("topic %s not owned by this node", topic)
 	}
-	
+
 	return ps.storage.StreamDeleteTopic(ctx, topic)
 }
 
@@ -120,11 +119,11 @@ func (ps *PartitionedStorage) StreamPublish(ctx context.Context, topic string, p
 	if routingKey == "" {
 		routingKey = topic
 	}
-	
+
 	if !ps.cluster.OwnsKey(routingKey) {
 		return storage.StreamMessage{}, fmt.Errorf("stream partition for key %s not owned by this node", routingKey)
 	}
-	
+
 	return ps.storage.StreamPublish(ctx, topic, partitionKey, data, headers)
 }
 
@@ -135,7 +134,7 @@ func (ps *PartitionedStorage) StreamRead(ctx context.Context, topic string, part
 	if !ps.cluster.OwnsKey(streamPartitionKey) {
 		return nil, fmt.Errorf("stream partition %s:%d not owned by this node", topic, partition)
 	}
-	
+
 	return ps.storage.StreamRead(ctx, topic, partition, offset, limit)
 }
 
@@ -146,7 +145,7 @@ func (ps *PartitionedStorage) GetPartitionKeys(ctx context.Context, partition in
 	if err != nil {
 		return nil, fmt.Errorf("failed to get keys: %w", err)
 	}
-	
+
 	var partitionKeys []string
 	for _, key := range allKeys {
 		keyPartition := ps.cluster.GetKeyPartition(key)
@@ -154,7 +153,7 @@ func (ps *PartitionedStorage) GetPartitionKeys(ctx context.Context, partition in
 			partitionKeys = append(partitionKeys, key)
 		}
 	}
-	
+
 	return partitionKeys, nil
 }
 
@@ -165,11 +164,11 @@ func (ps *PartitionedStorage) MigratePartition(ctx context.Context, partition in
 	if err != nil {
 		return fmt.Errorf("failed to get partition keys: %w", err)
 	}
-	
+
 	if len(keys) == 0 {
 		return nil // Nothing to migrate
 	}
-	
+
 	// 2. Get all key-value pairs
 	data := make(map[string][]byte)
 	for _, key := range keys {
@@ -181,17 +180,17 @@ func (ps *PartitionedStorage) MigratePartition(ctx context.Context, partition in
 			data[key] = value
 		}
 	}
-	
+
 	// 3. Send data to target node (placeholder for gRPC call)
 	if err := ps.sendDataToNode(ctx, targetNode, data); err != nil {
 		return fmt.Errorf("failed to send data to target node: %w", err)
 	}
-	
+
 	// 4. Delete keys locally after successful transfer
 	if _, err := ps.storage.Delete(ctx, keys...); err != nil {
 		return fmt.Errorf("failed to delete migrated keys: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -202,16 +201,16 @@ func (ps *PartitionedStorage) sendDataToNode(ctx context.Context, targetNode str
 	if nodeAddr == "" {
 		return fmt.Errorf("target node %s address not found", targetNode)
 	}
-	
+
 	// TODO: Implement actual gRPC call after generating protobuf code
 	// conn, err := grpc.Dial(nodeAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	// if err != nil {
 	//     return fmt.Errorf("failed to dial target node %s: %w", nodeAddr, err)
 	// }
 	// defer conn.Close()
-	// 
+	//
 	// client := clusterpb.NewClusterServiceClient(conn)
-	// 
+	//
 	// // Convert data to protobuf format
 	// var keyValuePairs []*clusterpb.KeyValuePair
 	// for key, value := range data {
@@ -221,25 +220,25 @@ func (ps *PartitionedStorage) sendDataToNode(ctx context.Context, targetNode str
 	//         Ttl:   0, // No TTL for migrated data
 	//     })
 	// }
-	// 
+	//
 	// req := &clusterpb.MigrateDataRequest{
 	//     Partition: 0, // Will be set by caller
 	//     Data:      keyValuePairs,
 	// }
-	// 
+	//
 	// resp, err := client.MigrateData(ctx, req)
 	// if err != nil {
 	//     return fmt.Errorf("failed to migrate data: %w", err)
 	// }
-	// 
+	//
 	// if !resp.Status.Success {
 	//     return fmt.Errorf("migrate data failed: %s", resp.Status.Message)
 	// }
-	
+
 	// Placeholder - assume successful transfer for now
 	_ = targetNode
 	_ = data
-	
+
 	return nil
 }
 
@@ -261,7 +260,7 @@ func (ps *PartitionedStorage) ReplicateKey(ctx context.Context, key string, valu
 	if len(owners) <= 1 {
 		return nil // No replicas needed
 	}
-	
+
 	// Skip the primary (ourselves) and replicate to others
 	var replicationErrors []error
 	for i := 1; i < len(owners); i++ {
@@ -269,19 +268,19 @@ func (ps *PartitionedStorage) ReplicateKey(ctx context.Context, key string, valu
 		if replicaNode == ps.cluster.nodeID {
 			continue // Skip if we're also a replica
 		}
-		
+
 		// Send replication request to replica
 		if err := ps.sendReplicationToNode(ctx, replicaNode, key, value, ttl); err != nil {
 			replicationErrors = append(replicationErrors, fmt.Errorf("failed to replicate to %s: %w", replicaNode, err))
 			continue
 		}
 	}
-	
+
 	// Return error if all replications failed
 	if len(replicationErrors) > 0 && len(replicationErrors) == len(owners)-1 {
 		return fmt.Errorf("all replications failed: %v", replicationErrors)
 	}
-	
+
 	return nil
 }
 
@@ -292,37 +291,37 @@ func (ps *PartitionedStorage) sendReplicationToNode(ctx context.Context, nodeID,
 	if nodeAddr == "" {
 		return fmt.Errorf("target node %s address not found", nodeID)
 	}
-	
+
 	// TODO: Implement actual gRPC call after generating protobuf code
 	// conn, err := grpc.Dial(nodeAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	// if err != nil {
 	//     return fmt.Errorf("failed to dial target node %s: %w", nodeAddr, err)
 	// }
 	// defer conn.Close()
-	// 
+	//
 	// client := clusterpb.NewClusterServiceClient(conn)
-	// 
+	//
 	// req := &clusterpb.ReplicateDataRequest{
 	//     Key:   key,
 	//     Value: value,
 	//     Ttl:   int64(ttl.Seconds()),
 	// }
-	// 
+	//
 	// resp, err := client.ReplicateData(ctx, req)
 	// if err != nil {
 	//     return fmt.Errorf("failed to replicate data: %w", err)
 	// }
-	// 
+	//
 	// if !resp.Status.Success {
 	//     return fmt.Errorf("replicate data failed: %s", resp.Status.Message)
 	// }
-	
+
 	// Placeholder - assume successful replication for now
 	_ = nodeID
 	_ = key
 	_ = value
 	_ = ttl
-	
+
 	return nil
 }
 
@@ -337,11 +336,11 @@ func (ps *PartitionedStorage) HandleReplication(ctx context.Context, key string,
 			break
 		}
 	}
-	
+
 	if !isReplica {
 		return fmt.Errorf("this node is not a replica for key %s", key)
 	}
-	
+
 	// Store the replicated data
 	return ps.storage.Set(ctx, key, value, ttl)
 }
@@ -369,4 +368,3 @@ func (ps *PartitionedStorage) getNodeAddress(nodeID string) string {
 	// In production, this would query the cluster for node addresses
 	return nodeID // Placeholder - assume nodeID is the address
 }
-

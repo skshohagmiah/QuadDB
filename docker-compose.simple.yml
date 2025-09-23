@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # Single GoMsg node for simple deployment
+  gomsg:
+    image: shohag2100/gomsg:latest
+    container_name: gomsg
+    ports:
+      - "9000:9000"  # gRPC API port
+      - "7000:7000"  # Raft port (for future clustering)
+    environment:
+      - GOMSG_NODE_ID=gomsg-single
+      - GOMSG_BIND_ADDR=0.0.0.0:9000
+      - GOMSG_DATA_DIR=/data
+      - GOMSG_BOOTSTRAP=true
+      - GOMSG_PARTITIONS=16
+      - GOMSG_REPLICATION_FACTOR=1
+    volumes:
+      - gomsg-data:/data
+    networks:
+      - gomsg-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: GoMsg CLI for administration
+  gomsg-cli:
+    image: shohag2100/gomsg:latest
+    container_name: gomsg-cli
+    entrypoint: ["./gomsg-cli"]
+    command: ["--help"]
+    networks:
+      - gomsg-network
+    profiles:
+      - cli
+    depends_on:
+      - gomsg
+
+volumes:
+  gomsg-data:
+    driver: local
+
+networks:
+  gomsg-network:
+    driver: bridge

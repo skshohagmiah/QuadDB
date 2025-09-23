@@ -483,7 +483,7 @@ func (s *BadgerStorage) StreamCreateTopic(ctx context.Context, topic string, par
 
 // StreamDeleteTopic deletes a topic and all its messages
 func (s *BadgerStorage) StreamDeleteTopic(ctx context.Context, topic string) error {
-	return s.db.Update(func(txn *badger.Txn) error {
+	err := s.db.Update(func(txn *badger.Txn) error {
 		// Delete topic info
 		topicKey := topicPrefix + topic
 		if err := txn.Delete([]byte(topicKey)); err != nil && err != badger.ErrKeyNotFound {
@@ -511,6 +511,7 @@ func (s *BadgerStorage) StreamDeleteTopic(ctx context.Context, topic string) err
 
 		// Delete offsets
 		offsetPrefixBytes := []byte(offsetPrefix + topic + ":")
+		keysToDelete = keysToDelete[:0] // Reset slice
 		for it.Seek(offsetPrefixBytes); it.ValidForPrefix(offsetPrefixBytes); it.Next() {
 			keysToDelete = append(keysToDelete, it.Item().KeyCopy(nil))
 		}
@@ -523,7 +524,21 @@ func (s *BadgerStorage) StreamDeleteTopic(ctx context.Context, topic string) err
 
 		// Delete consumer offsets
 		consumerPrefixBytes := []byte(consumerPrefix + topic + ":")
+		keysToDelete = keysToDelete[:0] // Reset slice
 		for it.Seek(consumerPrefixBytes); it.ValidForPrefix(consumerPrefixBytes); it.Next() {
+			keysToDelete = append(keysToDelete, it.Item().KeyCopy(nil))
+		}
+
+		for _, key := range keysToDelete {
+			if err := txn.Delete(key); err != nil {
+				return err
+			}
+		}
+
+		// Delete sequence counters
+		seqPrefix := []byte("seq:" + topic + ":")
+		keysToDelete = keysToDelete[:0] // Reset slice
+		for it.Seek(seqPrefix); it.ValidForPrefix(seqPrefix); it.Next() {
 			keysToDelete = append(keysToDelete, it.Item().KeyCopy(nil))
 		}
 
@@ -535,6 +550,13 @@ func (s *BadgerStorage) StreamDeleteTopic(ctx context.Context, topic string) err
 
 		return nil
 	})
+	
+	// Clear sequence cache after successful deletion
+	if err == nil {
+		s.clearSequenceCache(topic)
+	}
+	
+	return err
 }
 
 // StreamListTopics lists all topics
@@ -674,10 +696,24 @@ func (s *BadgerStorage) StreamPurge(ctx context.Context, topic string) (int64, e
 		}
 		
 		// Reset offsets for all partitions
-		offsetPrefix := []byte(offsetPrefix + topic + ":")
+		offsetPrefixBytes := []byte(offsetPrefix + topic + ":")
 		keysToDelete = keysToDelete[:0] // Reset slice
 		
-		for it.Seek(offsetPrefix); it.ValidForPrefix(offsetPrefix); it.Next() {
+		for it.Seek(offsetPrefixBytes); it.ValidForPrefix(offsetPrefixBytes); it.Next() {
+			key := make([]byte, len(it.Item().Key()))
+			copy(key, it.Item().Key())
+			keysToDelete = append(keysToDelete, key)
+		}
+		
+		for _, key := range keysToDelete {
+			if err := txn.Delete(key); err != nil {
+				return err
+			}
+		}
+		
+		// Reset sequence counters for all partitions
+		seqPrefix := []byte("seq:" + topic + ":")
+		for it.Seek(seqPrefix); it.ValidForPrefix(seqPrefix); it.Next() {
 			key := make([]byte, len(it.Item().Key()))
 			copy(key, it.Item().Key())
 			keysToDelete = append(keysToDelete, key)
@@ -691,6 +727,11 @@ func (s *BadgerStorage) StreamPurge(ctx context.Context, topic string) (int64, e
 		
 		return nil
 	})
+	
+	// Clear sequence cache after purge
+	if err == nil {
+		s.clearSequenceCache(topic)
+	}
 	
 	return purgedCount, err
 }

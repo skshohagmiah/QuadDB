@@ -13,10 +13,14 @@ import (
 	kvpb "gomsg/api/generated/kv"
 	queuepb "gomsg/api/generated/queue"
 	streampb "gomsg/api/generated/stream"
+	"gomsg/tests/testutil"
 )
 
 func setupClients(t *testing.T) (kvpb.KVServiceClient, queuepb.QueueServiceClient, streampb.StreamServiceClient) {
-	conn, err := grpc.Dial("localhost:9000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// Start test server automatically
+	testServer := testutil.StartTestServer(t)
+	
+	conn, err := grpc.Dial(testServer.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to connect to server: %v", err)
 	}
@@ -48,7 +52,6 @@ func TestUserRegistrationWorkflow(t *testing.T) {
 	pushResp, err := queueClient.Push(ctx, &queuepb.PushRequest{
 		Queue: "email_verification",
 		Data:  []byte(fmt.Sprintf(`{"user_id":"%s","email":"%s","type":"verification"}`, userID, email)),
-		Delay: 0,
 	})
 	if err != nil {
 		t.Fatalf("Failed to queue email job: %v", err)
@@ -194,7 +197,6 @@ func TestConcurrentOperations(t *testing.T) {
 				_, err = queueClient.Push(ctx, &queuepb.PushRequest{
 					Queue: fmt.Sprintf("queue_%d", workerID),
 					Data:  []byte(fmt.Sprintf("job_%d_%d", workerID, j)),
-					Delay: 0,
 				})
 				if err != nil {
 					errors <- fmt.Errorf("worker %d queue push failed: %v", workerID, err)
@@ -296,7 +298,6 @@ func TestDataConsistency(t *testing.T) {
 		_, err := queueClient.Push(ctx, &queuepb.PushRequest{
 			Queue: queueName,
 			Data:  []byte(msg),
-			Delay: 0,
 		})
 		if err != nil {
 			t.Fatalf("Failed to push message %s: %v", msg, err)

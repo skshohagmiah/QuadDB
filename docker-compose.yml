@@ -6,11 +6,11 @@ services:
     build: .
     container_name: gomsg-node1
     ports:
-      - "8080:8080"
+      - "9000:9000"
       - "7000:7000"  # Raft port
     environment:
       - GOMSG_NODE_ID=node1
-      - GOMSG_BIND_ADDR=0.0.0.0:8080
+      - GOMSG_BIND_ADDR=0.0.0.0:9000
       - GOMSG_DATA_DIR=/data
       - GOMSG_BOOTSTRAP=true
       - GOMSG_PARTITIONS=32
@@ -20,7 +20,7 @@ services:
     networks:
       - gomsg-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -30,14 +30,14 @@ services:
     build: .
     container_name: gomsg-node2
     ports:
-      - "8081:8080"
+      - "9001:9000"
       - "7001:7000"  # Raft port
     environment:
       - GOMSG_NODE_ID=node2
-      - GOMSG_BIND_ADDR=0.0.0.0:8080
+      - GOMSG_BIND_ADDR=0.0.0.0:9000
       - GOMSG_DATA_DIR=/data
       - GOMSG_BOOTSTRAP=false
-      - GOMSG_SEED_NODES=gomsg-node1:8080
+      - GOMSG_SEED_NODES=gomsg-node1:9000
       - GOMSG_PARTITIONS=32
       - GOMSG_REPLICATION_FACTOR=3
     volumes:
@@ -47,7 +47,7 @@ services:
     depends_on:
       - gomsg-node1
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -57,14 +57,14 @@ services:
     build: .
     container_name: gomsg-node3
     ports:
-      - "8082:8080"
+      - "9002:9000"
       - "7002:7000"  # Raft port
     environment:
       - GOMSG_NODE_ID=node3
-      - GOMSG_BIND_ADDR=0.0.0.0:8080
+      - GOMSG_BIND_ADDR=0.0.0.0:9000
       - GOMSG_DATA_DIR=/data
       - GOMSG_BOOTSTRAP=false
-      - GOMSG_SEED_NODES=gomsg-node1:8080
+      - GOMSG_SEED_NODES=gomsg-node1:9000
       - GOMSG_PARTITIONS=32
       - GOMSG_REPLICATION_FACTOR=3
     volumes:
@@ -74,7 +74,7 @@ services:
     depends_on:
       - gomsg-node1
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
       interval: 30s
       timeout: 10s
       retries: 3

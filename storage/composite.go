@@ -105,8 +105,8 @@ func (c *CompositeStorage) MGet(ctx context.Context, keys []string) (map[string]
 
 // ------- Queue operations (Badger) -------
 
-func (c *CompositeStorage) QueuePush(ctx context.Context, queue string, message []byte, delay time.Duration) (string, error) {
-	return c.badger.QueuePush(ctx, queue, message, delay)
+func (c *CompositeStorage) QueuePush(ctx context.Context, queue string, data []byte) (string, error) {
+	return c.badger.QueuePush(ctx, queue, data)
 }
 
 func (c *CompositeStorage) QueuePop(ctx context.Context, queue string, timeout time.Duration) (QueueMessage, error) {
@@ -142,8 +142,8 @@ func (c *CompositeStorage) QueueList(ctx context.Context) ([]string, error) {
 }
 
 // Queue batch operations
-func (c *CompositeStorage) QueuePushBatch(ctx context.Context, queue string, messages [][]byte, delays []time.Duration) ([]string, error) {
-	return c.badger.QueuePushBatch(ctx, queue, messages, delays)
+func (c *CompositeStorage) QueuePushBatch(ctx context.Context, queue string, messages [][]byte) ([]string, error) {
+	return c.badger.QueuePushBatch(ctx, queue, messages)
 }
 
 func (c *CompositeStorage) QueuePopBatch(ctx context.Context, queue string, limit int, timeout time.Duration) ([]QueueMessage, error) {

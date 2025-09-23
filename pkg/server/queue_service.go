@@ -36,12 +36,7 @@ func (s *QueueService) Push(ctx context.Context, req *queuepb.PushRequest) (*que
 		}, nil
 	}
 
-	var delay time.Duration
-	if req.Delay > 0 {
-		delay = time.Duration(req.Delay) * time.Second
-	}
-
-	messageID, err := s.storage.QueuePush(ctx, req.Queue, req.Data, delay)
+	messageID, err := s.storage.QueuePush(ctx, req.Queue, req.Data)
 	if err != nil {
 		return &queuepb.PushResponse{
 			Status: &commonpb.Status{
@@ -377,18 +372,14 @@ func (s *QueueService) PushBatch(ctx context.Context, req *queuepb.PushBatchRequ
 		}, nil
 	}
 
-	// Convert messages and delays
+	// Convert messages
 	messages := make([][]byte, len(req.Messages))
-	delays := make([]time.Duration, len(req.Messages))
 	
 	for i, msg := range req.Messages {
 		messages[i] = msg.Data
-		if msg.Delay > 0 {
-			delays[i] = time.Duration(msg.Delay) * time.Second
-		}
 	}
 
-	messageIDs, err := s.storage.QueuePushBatch(ctx, req.Queue, messages, delays)
+	messageIDs, err := s.storage.QueuePushBatch(ctx, req.Queue, messages)
 	if err != nil {
 		return &queuepb.PushBatchResponse{
 			Status: &commonpb.Status{

@@ -8,15 +8,19 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	streampb "gomsg/api/generated/stream"
+	"gomsg/tests/testutil"
 )
 
 func setupStreamClient(t *testing.T) streampb.StreamServiceClient {
-	conn, err := grpc.Dial("localhost:9000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// Start test server automatically
+	testServer := testutil.StartTestServer(t)
+	
+	conn, err := grpc.Dial(testServer.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to connect to server: %v", err)
 	}
 	t.Cleanup(func() { conn.Close() })
-	
+
 	return streampb.NewStreamServiceClient(conn)
 }
 
