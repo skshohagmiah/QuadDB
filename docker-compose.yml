@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # GoMsg Node 1 (Bootstrap node)
+  gomsg-node1:
+    build: .
+    container_name: gomsg-node1
+    ports:
+      - "8080:8080"
+      - "7000:7000"  # Raft port
+    environment:
+      - GOMSG_NODE_ID=node1
+      - GOMSG_BIND_ADDR=0.0.0.0:8080
+      - GOMSG_DATA_DIR=/data
+      - GOMSG_BOOTSTRAP=true
+      - GOMSG_PARTITIONS=32
+      - GOMSG_REPLICATION_FACTOR=3
+    volumes:
+      - gomsg-node1-data:/data
+    networks:
+      - gomsg-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # GoMsg Node 2
+  gomsg-node2:
+    build: .
+    container_name: gomsg-node2
+    ports:
+      - "8081:8080"
+      - "7001:7000"  # Raft port
+    environment:
+      - GOMSG_NODE_ID=node2
+      - GOMSG_BIND_ADDR=0.0.0.0:8080
+      - GOMSG_DATA_DIR=/data
+      - GOMSG_BOOTSTRAP=false
+      - GOMSG_SEED_NODES=gomsg-node1:8080
+      - GOMSG_PARTITIONS=32
+      - GOMSG_REPLICATION_FACTOR=3
+    volumes:
+      - gomsg-node2-data:/data
+    networks:
+      - gomsg-network
+    depends_on:
+      - gomsg-node1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # GoMsg Node 3
+  gomsg-node3:
+    build: .
+    container_name: gomsg-node3
+    ports:
+      - "8082:8080"
+      - "7002:7000"  # Raft port
+    environment:
+      - GOMSG_NODE_ID=node3
+      - GOMSG_BIND_ADDR=0.0.0.0:8080
+      - GOMSG_DATA_DIR=/data
+      - GOMSG_BOOTSTRAP=false
+      - GOMSG_SEED_NODES=gomsg-node1:8080
+      - GOMSG_PARTITIONS=32
+      - GOMSG_REPLICATION_FACTOR=3
+    volumes:
+      - gomsg-node3-data:/data
+    networks:
+      - gomsg-network
+    depends_on:
+      - gomsg-node1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: gomsg-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - gomsg-network
+    profiles:
+      - monitoring
+
+  # Optional: Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: gomsg-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - gomsg-network
+    profiles:
+      - monitoring
+
+volumes:
+  gomsg-node1-data:
+  gomsg-node2-data:
+  gomsg-node3-data:
+  grafana-data:
+
+networks:
+  gomsg-network:
+    driver: bridge
