@@ -6,9 +6,9 @@ import (
 
 	"google.golang.org/grpc/codes"
 
-	commonpb "gomsg/api/generated/common"
-	queuepb "gomsg/api/generated/queue"
-	"gomsg/storage"
+	commonpb "github.com/skshohagmiah/fluxdl/api/generated/common"
+	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
+	"github.com/skshohagmiah/fluxdl/storage"
 )
 
 // QueueService implements the Queue gRPC service
@@ -20,7 +20,8 @@ type QueueService struct {
 // NewQueueService creates a new Queue service
 func NewQueueService(store storage.Storage) *QueueService {
 	return &QueueService{
-		storage: store,
+		UnimplementedQueueServiceServer: queuepb.UnimplementedQueueServiceServer{},
+		storage:                         store,
 	}
 }
 
@@ -374,7 +375,7 @@ func (s *QueueService) PushBatch(ctx context.Context, req *queuepb.PushBatchRequ
 
 	// Convert messages
 	messages := make([][]byte, len(req.Messages))
-	
+
 	for i, msg := range req.Messages {
 		messages[i] = msg.Data
 	}

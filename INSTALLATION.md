@@ -1,6 +1,6 @@
-# GoMsg Installation Guide
+# fluxdl Installation Guide
 
-Complete step-by-step guide to install and run GoMsg with all available SDKs.
+Complete step-by-step guide to install and run fluxdl with all available SDKs.
 
 ## 📋 Prerequisites
 
@@ -13,25 +13,25 @@ Complete step-by-step guide to install and run GoMsg with all available SDKs.
 
 ## 🚀 Quick Start (Docker - Recommended)
 
-### 1. Run GoMsg Server
+### 1. Run fluxdl Server
 
 ```bash
-# Pull and run the latest GoMsg Docker image
+# Pull and run the latest fluxdl Docker image
 docker run -d \
-  --name gomsg \
+  --name fluxdl \
   -p 9000:9000 \
-  -v gomsg-data:/data \
-  shohag2100/gomsg:latest
+  -v fluxdl-data:/data \
+  shohag2100/fluxdl:latest
 
 # Verify it's running
-docker logs gomsg
+docker logs fluxdl
 ```
 
 ### 2. Test Connection
 
 ```bash
-# Check if GoMsg is responding
-curl -f http://localhost:9000/health || echo "GoMsg is running on gRPC port 9000"
+# Check if fluxdl is responding
+curl -f http://localhost:9000/health || echo "fluxdl is running on gRPC port 9000"
 ```
 
 Now jump to the [SDK Installation](#-sdk-installation) section for your preferred language.
@@ -41,11 +41,11 @@ Now jump to the [SDK Installation](#-sdk-installation) section for your preferre
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/shohag2100/gomsg.git
-cd gomsg
+git clone https://github.com/skshohagmiah/fluxdl.git
+cd fluxdl
 ```
 
-### 2. Build GoMsg Server
+### 2. Build fluxdl Server
 
 ```bash
 # Install dependencies and build
@@ -56,11 +56,11 @@ make build
 make docker
 ```
 
-### 3. Run GoMsg Server
+### 3. Run fluxdl Server
 
 ```bash
 # Run single node
-./bin/gomsg server --port 9000 --data-dir ./data
+./bin/fluxdl server --port 9000 --data-dir ./data
 
 # Or with Docker Compose
 make docker-compose
@@ -70,8 +70,8 @@ make docker-compose
 
 ```bash
 # Test with CLI
-./bin/gomsg-cli --server localhost:9000 kv set test "Hello GoMsg"
-./bin/gomsg-cli --server localhost:9000 kv get test
+./bin/fluxdl-cli --server localhost:9000 kv set test "Hello fluxdl"
+./bin/fluxdl-cli --server localhost:9000 kv get test
 ```
 
 ## 📚 SDK Installation
@@ -84,11 +84,11 @@ Choose your preferred programming language:
 
 ```bash
 # Create a new Go project
-mkdir my-gomsg-app && cd my-gomsg-app
-go mod init my-gomsg-app
+mkdir my-fluxdl-app && cd my-fluxdl-app
+go mod init my-fluxdl-app
 
 # Install the Go SDK
-go get github.com/shohag2100/gomsg-go-sdk
+go get github.com/skshohagmiah/fluxdl-go-sdk
 ```
 
 #### Quick Example
@@ -104,12 +104,12 @@ import (
     "log"
     "time"
 
-    gomsg "github.com/shohag2100/gomsg-go-sdk"
+    fluxdl "github.com/skshohagmiah/fluxdl-go-sdk"
 )
 
 func main() {
-    // Connect to GoMsg
-    client, err := gomsg.NewClient(&gomsg.Config{
+    // Connect to fluxdl
+    client, err := fluxdl.NewClient(&fluxdl.Config{
         Address: "localhost:9000",
         Timeout: 30 * time.Second,
     })
@@ -133,7 +133,7 @@ func main() {
     // Stream operations
     client.Stream.CreateStream(ctx, "events", 3)
     client.Stream.Publish(ctx, "events", "user-login")
-    fmt.Println("✅ GoMsg operations completed!")
+    fmt.Println("✅ fluxdl operations completed!")
 }
 ```
 
@@ -149,11 +149,11 @@ go run main.go
 
 ```bash
 # Create a new Node.js project
-mkdir my-gomsg-app && cd my-gomsg-app
+mkdir my-fluxdl-app && cd my-fluxdl-app
 npm init -y
 
 # Install the Node.js SDK
-npm install @shohag2100/gomsg-nodejs-sdk
+npm install @skshohagmiah/fluxdl-nodejs-sdk
 
 # For TypeScript projects
 npm install -D typescript @types/node
@@ -165,12 +165,12 @@ npx tsc --init
 Create `index.js` (or `index.ts` for TypeScript):
 
 ```javascript
-const { GoMsgClient } = require('@shohag2100/gomsg-nodejs-sdk');
-// For TypeScript: import { GoMsgClient } from '@shohag2100/gomsg-nodejs-sdk';
+const { fluxdlClient } = require('@skshohagmiah/fluxdl-nodejs-sdk');
+// For TypeScript: import { fluxdlClient } from '@skshohagmiah/fluxdl-nodejs-sdk';
 
 async function main() {
-    // Connect to GoMsg
-    const client = await GoMsgClient.connect({
+    // Connect to fluxdl
+    const client = await fluxdlClient.connect({
         address: 'localhost:9000',
         timeout: 10000
     });
@@ -190,7 +190,7 @@ async function main() {
         await client.stream.createStream('events', 3);
         await client.stream.publish('events', 'user-login');
         
-        console.log('✅ GoMsg operations completed!');
+        console.log('✅ fluxdl operations completed!');
     } finally {
         await client.disconnect();
     }
@@ -212,14 +212,14 @@ node index.js
 
 ```bash
 # Create a new Python project
-mkdir my-gomsg-app && cd my-gomsg-app
+mkdir my-fluxdl-app && cd my-fluxdl-app
 
 # Create virtual environment (recommended)
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install the Python SDK
-pip install gomsg-python-sdk
+pip install fluxdl-python-sdk
 ```
 
 #### Quick Example
@@ -228,11 +228,11 @@ Create `main.py`:
 
 ```python
 import asyncio
-from gomsg_sdk import GoMsgClient
+from fluxdl_sdk import fluxdlClient
 
 async def main():
-    # Connect to GoMsg
-    client = await GoMsgClient.create(
+    # Connect to fluxdl
+    client = await fluxdlClient.create(
         address="localhost:9000",
         timeout=10.0
     )
@@ -252,7 +252,7 @@ async def main():
         await client.stream.create_stream("events", 3)
         await client.stream.publish("events", "user-login")
         
-        print("✅ GoMsg operations completed!")
+        print("✅ fluxdl operations completed!")
     finally:
         await client.disconnect()
 
@@ -275,16 +275,16 @@ For development with Docker Compose:
 ```yaml
 version: '3.8'
 services:
-  gomsg:
-    image: shohag2100/gomsg:latest
+  fluxdl:
+    image: shohag2100/fluxdl:latest
     ports:
       - "9000:9000"
     volumes:
-      - gomsg-data:/data
+      - fluxdl-data:/data
     environment:
-      - GOMSG_LOG_LEVEL=info
+      - fluxdl_LOG_LEVEL=info
     healthcheck:
-      test: ["CMD", "gomsg-cli", "--server", "localhost:9000", "ping"]
+      test: ["CMD", "fluxdl-cli", "--server", "localhost:9000", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -293,12 +293,12 @@ services:
   app:
     build: .
     depends_on:
-      - gomsg
+      - fluxdl
     environment:
-      - GOMSG_ADDRESS=gomsg:9000
+      - fluxdl_ADDRESS=fluxdl:9000
 
 volumes:
-  gomsg-data:
+  fluxdl-data:
 ```
 
 ### 2. Run with Docker Compose
@@ -313,18 +313,18 @@ docker-compose up -d
 
 ```bash
 # Server configuration
-export GOMSG_PORT=9000
-export GOMSG_DATA_DIR=/data
-export GOMSG_LOG_LEVEL=info
+export fluxdl_PORT=9000
+export fluxdl_DATA_DIR=/data
+export fluxdl_LOG_LEVEL=info
 
 # Client configuration
-export GOMSG_ADDRESS=localhost:9000
-export GOMSG_TIMEOUT=30s
+export fluxdl_ADDRESS=localhost:9000
+export fluxdl_TIMEOUT=30s
 ```
 
 ### Configuration Files
 
-Create `gomsg.yaml`:
+Create `fluxdl.yaml`:
 
 ```yaml
 server:
@@ -347,26 +347,26 @@ storage:
 
 ```bash
 # Using Docker
-docker exec gomsg gomsg-cli ping
+docker exec fluxdl fluxdl-cli ping
 
 # Using binary
-./bin/gomsg-cli --server localhost:9000 ping
+./bin/fluxdl-cli --server localhost:9000 ping
 ```
 
 ### 2. Basic Operations Test
 
 ```bash
 # Key-Value test
-./bin/gomsg-cli --server localhost:9000 kv set test "Hello World"
-./bin/gomsg-cli --server localhost:9000 kv get test
+./bin/fluxdl-cli --server localhost:9000 kv set test "Hello World"
+./bin/fluxdl-cli --server localhost:9000 kv get test
 
 # Queue test
-./bin/gomsg-cli --server localhost:9000 queue push myqueue "test message"
-./bin/gomsg-cli --server localhost:9000 queue pop myqueue
+./bin/fluxdl-cli --server localhost:9000 queue push myqueue "test message"
+./bin/fluxdl-cli --server localhost:9000 queue pop myqueue
 
 # Stream test
-./bin/gomsg-cli --server localhost:9000 stream create mystream 3
-./bin/gomsg-cli --server localhost:9000 stream publish mystream "test event"
+./bin/fluxdl-cli --server localhost:9000 stream create mystream 3
+./bin/fluxdl-cli --server localhost:9000 stream publish mystream "test event"
 ```
 
 ## 🚨 Troubleshooting
@@ -375,10 +375,10 @@ docker exec gomsg gomsg-cli ping
 
 #### 1. Connection Refused
 ```bash
-# Check if GoMsg is running
-docker ps | grep gomsg
+# Check if fluxdl is running
+docker ps | grep fluxdl
 # or
-ps aux | grep gomsg
+ps aux | grep fluxdl
 
 # Check port availability
 netstat -tlnp | grep 9000
@@ -397,8 +397,8 @@ chmod 755 ./data
 docker system prune -f
 docker volume prune -f
 
-# Restart GoMsg container
-docker restart gomsg
+# Restart fluxdl container
+docker restart fluxdl
 ```
 
 #### 4. SDK Import Issues
@@ -418,7 +418,7 @@ npm install
 **Python:**
 ```bash
 pip install --upgrade pip
-pip install --force-reinstall gomsg-python-sdk
+pip install --force-reinstall fluxdl-python-sdk
 ```
 
 ## 📖 Next Steps
@@ -426,9 +426,9 @@ pip install --force-reinstall gomsg-python-sdk
 1. **Read the Documentation**: Check individual SDK README files in `./sdks/`
 2. **Explore Examples**: Look at example projects in each SDK directory
 3. **Join the Community**: 
-   - 🐛 [Report Issues](https://github.com/shohag2100/gomsg/issues)
-   - 💬 [Discussions](https://github.com/shohag2100/gomsg/discussions)
-   - 📖 [Wiki](https://github.com/shohag2100/gomsg/wiki)
+   - 🐛 [Report Issues](https://github.com/shohag2100/fluxdl/issues)
+   - 💬 [Discussions](https://github.com/shohag2100/fluxdl/discussions)
+   - 📖 [Wiki](https://github.com/shohag2100/fluxdl/wiki)
 
 ## 🤝 Contributing
 
@@ -437,6 +437,6 @@ Want to contribute? Check out our [Contributing Guide](CONTRIBUTING.md) and [Dev
 ---
 
 **Need Help?** 
-- 📧 Email: support@gomsg.io
-- 💬 Discord: [GoMsg Community](https://discord.gg/gomsg)
-- 📖 Docs: [docs.gomsg.io](https://docs.gomsg.io)
+- 📧 Email: support@fluxdl.io
+- 💬 Discord: [fluxdl Community](https://discord.gg/fluxdl)
+- 📖 Docs: [docs.fluxdl.io](https://docs.fluxdl.io)

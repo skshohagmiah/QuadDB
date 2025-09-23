@@ -1,7 +1,7 @@
 """
-GoMsg Python Client
+fluxdl Python Client
 
-Main client class for connecting to GoMsg server.
+Main client class for connecting to fluxdl server.
 """
 
 import asyncio
@@ -13,12 +13,12 @@ from .stream import StreamClient
 from .exceptions import ConnectionError, TimeoutError
 
 
-class GoMsgClient:
+class fluxdlClient:
     """
-    Main GoMsg client for connecting to GoMsg Docker containers.
+    Main fluxdl client for connecting to fluxdl Docker containers.
     
     Example:
-        client = GoMsgClient(address="localhost:9000")
+        client = fluxdlClient(address="localhost:9000")
         await client.connect()
         
         # Key-Value operations
@@ -41,7 +41,7 @@ class GoMsgClient:
         options: Optional[Dict[str, Any]] = None
     ):
         """
-        Initialize GoMsg client.
+        Initialize fluxdl client.
         
         Args:
             address: Server address (default: "localhost:9000")
@@ -61,7 +61,7 @@ class GoMsgClient:
         self._connected = False
 
     async def connect(self) -> None:
-        """Connect to GoMsg server."""
+        """Connect to fluxdl server."""
         try:
             # Create gRPC channel
             if self.credentials:
@@ -85,18 +85,18 @@ class GoMsgClient:
             await self.ping()
             self._connected = True
             
-            print(f"✅ Connected to GoMsg at {self.address}")
+            print(f"✅ Connected to fluxdl at {self.address}")
             
         except Exception as e:
-            raise ConnectionError(f"Failed to connect to GoMsg: {e}")
+            raise ConnectionError(f"Failed to connect to fluxdl: {e}")
 
     async def disconnect(self) -> None:
-        """Disconnect from GoMsg server."""
+        """Disconnect from fluxdl server."""
         if self._channel:
             await self._channel.close()
             self._channel = None
             self._connected = False
-            print("Disconnected from GoMsg")
+            print("Disconnected from fluxdl")
 
     async def ping(self) -> bool:
         """Test connection to server."""
@@ -149,9 +149,9 @@ class GoMsgClient:
         address: str = "localhost:9000",
         timeout: float = 30.0,
         **kwargs
-    ) -> "GoMsgClient":
+    ) -> "fluxdlClient":
         """
-        Create and connect to GoMsg in one step.
+        Create and connect to fluxdl in one step.
         
         Args:
             address: Server address
@@ -159,7 +159,7 @@ class GoMsgClient:
             **kwargs: Additional client options
             
         Returns:
-            Connected GoMsgClient instance
+            Connected fluxdlClient instance
         """
         client = cls(address=address, timeout=timeout, **kwargs)
         await client.connect()

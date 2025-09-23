@@ -7,7 +7,7 @@
 package stream
 
 import (
-	common "gomsg/api/generated/common"
+	common "github.com/skshohagmiah/fluxdl/api/generated/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -1686,39 +1686,39 @@ var File_stream_proto protoreflect.FileDescriptor
 
 const file_stream_proto_rawDesc = "" +
 	"\n" +
-	"\fstream.proto\x12\fgomsg.stream\x1a\fcommon.proto\"\xa4\x02\n" +
+	"\fstream.proto\x12\rfluxdl.stream\x1a\fcommon.proto\"\xa5\x02\n" +
 	"\rStreamMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05topic\x18\x02 \x01(\tR\x05topic\x12#\n" +
 	"\rpartition_key\x18\x03 \x01(\tR\fpartitionKey\x12\x12\n" +
 	"\x04data\x18\x04 \x01(\fR\x04data\x12\x16\n" +
 	"\x06offset\x18\x05 \x01(\x03R\x06offset\x12\x1c\n" +
-	"\ttimestamp\x18\x06 \x01(\x03R\ttimestamp\x12B\n" +
-	"\aheaders\x18\a \x03(\v2(.gomsg.stream.StreamMessage.HeadersEntryR\aheaders\x1a:\n" +
+	"\ttimestamp\x18\x06 \x01(\x03R\ttimestamp\x12C\n" +
+	"\aheaders\x18\a \x03(\v2).fluxdl.stream.StreamMessage.HeadersEntryR\aheaders\x1a:\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa6\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa7\x01\n" +
 	"\tTopicInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1e\n" +
 	"\n" +
 	"partitions\x18\x02 \x01(\x05R\n" +
 	"partitions\x12%\n" +
-	"\x0etotal_messages\x18\x03 \x01(\x03R\rtotalMessages\x12>\n" +
-	"\x0epartition_info\x18\x04 \x03(\v2\x17.gomsg.common.PartitionR\rpartitionInfo\"\xe0\x01\n" +
+	"\x0etotal_messages\x18\x03 \x01(\x03R\rtotalMessages\x12?\n" +
+	"\x0epartition_info\x18\x04 \x03(\v2\x18.fluxdl.common.PartitionR\rpartitionInfo\"\xe1\x01\n" +
 	"\x0ePublishRequest\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x12\n" +
 	"\x04data\x18\x02 \x01(\fR\x04data\x12#\n" +
-	"\rpartition_key\x18\x03 \x01(\tR\fpartitionKey\x12C\n" +
-	"\aheaders\x18\x04 \x03(\v2).gomsg.stream.PublishRequest.HeadersEntryR\aheaders\x1a:\n" +
+	"\rpartition_key\x18\x03 \x01(\tR\fpartitionKey\x12D\n" +
+	"\aheaders\x18\x04 \x03(\v2*.fluxdl.stream.PublishRequest.HeadersEntryR\aheaders\x1a:\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x94\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x95\x01\n" +
 	"\x0fPublishResponse\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x01 \x01(\tR\tmessageId\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x03R\x06offset\x12\x1c\n" +
-	"\tpartition\x18\x03 \x01(\x05R\tpartition\x12,\n" +
-	"\x06status\x18\x04 \x01(\v2\x14.gomsg.common.StatusR\x06status\"\xb8\x01\n" +
+	"\tpartition\x18\x03 \x01(\x05R\tpartition\x12-\n" +
+	"\x06status\x18\x04 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"\xb8\x01\n" +
 	"\x10SubscribeRequest\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12%\n" +
 	"\x0econsumer_group\x18\x02 \x01(\tR\rconsumerGroup\x12\x1f\n" +
@@ -1726,73 +1726,73 @@ const file_stream_proto_rawDesc = "" +
 	"consumerId\x12\x1f\n" +
 	"\vfrom_offset\x18\x04 \x01(\x03R\n" +
 	"fromOffset\x12%\n" +
-	"\x0efrom_beginning\x18\x05 \x01(\bR\rfromBeginning\"x\n" +
-	"\x11SubscribeResponse\x125\n" +
-	"\amessage\x18\x01 \x01(\v2\x1b.gomsg.stream.StreamMessageR\amessage\x12,\n" +
-	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"x\n" +
+	"\x0efrom_beginning\x18\x05 \x01(\bR\rfromBeginning\"z\n" +
+	"\x11SubscribeResponse\x126\n" +
+	"\amessage\x18\x01 \x01(\v2\x1c.fluxdl.stream.StreamMessageR\amessage\x12-\n" +
+	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"x\n" +
 	"\vReadRequest\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x1f\n" +
 	"\vfrom_offset\x18\x02 \x01(\x03R\n" +
 	"fromOffset\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x1c\n" +
-	"\tpartition\x18\x04 \x01(\x05R\tpartition\"\x96\x01\n" +
-	"\fReadResponse\x127\n" +
-	"\bmessages\x18\x01 \x03(\v2\x1b.gomsg.stream.StreamMessageR\bmessages\x12\x1f\n" +
+	"\tpartition\x18\x04 \x01(\x05R\tpartition\"\x98\x01\n" +
+	"\fReadResponse\x128\n" +
+	"\bmessages\x18\x01 \x03(\v2\x1c.fluxdl.stream.StreamMessageR\bmessages\x12\x1f\n" +
 	"\vnext_offset\x18\x02 \x01(\x03R\n" +
-	"nextOffset\x12,\n" +
-	"\x06status\x18\x03 \x01(\v2\x14.gomsg.common.StatusR\x06status\"z\n" +
+	"nextOffset\x12-\n" +
+	"\x06status\x18\x03 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"z\n" +
 	"\vSeekRequest\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x1f\n" +
 	"\vconsumer_id\x18\x02 \x01(\tR\n" +
 	"consumerId\x12\x16\n" +
 	"\x06offset\x18\x03 \x01(\x03R\x06offset\x12\x1c\n" +
-	"\tpartition\x18\x04 \x01(\x05R\tpartition\"<\n" +
-	"\fSeekResponse\x12,\n" +
-	"\x06status\x18\x01 \x01(\v2\x14.gomsg.common.StatusR\x06status\"g\n" +
+	"\tpartition\x18\x04 \x01(\x05R\tpartition\"=\n" +
+	"\fSeekResponse\x12-\n" +
+	"\x06status\x18\x01 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"g\n" +
 	"\x10GetOffsetRequest\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x1f\n" +
 	"\vconsumer_id\x18\x02 \x01(\tR\n" +
 	"consumerId\x12\x1c\n" +
-	"\tpartition\x18\x03 \x01(\x05R\tpartition\"Y\n" +
+	"\tpartition\x18\x03 \x01(\x05R\tpartition\"Z\n" +
 	"\x11GetOffsetResponse\x12\x16\n" +
-	"\x06offset\x18\x01 \x01(\x03R\x06offset\x12,\n" +
-	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"w\n" +
+	"\x06offset\x18\x01 \x01(\x03R\x06offset\x12-\n" +
+	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"w\n" +
 	"\x12CreateTopicRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1e\n" +
 	"\n" +
 	"partitions\x18\x02 \x01(\x05R\n" +
 	"partitions\x12-\n" +
-	"\x12replication_factor\x18\x03 \x01(\x05R\x11replicationFactor\"C\n" +
-	"\x13CreateTopicResponse\x12,\n" +
-	"\x06status\x18\x01 \x01(\v2\x14.gomsg.common.StatusR\x06status\"(\n" +
+	"\x12replication_factor\x18\x03 \x01(\x05R\x11replicationFactor\"D\n" +
+	"\x13CreateTopicResponse\x12-\n" +
+	"\x06status\x18\x01 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"(\n" +
 	"\x12DeleteTopicRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"C\n" +
-	"\x13DeleteTopicResponse\x12,\n" +
-	"\x06status\x18\x01 \x01(\v2\x14.gomsg.common.StatusR\x06status\"\x13\n" +
-	"\x11ListTopicsRequest\"Z\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"D\n" +
+	"\x13DeleteTopicResponse\x12-\n" +
+	"\x06status\x18\x01 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"\x13\n" +
+	"\x11ListTopicsRequest\"[\n" +
 	"\x12ListTopicsResponse\x12\x16\n" +
-	"\x06topics\x18\x01 \x03(\tR\x06topics\x12,\n" +
-	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"+\n" +
+	"\x06topics\x18\x01 \x03(\tR\x06topics\x12-\n" +
+	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"+\n" +
 	"\x13GetTopicInfoRequest\x12\x14\n" +
-	"\x05topic\x18\x01 \x01(\tR\x05topic\"q\n" +
-	"\x14GetTopicInfoResponse\x12+\n" +
-	"\x04info\x18\x01 \x01(\v2\x17.gomsg.stream.TopicInfoR\x04info\x12,\n" +
-	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"y\n" +
+	"\x05topic\x18\x01 \x01(\tR\x05topic\"s\n" +
+	"\x14GetTopicInfoResponse\x12,\n" +
+	"\x04info\x18\x01 \x01(\v2\x18.fluxdl.stream.TopicInfoR\x04info\x12-\n" +
+	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"y\n" +
 	"\x0fReadFromRequest\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x1c\n" +
 	"\tpartition\x18\x02 \x01(\x05R\tpartition\x12\x1c\n" +
 	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\x12\x14\n" +
-	"\x05limit\x18\x04 \x01(\x05R\x05limit\"\x9a\x01\n" +
-	"\x10ReadFromResponse\x127\n" +
-	"\bmessages\x18\x01 \x03(\v2\x1b.gomsg.stream.StreamMessageR\bmessages\x12\x1f\n" +
+	"\x05limit\x18\x04 \x01(\x05R\x05limit\"\x9c\x01\n" +
+	"\x10ReadFromResponse\x128\n" +
+	"\bmessages\x18\x01 \x03(\v2\x1c.fluxdl.stream.StreamMessageR\bmessages\x12\x1f\n" +
 	"\vnext_offset\x18\x02 \x01(\x03R\n" +
-	"nextOffset\x12,\n" +
-	"\x06status\x18\x03 \x01(\v2\x14.gomsg.common.StatusR\x06status\"$\n" +
+	"nextOffset\x12-\n" +
+	"\x06status\x18\x03 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"$\n" +
 	"\fPurgeRequest\x12\x14\n" +
-	"\x05topic\x18\x01 \x01(\tR\x05topic\"`\n" +
+	"\x05topic\x18\x01 \x01(\tR\x05topic\"a\n" +
 	"\rPurgeResponse\x12!\n" +
-	"\fpurged_count\x18\x01 \x01(\x03R\vpurgedCount\x12,\n" +
-	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"i\n" +
+	"\fpurged_count\x18\x01 \x01(\x03R\vpurgedCount\x12-\n" +
+	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"i\n" +
 	"\x15SubscribeGroupRequest\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x19\n" +
 	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12\x1f\n" +
@@ -1802,32 +1802,32 @@ const file_stream_proto_rawDesc = "" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x19\n" +
 	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12\x1c\n" +
 	"\tpartition\x18\x03 \x01(\x05R\tpartition\x12\x16\n" +
-	"\x06offset\x18\x04 \x01(\x03R\x06offset\"I\n" +
-	"\x19CommitGroupOffsetResponse\x12,\n" +
-	"\x06status\x18\x01 \x01(\v2\x14.gomsg.common.StatusR\x06status\"f\n" +
+	"\x06offset\x18\x04 \x01(\x03R\x06offset\"J\n" +
+	"\x19CommitGroupOffsetResponse\x12-\n" +
+	"\x06status\x18\x01 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"f\n" +
 	"\x15GetGroupOffsetRequest\x12\x14\n" +
 	"\x05topic\x18\x01 \x01(\tR\x05topic\x12\x19\n" +
 	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12\x1c\n" +
-	"\tpartition\x18\x03 \x01(\x05R\tpartition\"^\n" +
+	"\tpartition\x18\x03 \x01(\x05R\tpartition\"_\n" +
 	"\x16GetGroupOffsetResponse\x12\x16\n" +
-	"\x06offset\x18\x01 \x01(\x03R\x06offset\x12,\n" +
-	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status2\xed\b\n" +
-	"\rStreamService\x12F\n" +
-	"\aPublish\x12\x1c.gomsg.stream.PublishRequest\x1a\x1d.gomsg.stream.PublishResponse\x12N\n" +
-	"\tSubscribe\x12\x1e.gomsg.stream.SubscribeRequest\x1a\x1f.gomsg.stream.SubscribeResponse0\x01\x12X\n" +
-	"\x0eSubscribeGroup\x12#.gomsg.stream.SubscribeGroupRequest\x1a\x1f.gomsg.stream.SubscribeResponse0\x01\x12=\n" +
-	"\x04Read\x12\x19.gomsg.stream.ReadRequest\x1a\x1a.gomsg.stream.ReadResponse\x12I\n" +
-	"\bReadFrom\x12\x1d.gomsg.stream.ReadFromRequest\x1a\x1e.gomsg.stream.ReadFromResponse\x12=\n" +
-	"\x04Seek\x12\x19.gomsg.stream.SeekRequest\x1a\x1a.gomsg.stream.SeekResponse\x12L\n" +
-	"\tGetOffset\x12\x1e.gomsg.stream.GetOffsetRequest\x1a\x1f.gomsg.stream.GetOffsetResponse\x12d\n" +
-	"\x11CommitGroupOffset\x12&.gomsg.stream.CommitGroupOffsetRequest\x1a'.gomsg.stream.CommitGroupOffsetResponse\x12[\n" +
-	"\x0eGetGroupOffset\x12#.gomsg.stream.GetGroupOffsetRequest\x1a$.gomsg.stream.GetGroupOffsetResponse\x12R\n" +
-	"\vCreateTopic\x12 .gomsg.stream.CreateTopicRequest\x1a!.gomsg.stream.CreateTopicResponse\x12R\n" +
-	"\vDeleteTopic\x12 .gomsg.stream.DeleteTopicRequest\x1a!.gomsg.stream.DeleteTopicResponse\x12O\n" +
+	"\x06offset\x18\x01 \x01(\x03R\x06offset\x12-\n" +
+	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status2\x89\t\n" +
+	"\rStreamService\x12H\n" +
+	"\aPublish\x12\x1d.fluxdl.stream.PublishRequest\x1a\x1e.fluxdl.stream.PublishResponse\x12P\n" +
+	"\tSubscribe\x12\x1f.fluxdl.stream.SubscribeRequest\x1a .fluxdl.stream.SubscribeResponse0\x01\x12Z\n" +
+	"\x0eSubscribeGroup\x12$.fluxdl.stream.SubscribeGroupRequest\x1a .fluxdl.stream.SubscribeResponse0\x01\x12?\n" +
+	"\x04Read\x12\x1a.fluxdl.stream.ReadRequest\x1a\x1b.fluxdl.stream.ReadResponse\x12K\n" +
+	"\bReadFrom\x12\x1e.fluxdl.stream.ReadFromRequest\x1a\x1f.fluxdl.stream.ReadFromResponse\x12?\n" +
+	"\x04Seek\x12\x1a.fluxdl.stream.SeekRequest\x1a\x1b.fluxdl.stream.SeekResponse\x12N\n" +
+	"\tGetOffset\x12\x1f.fluxdl.stream.GetOffsetRequest\x1a .fluxdl.stream.GetOffsetResponse\x12f\n" +
+	"\x11CommitGroupOffset\x12'.fluxdl.stream.CommitGroupOffsetRequest\x1a(.fluxdl.stream.CommitGroupOffsetResponse\x12]\n" +
+	"\x0eGetGroupOffset\x12$.fluxdl.stream.GetGroupOffsetRequest\x1a%.fluxdl.stream.GetGroupOffsetResponse\x12T\n" +
+	"\vCreateTopic\x12!.fluxdl.stream.CreateTopicRequest\x1a\".fluxdl.stream.CreateTopicResponse\x12T\n" +
+	"\vDeleteTopic\x12!.fluxdl.stream.DeleteTopicRequest\x1a\".fluxdl.stream.DeleteTopicResponse\x12Q\n" +
 	"\n" +
-	"ListTopics\x12\x1f.gomsg.stream.ListTopicsRequest\x1a .gomsg.stream.ListTopicsResponse\x12U\n" +
-	"\fGetTopicInfo\x12!.gomsg.stream.GetTopicInfoRequest\x1a\".gomsg.stream.GetTopicInfoResponse\x12@\n" +
-	"\x05Purge\x12\x1a.gomsg.stream.PurgeRequest\x1a\x1b.gomsg.stream.PurgeResponseB\x1cZ\x1agomsg/api/generated/streamb\x06proto3"
+	"ListTopics\x12 .fluxdl.stream.ListTopicsRequest\x1a!.fluxdl.stream.ListTopicsResponse\x12W\n" +
+	"\fGetTopicInfo\x12\".fluxdl.stream.GetTopicInfoRequest\x1a#.fluxdl.stream.GetTopicInfoResponse\x12B\n" +
+	"\x05Purge\x12\x1b.fluxdl.stream.PurgeRequest\x1a\x1c.fluxdl.stream.PurgeResponseB5Z3github.com/skshohagmiah/fluxdl/api/generated/streamb\x06proto3"
 
 var (
 	file_stream_proto_rawDescOnce sync.Once
@@ -1843,89 +1843,89 @@ func file_stream_proto_rawDescGZIP() []byte {
 
 var file_stream_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_stream_proto_goTypes = []any{
-	(*StreamMessage)(nil),             // 0: gomsg.stream.StreamMessage
-	(*TopicInfo)(nil),                 // 1: gomsg.stream.TopicInfo
-	(*PublishRequest)(nil),            // 2: gomsg.stream.PublishRequest
-	(*PublishResponse)(nil),           // 3: gomsg.stream.PublishResponse
-	(*SubscribeRequest)(nil),          // 4: gomsg.stream.SubscribeRequest
-	(*SubscribeResponse)(nil),         // 5: gomsg.stream.SubscribeResponse
-	(*ReadRequest)(nil),               // 6: gomsg.stream.ReadRequest
-	(*ReadResponse)(nil),              // 7: gomsg.stream.ReadResponse
-	(*SeekRequest)(nil),               // 8: gomsg.stream.SeekRequest
-	(*SeekResponse)(nil),              // 9: gomsg.stream.SeekResponse
-	(*GetOffsetRequest)(nil),          // 10: gomsg.stream.GetOffsetRequest
-	(*GetOffsetResponse)(nil),         // 11: gomsg.stream.GetOffsetResponse
-	(*CreateTopicRequest)(nil),        // 12: gomsg.stream.CreateTopicRequest
-	(*CreateTopicResponse)(nil),       // 13: gomsg.stream.CreateTopicResponse
-	(*DeleteTopicRequest)(nil),        // 14: gomsg.stream.DeleteTopicRequest
-	(*DeleteTopicResponse)(nil),       // 15: gomsg.stream.DeleteTopicResponse
-	(*ListTopicsRequest)(nil),         // 16: gomsg.stream.ListTopicsRequest
-	(*ListTopicsResponse)(nil),        // 17: gomsg.stream.ListTopicsResponse
-	(*GetTopicInfoRequest)(nil),       // 18: gomsg.stream.GetTopicInfoRequest
-	(*GetTopicInfoResponse)(nil),      // 19: gomsg.stream.GetTopicInfoResponse
-	(*ReadFromRequest)(nil),           // 20: gomsg.stream.ReadFromRequest
-	(*ReadFromResponse)(nil),          // 21: gomsg.stream.ReadFromResponse
-	(*PurgeRequest)(nil),              // 22: gomsg.stream.PurgeRequest
-	(*PurgeResponse)(nil),             // 23: gomsg.stream.PurgeResponse
-	(*SubscribeGroupRequest)(nil),     // 24: gomsg.stream.SubscribeGroupRequest
-	(*CommitGroupOffsetRequest)(nil),  // 25: gomsg.stream.CommitGroupOffsetRequest
-	(*CommitGroupOffsetResponse)(nil), // 26: gomsg.stream.CommitGroupOffsetResponse
-	(*GetGroupOffsetRequest)(nil),     // 27: gomsg.stream.GetGroupOffsetRequest
-	(*GetGroupOffsetResponse)(nil),    // 28: gomsg.stream.GetGroupOffsetResponse
-	nil,                               // 29: gomsg.stream.StreamMessage.HeadersEntry
-	nil,                               // 30: gomsg.stream.PublishRequest.HeadersEntry
-	(*common.Partition)(nil),          // 31: gomsg.common.Partition
-	(*common.Status)(nil),             // 32: gomsg.common.Status
+	(*StreamMessage)(nil),             // 0: fluxdl.stream.StreamMessage
+	(*TopicInfo)(nil),                 // 1: fluxdl.stream.TopicInfo
+	(*PublishRequest)(nil),            // 2: fluxdl.stream.PublishRequest
+	(*PublishResponse)(nil),           // 3: fluxdl.stream.PublishResponse
+	(*SubscribeRequest)(nil),          // 4: fluxdl.stream.SubscribeRequest
+	(*SubscribeResponse)(nil),         // 5: fluxdl.stream.SubscribeResponse
+	(*ReadRequest)(nil),               // 6: fluxdl.stream.ReadRequest
+	(*ReadResponse)(nil),              // 7: fluxdl.stream.ReadResponse
+	(*SeekRequest)(nil),               // 8: fluxdl.stream.SeekRequest
+	(*SeekResponse)(nil),              // 9: fluxdl.stream.SeekResponse
+	(*GetOffsetRequest)(nil),          // 10: fluxdl.stream.GetOffsetRequest
+	(*GetOffsetResponse)(nil),         // 11: fluxdl.stream.GetOffsetResponse
+	(*CreateTopicRequest)(nil),        // 12: fluxdl.stream.CreateTopicRequest
+	(*CreateTopicResponse)(nil),       // 13: fluxdl.stream.CreateTopicResponse
+	(*DeleteTopicRequest)(nil),        // 14: fluxdl.stream.DeleteTopicRequest
+	(*DeleteTopicResponse)(nil),       // 15: fluxdl.stream.DeleteTopicResponse
+	(*ListTopicsRequest)(nil),         // 16: fluxdl.stream.ListTopicsRequest
+	(*ListTopicsResponse)(nil),        // 17: fluxdl.stream.ListTopicsResponse
+	(*GetTopicInfoRequest)(nil),       // 18: fluxdl.stream.GetTopicInfoRequest
+	(*GetTopicInfoResponse)(nil),      // 19: fluxdl.stream.GetTopicInfoResponse
+	(*ReadFromRequest)(nil),           // 20: fluxdl.stream.ReadFromRequest
+	(*ReadFromResponse)(nil),          // 21: fluxdl.stream.ReadFromResponse
+	(*PurgeRequest)(nil),              // 22: fluxdl.stream.PurgeRequest
+	(*PurgeResponse)(nil),             // 23: fluxdl.stream.PurgeResponse
+	(*SubscribeGroupRequest)(nil),     // 24: fluxdl.stream.SubscribeGroupRequest
+	(*CommitGroupOffsetRequest)(nil),  // 25: fluxdl.stream.CommitGroupOffsetRequest
+	(*CommitGroupOffsetResponse)(nil), // 26: fluxdl.stream.CommitGroupOffsetResponse
+	(*GetGroupOffsetRequest)(nil),     // 27: fluxdl.stream.GetGroupOffsetRequest
+	(*GetGroupOffsetResponse)(nil),    // 28: fluxdl.stream.GetGroupOffsetResponse
+	nil,                               // 29: fluxdl.stream.StreamMessage.HeadersEntry
+	nil,                               // 30: fluxdl.stream.PublishRequest.HeadersEntry
+	(*common.Partition)(nil),          // 31: fluxdl.common.Partition
+	(*common.Status)(nil),             // 32: fluxdl.common.Status
 }
 var file_stream_proto_depIdxs = []int32{
-	29, // 0: gomsg.stream.StreamMessage.headers:type_name -> gomsg.stream.StreamMessage.HeadersEntry
-	31, // 1: gomsg.stream.TopicInfo.partition_info:type_name -> gomsg.common.Partition
-	30, // 2: gomsg.stream.PublishRequest.headers:type_name -> gomsg.stream.PublishRequest.HeadersEntry
-	32, // 3: gomsg.stream.PublishResponse.status:type_name -> gomsg.common.Status
-	0,  // 4: gomsg.stream.SubscribeResponse.message:type_name -> gomsg.stream.StreamMessage
-	32, // 5: gomsg.stream.SubscribeResponse.status:type_name -> gomsg.common.Status
-	0,  // 6: gomsg.stream.ReadResponse.messages:type_name -> gomsg.stream.StreamMessage
-	32, // 7: gomsg.stream.ReadResponse.status:type_name -> gomsg.common.Status
-	32, // 8: gomsg.stream.SeekResponse.status:type_name -> gomsg.common.Status
-	32, // 9: gomsg.stream.GetOffsetResponse.status:type_name -> gomsg.common.Status
-	32, // 10: gomsg.stream.CreateTopicResponse.status:type_name -> gomsg.common.Status
-	32, // 11: gomsg.stream.DeleteTopicResponse.status:type_name -> gomsg.common.Status
-	32, // 12: gomsg.stream.ListTopicsResponse.status:type_name -> gomsg.common.Status
-	1,  // 13: gomsg.stream.GetTopicInfoResponse.info:type_name -> gomsg.stream.TopicInfo
-	32, // 14: gomsg.stream.GetTopicInfoResponse.status:type_name -> gomsg.common.Status
-	0,  // 15: gomsg.stream.ReadFromResponse.messages:type_name -> gomsg.stream.StreamMessage
-	32, // 16: gomsg.stream.ReadFromResponse.status:type_name -> gomsg.common.Status
-	32, // 17: gomsg.stream.PurgeResponse.status:type_name -> gomsg.common.Status
-	32, // 18: gomsg.stream.CommitGroupOffsetResponse.status:type_name -> gomsg.common.Status
-	32, // 19: gomsg.stream.GetGroupOffsetResponse.status:type_name -> gomsg.common.Status
-	2,  // 20: gomsg.stream.StreamService.Publish:input_type -> gomsg.stream.PublishRequest
-	4,  // 21: gomsg.stream.StreamService.Subscribe:input_type -> gomsg.stream.SubscribeRequest
-	24, // 22: gomsg.stream.StreamService.SubscribeGroup:input_type -> gomsg.stream.SubscribeGroupRequest
-	6,  // 23: gomsg.stream.StreamService.Read:input_type -> gomsg.stream.ReadRequest
-	20, // 24: gomsg.stream.StreamService.ReadFrom:input_type -> gomsg.stream.ReadFromRequest
-	8,  // 25: gomsg.stream.StreamService.Seek:input_type -> gomsg.stream.SeekRequest
-	10, // 26: gomsg.stream.StreamService.GetOffset:input_type -> gomsg.stream.GetOffsetRequest
-	25, // 27: gomsg.stream.StreamService.CommitGroupOffset:input_type -> gomsg.stream.CommitGroupOffsetRequest
-	27, // 28: gomsg.stream.StreamService.GetGroupOffset:input_type -> gomsg.stream.GetGroupOffsetRequest
-	12, // 29: gomsg.stream.StreamService.CreateTopic:input_type -> gomsg.stream.CreateTopicRequest
-	14, // 30: gomsg.stream.StreamService.DeleteTopic:input_type -> gomsg.stream.DeleteTopicRequest
-	16, // 31: gomsg.stream.StreamService.ListTopics:input_type -> gomsg.stream.ListTopicsRequest
-	18, // 32: gomsg.stream.StreamService.GetTopicInfo:input_type -> gomsg.stream.GetTopicInfoRequest
-	22, // 33: gomsg.stream.StreamService.Purge:input_type -> gomsg.stream.PurgeRequest
-	3,  // 34: gomsg.stream.StreamService.Publish:output_type -> gomsg.stream.PublishResponse
-	5,  // 35: gomsg.stream.StreamService.Subscribe:output_type -> gomsg.stream.SubscribeResponse
-	5,  // 36: gomsg.stream.StreamService.SubscribeGroup:output_type -> gomsg.stream.SubscribeResponse
-	7,  // 37: gomsg.stream.StreamService.Read:output_type -> gomsg.stream.ReadResponse
-	21, // 38: gomsg.stream.StreamService.ReadFrom:output_type -> gomsg.stream.ReadFromResponse
-	9,  // 39: gomsg.stream.StreamService.Seek:output_type -> gomsg.stream.SeekResponse
-	11, // 40: gomsg.stream.StreamService.GetOffset:output_type -> gomsg.stream.GetOffsetResponse
-	26, // 41: gomsg.stream.StreamService.CommitGroupOffset:output_type -> gomsg.stream.CommitGroupOffsetResponse
-	28, // 42: gomsg.stream.StreamService.GetGroupOffset:output_type -> gomsg.stream.GetGroupOffsetResponse
-	13, // 43: gomsg.stream.StreamService.CreateTopic:output_type -> gomsg.stream.CreateTopicResponse
-	15, // 44: gomsg.stream.StreamService.DeleteTopic:output_type -> gomsg.stream.DeleteTopicResponse
-	17, // 45: gomsg.stream.StreamService.ListTopics:output_type -> gomsg.stream.ListTopicsResponse
-	19, // 46: gomsg.stream.StreamService.GetTopicInfo:output_type -> gomsg.stream.GetTopicInfoResponse
-	23, // 47: gomsg.stream.StreamService.Purge:output_type -> gomsg.stream.PurgeResponse
+	29, // 0: fluxdl.stream.StreamMessage.headers:type_name -> fluxdl.stream.StreamMessage.HeadersEntry
+	31, // 1: fluxdl.stream.TopicInfo.partition_info:type_name -> fluxdl.common.Partition
+	30, // 2: fluxdl.stream.PublishRequest.headers:type_name -> fluxdl.stream.PublishRequest.HeadersEntry
+	32, // 3: fluxdl.stream.PublishResponse.status:type_name -> fluxdl.common.Status
+	0,  // 4: fluxdl.stream.SubscribeResponse.message:type_name -> fluxdl.stream.StreamMessage
+	32, // 5: fluxdl.stream.SubscribeResponse.status:type_name -> fluxdl.common.Status
+	0,  // 6: fluxdl.stream.ReadResponse.messages:type_name -> fluxdl.stream.StreamMessage
+	32, // 7: fluxdl.stream.ReadResponse.status:type_name -> fluxdl.common.Status
+	32, // 8: fluxdl.stream.SeekResponse.status:type_name -> fluxdl.common.Status
+	32, // 9: fluxdl.stream.GetOffsetResponse.status:type_name -> fluxdl.common.Status
+	32, // 10: fluxdl.stream.CreateTopicResponse.status:type_name -> fluxdl.common.Status
+	32, // 11: fluxdl.stream.DeleteTopicResponse.status:type_name -> fluxdl.common.Status
+	32, // 12: fluxdl.stream.ListTopicsResponse.status:type_name -> fluxdl.common.Status
+	1,  // 13: fluxdl.stream.GetTopicInfoResponse.info:type_name -> fluxdl.stream.TopicInfo
+	32, // 14: fluxdl.stream.GetTopicInfoResponse.status:type_name -> fluxdl.common.Status
+	0,  // 15: fluxdl.stream.ReadFromResponse.messages:type_name -> fluxdl.stream.StreamMessage
+	32, // 16: fluxdl.stream.ReadFromResponse.status:type_name -> fluxdl.common.Status
+	32, // 17: fluxdl.stream.PurgeResponse.status:type_name -> fluxdl.common.Status
+	32, // 18: fluxdl.stream.CommitGroupOffsetResponse.status:type_name -> fluxdl.common.Status
+	32, // 19: fluxdl.stream.GetGroupOffsetResponse.status:type_name -> fluxdl.common.Status
+	2,  // 20: fluxdl.stream.StreamService.Publish:input_type -> fluxdl.stream.PublishRequest
+	4,  // 21: fluxdl.stream.StreamService.Subscribe:input_type -> fluxdl.stream.SubscribeRequest
+	24, // 22: fluxdl.stream.StreamService.SubscribeGroup:input_type -> fluxdl.stream.SubscribeGroupRequest
+	6,  // 23: fluxdl.stream.StreamService.Read:input_type -> fluxdl.stream.ReadRequest
+	20, // 24: fluxdl.stream.StreamService.ReadFrom:input_type -> fluxdl.stream.ReadFromRequest
+	8,  // 25: fluxdl.stream.StreamService.Seek:input_type -> fluxdl.stream.SeekRequest
+	10, // 26: fluxdl.stream.StreamService.GetOffset:input_type -> fluxdl.stream.GetOffsetRequest
+	25, // 27: fluxdl.stream.StreamService.CommitGroupOffset:input_type -> fluxdl.stream.CommitGroupOffsetRequest
+	27, // 28: fluxdl.stream.StreamService.GetGroupOffset:input_type -> fluxdl.stream.GetGroupOffsetRequest
+	12, // 29: fluxdl.stream.StreamService.CreateTopic:input_type -> fluxdl.stream.CreateTopicRequest
+	14, // 30: fluxdl.stream.StreamService.DeleteTopic:input_type -> fluxdl.stream.DeleteTopicRequest
+	16, // 31: fluxdl.stream.StreamService.ListTopics:input_type -> fluxdl.stream.ListTopicsRequest
+	18, // 32: fluxdl.stream.StreamService.GetTopicInfo:input_type -> fluxdl.stream.GetTopicInfoRequest
+	22, // 33: fluxdl.stream.StreamService.Purge:input_type -> fluxdl.stream.PurgeRequest
+	3,  // 34: fluxdl.stream.StreamService.Publish:output_type -> fluxdl.stream.PublishResponse
+	5,  // 35: fluxdl.stream.StreamService.Subscribe:output_type -> fluxdl.stream.SubscribeResponse
+	5,  // 36: fluxdl.stream.StreamService.SubscribeGroup:output_type -> fluxdl.stream.SubscribeResponse
+	7,  // 37: fluxdl.stream.StreamService.Read:output_type -> fluxdl.stream.ReadResponse
+	21, // 38: fluxdl.stream.StreamService.ReadFrom:output_type -> fluxdl.stream.ReadFromResponse
+	9,  // 39: fluxdl.stream.StreamService.Seek:output_type -> fluxdl.stream.SeekResponse
+	11, // 40: fluxdl.stream.StreamService.GetOffset:output_type -> fluxdl.stream.GetOffsetResponse
+	26, // 41: fluxdl.stream.StreamService.CommitGroupOffset:output_type -> fluxdl.stream.CommitGroupOffsetResponse
+	28, // 42: fluxdl.stream.StreamService.GetGroupOffset:output_type -> fluxdl.stream.GetGroupOffsetResponse
+	13, // 43: fluxdl.stream.StreamService.CreateTopic:output_type -> fluxdl.stream.CreateTopicResponse
+	15, // 44: fluxdl.stream.StreamService.DeleteTopic:output_type -> fluxdl.stream.DeleteTopicResponse
+	17, // 45: fluxdl.stream.StreamService.ListTopics:output_type -> fluxdl.stream.ListTopicsResponse
+	19, // 46: fluxdl.stream.StreamService.GetTopicInfo:output_type -> fluxdl.stream.GetTopicInfoResponse
+	23, // 47: fluxdl.stream.StreamService.Purge:output_type -> fluxdl.stream.PurgeResponse
 	34, // [34:48] is the sub-list for method output_type
 	20, // [20:34] is the sub-list for method input_type
 	20, // [20:20] is the sub-list for extension type_name

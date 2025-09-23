@@ -1,5 +1,5 @@
 // Client configuration
-export interface GoMsgConfig {
+export interface fluxdlConfig {
   address?: string;
   timeout?: number;
   credentials?: any;
@@ -48,21 +48,21 @@ export interface SubscribeOptions {
 export type MessageHandler = (message: StreamMessage) => Promise<void> | void;
 
 // Error types
-export class GoMsgError extends Error {
+export class fluxdlError extends Error {
   constructor(message: string, public code?: string) {
     super(message);
-    this.name = 'GoMsgError';
+    this.name = 'fluxdlError';
   }
 }
 
-export class ConnectionError extends GoMsgError {
+export class ConnectionError extends fluxdlError {
   constructor(message: string) {
     super(message, 'CONNECTION_ERROR');
     this.name = 'ConnectionError';
   }
 }
 
-export class TimeoutError extends GoMsgError {
+export class TimeoutError extends fluxdlError {
   constructor(message: string) {
     super(message, 'TIMEOUT_ERROR');
     this.name = 'TimeoutError';

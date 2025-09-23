@@ -9,14 +9,15 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/reflection"
 
-	"gomsg/config"
-	"gomsg/pkg/cluster"
-	"gomsg/storage"
-	clusterpb "gomsg/api/generated/cluster"
-	kvpb "gomsg/api/generated/kv"
-	queuepb "gomsg/api/generated/queue"
-	streampb "gomsg/api/generated/stream"
+	clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
+	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
+	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
+	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
+	"github.com/skshohagmiah/fluxdl/config"
+	"github.com/skshohagmiah/fluxdl/pkg/cluster"
+	"github.com/skshohagmiah/fluxdl/storage"
 )
 
 // Server represents the gRPC server
@@ -70,8 +71,8 @@ func NewServer(cfg *config.Config, store storage.Storage) (*Server, error) {
 			MinTime:             5 * time.Second,
 			PermitWithoutStream: true,
 		}),
-		grpc.MaxRecvMsgSize(4 * 1024 * 1024),  // 4MB
-		grpc.MaxSendMsgSize(4 * 1024 * 1024),  // 4MB
+		grpc.MaxRecvMsgSize(4 * 1024 * 1024), // 4MB
+		grpc.MaxSendMsgSize(4 * 1024 * 1024), // 4MB
 	}
 
 	grpcServer := grpc.NewServer(opts...)
@@ -89,11 +90,11 @@ func NewServer(cfg *config.Config, store storage.Storage) (*Server, error) {
 			BindAddr:          cfg.Cluster.BindAddr,
 			DataDir:           cfg.Storage.DataDir,
 			Bootstrap:         cfg.Cluster.Bootstrap,
-			Partitions:        32, // Default partitions
-			ReplicationFactor: 3,  // Default replication
+			Partitions:        32,         // Default partitions
+			ReplicationFactor: 3,          // Default replication
 			SeedNodes:         []string{}, // Would be populated from config
 		}
-		
+
 		clstr, err := cluster.New(context.Background(), store, clusterConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start cluster: %w", err)
@@ -126,10 +127,19 @@ func NewServer(cfg *config.Config, store storage.Storage) (*Server, error) {
 	server.clusterService = NewClusterService(server.cluster, store)
 
 	// Register services
+	log.Printf("Registering KV service...")
 	kvpb.RegisterKVServiceServer(grpcServer, server.kvService)
+	log.Printf("Registering Queue service...")
 	queuepb.RegisterQueueServiceServer(grpcServer, server.queueService)
+	log.Printf("Registering Stream service...")
 	streampb.RegisterStreamServiceServer(grpcServer, server.streamService)
+	log.Printf("Registering Cluster service...")
 	clusterpb.RegisterClusterServiceServer(grpcServer, server.clusterService)
+
+	// Register reflection service for debugging
+	log.Printf("Registering reflection service...")
+	reflection.Register(grpcServer)
+	log.Printf("All services registered successfully")
 
 	return server, nil
 }
@@ -137,13 +147,13 @@ func NewServer(cfg *config.Config, store storage.Storage) (*Server, error) {
 // Start starts the server
 func (s *Server) Start(ctx context.Context) error {
 	address := fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port)
-	
+
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return fmt.Errorf("failed to listen on %s: %w", address, err)
 	}
 
-	log.Printf("Starting gomsg server on %s", address)
+	log.Printf("Starting fluxdl server on %s", address)
 
 	// Start gRPC server in a goroutine
 	go func() {
@@ -154,14 +164,14 @@ func (s *Server) Start(ctx context.Context) error {
 
 	// Wait for context cancellation
 	<-ctx.Done()
-	
+
 	return s.Stop()
 }
 
 // Stop stops the server gracefully
 func (s *Server) Stop() error {
-	log.Println("Stopping gomsg server...")
-	
+	log.Println("Stopping fluxdl server...")
+
 	// Graceful stop with timeout
 	done := make(chan struct{})
 	go func() {

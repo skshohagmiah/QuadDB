@@ -1,7 +1,7 @@
 GO_VERSION := 1.24
 PROTO_VERSION := 25.1
-BINARY_NAME := gomsg
-CLI_BINARY_NAME := gomsg-cli
+BINARY_NAME := fluxdl
+CLI_BINARY_NAME := fluxdl-cli
 
 .PHONY: help build test clean install proto docker deps
 
@@ -18,27 +18,27 @@ deps: ## Install dependencies
 proto: ## Generate protobuf code
 	@echo "Generating protobuf code..."
 	@mkdir -p api/generated/{common,kv,queue,stream,cluster}
-	protoc --go_out=api/generated/common --go_opt=paths=source_relative \
-		--go-grpc_out=api/generated/common --go-grpc_opt=paths=source_relative \
+	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/fluxdl \
+		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/fluxdl \
 		api/proto/common.proto
-	protoc --go_out=api/generated/kv --go_opt=paths=source_relative \
-		--go-grpc_out=api/generated/kv --go-grpc_opt=paths=source_relative \
+	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/fluxdl \
+		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/fluxdl \
 		-I api/proto api/proto/kv.proto
-	protoc --go_out=api/generated/queue --go_opt=paths=source_relative \
-		--go-grpc_out=api/generated/queue --go-grpc_opt=paths=source_relative \
+	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/fluxdl \
+		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/fluxdl \
 		-I api/proto api/proto/queue.proto
-	protoc --go_out=api/generated/stream --go_opt=paths=source_relative \
-		--go-grpc_out=api/generated/stream --go-grpc_opt=paths=source_relative \
+	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/fluxdl \
+		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/fluxdl \
 		-I api/proto api/proto/stream.proto
-	protoc --go_out=api/generated/cluster --go_opt=paths=source_relative \
-		--go-grpc_out=api/generated/cluster --go-grpc_opt=paths=source_relative \
+	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/fluxdl \
+		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/fluxdl \
 		-I api/proto api/proto/cluster.proto
 
 build: deps proto ## Build the server and CLI binaries
 	@echo "Building server..."
-	go build -ldflags="-s -w" -o bin/$(BINARY_NAME) cmd/gomsg/main.go
+	go build -ldflags="-s -w" -o bin/$(BINARY_NAME) ./cmd/fluxdl
 	@echo "Building CLI..."
-	go build -ldflags="-s -w" -o bin/$(CLI_BINARY_NAME) cmd/cli/*.go
+	go build -ldflags="-s -w" -o bin/$(CLI_BINARY_NAME) ./cmd/cli
 
 test: ## Run all tests
 	cd tests && ./run_tests.sh all
@@ -77,10 +77,10 @@ docker: ## Build Docker image
 	./scripts/docker-build.sh
 
 docker-push: ## Push Docker image to Docker Hub
-	docker push shohag2100/gomsg:latest
+	docker push shohag2100/fluxdl:latest
 
 docker-run: ## Run Docker container
-	docker run -d -p 9000:9000 -p 7000:7000 -v gomsg-data:/data --name gomsg shohag2100/gomsg:latest
+	docker run -d -p 9000:9000 -p 7000:7000 -v fluxdl-data:/data --name fluxdl shohag2100/fluxdl:latest
 
 docker-compose: ## Start with docker-compose (single node)
 	docker-compose -f docker-compose.simple.yml up -d
@@ -89,13 +89,13 @@ docker-cluster: ## Start cluster with docker-compose
 	docker-compose up -d
 
 docker-stop: ## Stop all docker services
-	docker stop gomsg 2>/dev/null || true
+	docker stop fluxdl 2>/dev/null || true
 	docker-compose down 2>/dev/null || true
 	docker-compose -f docker-compose.simple.yml down 2>/dev/null || true
 
 docker-clean: ## Clean up Docker resources
-	docker stop gomsg 2>/dev/null || true
-	docker rm gomsg 2>/dev/null || true
+	docker stop fluxdl 2>/dev/null || true
+	docker rm fluxdl 2>/dev/null || true
 	docker-compose down -v 2>/dev/null || true
 	docker-compose -f docker-compose.simple.yml down -v 2>/dev/null || true
 
@@ -129,9 +129,9 @@ mod: ## Update go modules
 release: ## Build release binaries
 	@echo "Building release binaries..."
 	@mkdir -p releases
-	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o releases/$(BINARY_NAME)-linux-amd64 cmd/gomsg/main.go
-	GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o releases/$(BINARY_NAME)-darwin-amd64 cmd/gomsg/main.go
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o releases/$(BINARY_NAME)-windows-amd64.exe cmd/gomsg/main.go
+	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o releases/$(BINARY_NAME)-linux-amd64 cmd/fluxdl/main.go
+	GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o releases/$(BINARY_NAME)-darwin-amd64 cmd/fluxdl/main.go
+	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o releases/$(BINARY_NAME)-windows-amd64.exe cmd/fluxdl/main.go
 	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o releases/$(CLI_BINARY_NAME)-linux-amd64 cmd/cli/*.go
 	GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o releases/$(CLI_BINARY_NAME)-darwin-amd64 cmd/cli/*.go
 	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o releases/$(CLI_BINARY_NAME)-windows-amd64.exe cmd/cli/*.go
@@ -142,8 +142,8 @@ dev: build ## Start development server with file watching
 	./bin/$(BINARY_NAME) --data-dir=./dev-data --port=9000 &
 	@echo "Server started on localhost:9000"
 
-stop: ## Stop all running gomsg processes
-	@echo "Stopping gomsg processes..."
+stop: ## Stop all running fluxdl processes
+	@echo "Stopping fluxdl processes..."
 	-pkill -f "$(BINARY_NAME)"
 
 # Database targets

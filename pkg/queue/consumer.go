@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gomsg/storage"
+	"github.com/skshohagmiah/fluxdl/storage"
 )
 
 // Consumer pops and peeks messages from a queue.

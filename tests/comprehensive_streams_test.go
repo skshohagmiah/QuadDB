@@ -8,14 +8,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	streampb "gomsg/api/generated/stream"
-	"gomsg/tests/testutil"
+	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
+	"github.com/skshohagmiah/fluxdl/tests/testutil"
 )
 
 func setupComprehensiveStreamClient(t *testing.T) streampb.StreamServiceClient {
 	// Start test server automatically
 	testServer := testutil.StartTestServer(t)
-	
+
 	conn, err := grpc.Dial(testServer.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to connect to server: %v", err)
@@ -29,7 +29,7 @@ func TestComprehensiveStreamsDemo(t *testing.T) {
 	client := setupComprehensiveStreamClient(t)
 	ctx := context.Background()
 
-	t.Log("🚀 GoMsg Comprehensive Streams & Pub/Sub Functionality Test")
+	t.Log("🚀 fluxdl Comprehensive Streams & Pub/Sub Functionality Test")
 	t.Log("===========================================================")
 
 	// Test 1: E-commerce Event Streaming
@@ -45,7 +45,7 @@ func TestComprehensiveStreamsDemo(t *testing.T) {
 	testIoTSensorStreaming(t, ctx, client)
 
 	t.Log("\n🎉 All comprehensive stream tests completed successfully!")
-	t.Log("✅ GoMsg provides enterprise-grade event streaming:")
+	t.Log("✅ fluxdl provides enterprise-grade event streaming:")
 	t.Log("   • Kafka-like persistent event logs")
 	t.Log("   • Multi-partition topics for horizontal scaling")
 	t.Log("   • Offset-based message replay and recovery")
@@ -83,7 +83,7 @@ func testEcommerceEventStreaming(t *testing.T, ctx context.Context, client strea
 	}
 
 	t.Logf("   📤 Publishing %d customer journey events...", len(customerEvents))
-	
+
 	partitionCounts := make(map[int32]int)
 	for i, event := range customerEvents {
 		publishResp, err := client.Publish(ctx, &streampb.PublishRequest{
@@ -100,7 +100,7 @@ func testEcommerceEventStreaming(t *testing.T, ctx context.Context, client strea
 			t.Fatalf("Failed to publish event %d: %v", i, err)
 		}
 		partitionCounts[publishResp.Partition]++
-		t.Logf("      [%d] %s %s -> partition %d, offset %d", 
+		t.Logf("      [%d] %s %s -> partition %d, offset %d",
 			i+1, event.customerID, event.eventType, publishResp.Partition, publishResp.Offset)
 	}
 
@@ -112,10 +112,10 @@ func testEcommerceEventStreaming(t *testing.T, ctx context.Context, client strea
 
 	// Simulate different services consuming the events
 	services := []string{"analytics", "recommendations", "marketing", "fraud_detection"}
-	
+
 	for _, service := range services {
 		t.Logf("   📥 Service '%s' processing events:", service)
-		
+
 		totalProcessed := 0
 		for p := int32(0); p < 2; p++ {
 			readResp, err := client.Read(ctx, &streampb.ReadRequest{
@@ -162,12 +162,12 @@ func testFinancialTransactionLog(t *testing.T, ctx context.Context, client strea
 	}
 
 	t.Logf("   📤 Recording %d financial transactions...", len(transactions))
-	
+
 	var offsets []int64
 	for i, tx := range transactions {
 		data := fmt.Sprintf(`{"tx_id":"tx_%03d","type":"%s","account":"%s","amount":"%s","balance":"%s","timestamp":"%d"}`,
 			i+1, tx.txType, tx.account, tx.amount, tx.balance, i*1000)
-		
+
 		publishResp, err := client.Publish(ctx, &streampb.PublishRequest{
 			Topic:        topicName,
 			PartitionKey: tx.account,
@@ -182,7 +182,7 @@ func testFinancialTransactionLog(t *testing.T, ctx context.Context, client strea
 			t.Fatalf("Failed to publish transaction %d: %v", i, err)
 		}
 		offsets = append(offsets, publishResp.Offset)
-		t.Logf("      [%d] %s $%s -> offset %d (balance: $%s)", 
+		t.Logf("      [%d] %s $%s -> offset %d (balance: $%s)",
 			i+1, tx.txType, tx.amount, publishResp.Offset, tx.balance)
 	}
 
@@ -200,7 +200,7 @@ func testFinancialTransactionLog(t *testing.T, ctx context.Context, client strea
 	if err != nil {
 		t.Fatalf("Failed to read audit trail: %v", err)
 	}
-	
+
 	for _, msg := range readResp.Messages {
 		txType := msg.Headers["transaction_type"]
 		t.Logf("         [offset:%d] %s transaction", msg.Offset, txType)
@@ -254,10 +254,10 @@ func testIoTSensorStreaming(t *testing.T, ctx context.Context, client streampb.S
 	}
 
 	t.Logf("   📤 Publishing %d IoT sensor readings...", len(sensorData))
-	
+
 	locationCounts := make(map[string]int)
 	partitionCounts := make(map[int32]int)
-	
+
 	for i, sensor := range sensorData {
 		publishResp, err := client.Publish(ctx, &streampb.PublishRequest{
 			Topic:        topicName,
@@ -274,7 +274,7 @@ func testIoTSensorStreaming(t *testing.T, ctx context.Context, client streampb.S
 		}
 		locationCounts[sensor.location]++
 		partitionCounts[publishResp.Partition]++
-		t.Logf("      [%d] %s @ %s -> partition %d, offset %d", 
+		t.Logf("      [%d] %s @ %s -> partition %d, offset %d",
 			i+1, sensor.sensorID, sensor.location, publishResp.Partition, publishResp.Offset)
 	}
 
@@ -302,7 +302,7 @@ func testIoTSensorStreaming(t *testing.T, ctx context.Context, client streampb.S
 		if err != nil {
 			t.Fatalf("Failed to read from partition %d: %v", p, err)
 		}
-		
+
 		if len(readResp.Messages) > 0 {
 			// Group by location for this partition
 			locationData := make(map[string]int)
@@ -310,7 +310,7 @@ func testIoTSensorStreaming(t *testing.T, ctx context.Context, client streampb.S
 				location := msg.Headers["location"]
 				locationData[location]++
 			}
-			
+
 			t.Logf("      Partition %d processor:", p)
 			for location, count := range locationData {
 				t.Logf("         %s: %d readings", location, count)
@@ -318,6 +318,6 @@ func testIoTSensorStreaming(t *testing.T, ctx context.Context, client streampb.S
 			totalReadings += len(readResp.Messages)
 		}
 	}
-	
+
 	t.Logf("   ✅ Processed %d total IoT sensor readings across all partitions", totalReadings)
 }

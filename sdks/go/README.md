@@ -1,12 +1,12 @@
-# GoMsg Go SDK
+# fluxdl Go SDK
 
-Go client library for connecting to GoMsg Docker containers.
+Go client library for connecting to fluxdl Docker containers.
 
 ## Installation
 
 ```bash
 go mod init your-project
-go get github.com/shohag2100/gomsg-go-sdk
+go get github.com/skshohagmiah/fluxdl-go-sdk
 ```
 
 ## Quick Start
@@ -19,17 +19,17 @@ import (
     "log"
     "time"
     
-    gomsg "github.com/shohag2100/gomsg-go-sdk"
+    fluxdl "github.com/skshohagmiah/fluxdl-go-sdk"
 )
 
 func main() {
-    // Connect to GoMsg Docker container
-    config := &gomsg.Config{
+    // Connect to fluxdl Docker container
+    config := &fluxdl.Config{
         Address: "localhost:9000",
-        Timeout: 10 * time.Second,
+        Timeout: 30 * time.Second,
     }
     
-    client, err := gomsg.NewClient(config)
+    client, err := fluxdl.NewClient(config)
     if err != nil {
         log.Fatal(err)
     }
@@ -61,14 +61,14 @@ func main() {
 
 ## Docker Integration
 
-Works seamlessly with GoMsg Docker containers:
+Works seamlessly with fluxdl Docker containers:
 
 ```bash
-# Run GoMsg container
-docker run -d -p 9000:9000 -v gomsg-data:/data --name gomsg shohag2100/gomsg:latest
+# Run fluxdl container
+docker run -d -p 9000:9000 -v fluxdl-data:/data --name fluxdl shohag2100/fluxdl:latest
 
 # Your Go app connects automatically
-client, _ := gomsg.NewClient(&gomsg.Config{Address: "localhost:9000"})
+client, _ := fluxdl.NewClient(&fluxdl.Config{Address: "localhost:9000"})
 ```
 
 ## API Reference
@@ -110,7 +110,7 @@ client, _ := gomsg.NewClient(&gomsg.Config{Address: "localhost:9000"})
 
 🚧 **Work in Progress**: This SDK currently provides the interface structure. Full implementation requires:
 
-1. Copy protobuf files from main GoMsg project
+1. Copy protobuf files from main fluxdl project
 2. Generate Go gRPC clients
 3. Implement actual gRPC calls
 

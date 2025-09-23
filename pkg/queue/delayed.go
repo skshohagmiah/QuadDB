@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gomsg/storage"
+	"github.com/skshohagmiah/fluxdl/storage"
 )
 
 // Delayed provides helpers for delayed enqueueing and (optionally) background

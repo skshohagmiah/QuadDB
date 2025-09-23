@@ -1,5 +1,5 @@
 """
-GoMsg Queue Client
+fluxdl Queue Client
 
 RabbitMQ-like message queue operations.
 """
@@ -7,7 +7,7 @@ RabbitMQ-like message queue operations.
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 import grpc
-from .exceptions import GoMsgError, QueueEmptyError, TimeoutError
+from .exceptions import fluxdlError, QueueEmptyError, TimeoutError
 
 
 @dataclass
@@ -57,7 +57,7 @@ class QueueClient:
         print(f"QUEUE PUSH: {queue} <- {message}" + (f" (priority: {priority})" if priority else ""))
         
         if not queue or not message:
-            raise GoMsgError("Invalid queue name or message")
+            raise fluxdlError("Invalid queue name or message")
 
     async def pop(self, queue: str, timeout: Optional[float] = None) -> Optional[str]:
         """
@@ -73,7 +73,7 @@ class QueueClient:
         print(f"QUEUE POP: {queue}" + (f" (timeout: {timeout}s)" if timeout else ""))
         
         if not queue:
-            raise GoMsgError("Invalid queue name")
+            raise fluxdlError("Invalid queue name")
         
         # Placeholder implementation
         return f"message-from-{queue}"
@@ -91,7 +91,7 @@ class QueueClient:
         print(f"QUEUE PEEK: {queue}")
         
         if not queue:
-            raise GoMsgError("Invalid queue name")
+            raise fluxdlError("Invalid queue name")
         
         return f"peeked-message-from-{queue}"
 
@@ -120,7 +120,7 @@ class QueueClient:
         print(f"QUEUE STATS: {queue}")
         
         if not queue:
-            raise GoMsgError("Invalid queue name")
+            raise fluxdlError("Invalid queue name")
         
         return QueueStats(
             name=queue,
@@ -142,7 +142,7 @@ class QueueClient:
         print(f"QUEUE PURGE: {queue}")
         
         if not queue:
-            raise GoMsgError("Invalid queue name")
+            raise fluxdlError("Invalid queue name")
         
         return 10  # Placeholder
 
@@ -157,7 +157,7 @@ class QueueClient:
         print(f"QUEUE PUSH BATCH: {queue} <- {len(messages)} messages")
         
         if not queue or not messages:
-            raise GoMsgError("Invalid queue name or empty messages")
+            raise fluxdlError("Invalid queue name or empty messages")
 
     async def pop_batch(self, queue: str, count: int = 10, timeout: Optional[float] = None) -> List[str]:
         """
@@ -174,7 +174,7 @@ class QueueClient:
         print(f"QUEUE POP BATCH: {queue} (count: {count})" + (f" (timeout: {timeout}s)" if timeout else ""))
         
         if not queue or count <= 0:
-            raise GoMsgError("Invalid queue name or count")
+            raise fluxdlError("Invalid queue name or count")
         
         # Placeholder implementation
         return [f"batch-message-{i+1}" for i in range(min(count, 5))]
@@ -190,7 +190,7 @@ class QueueClient:
         print(f"QUEUE CREATE: {queue} with options: {options}")
         
         if not queue:
-            raise GoMsgError("Invalid queue name")
+            raise fluxdlError("Invalid queue name")
 
     async def delete(self, queue: str) -> bool:
         """
@@ -205,7 +205,7 @@ class QueueClient:
         print(f"QUEUE DELETE: {queue}")
         
         if not queue:
-            raise GoMsgError("Invalid queue name")
+            raise fluxdlError("Invalid queue name")
         
         return True
 
@@ -222,6 +222,6 @@ class QueueClient:
         print(f"QUEUE SIZE: {queue}")
         
         if not queue:
-            raise GoMsgError("Invalid queue name")
+            raise fluxdlError("Invalid queue name")
         
         return 42  # Placeholder

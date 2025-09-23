@@ -9,25 +9,25 @@ import (
 	"testing"
 	"time"
 
-	"gomsg/config"
-	"gomsg/pkg/server"
-	"gomsg/storage"
+	"github.com/skshohagmiah/fluxdl/config"
+	"github.com/skshohagmiah/fluxdl/pkg/server"
+	"github.com/skshohagmiah/fluxdl/storage"
 )
 
 // TestServer manages a test server instance
 type TestServer struct {
-	server   *server.Server
-	config   *config.Config
-	storage  storage.Storage
-	ctx      context.Context
-	cancel   context.CancelFunc
-	dataDir  string
+	server  *server.Server
+	config  *config.Config
+	storage storage.Storage
+	ctx     context.Context
+	cancel  context.CancelFunc
+	dataDir string
 }
 
 // StartTestServer starts a test server on a random available port
 func StartTestServer(t *testing.T) *TestServer {
 	// Create temporary data directory
-	dataDir, err := os.MkdirTemp("", "gomsg-test-*")
+	dataDir, err := os.MkdirTemp("", "fluxdl-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -120,11 +120,11 @@ func (ts *TestServer) Stop() {
 	if ts.cancel != nil {
 		ts.cancel()
 	}
-	
+
 	if ts.storage != nil {
 		ts.storage.Close()
 	}
-	
+
 	if ts.dataDir != "" {
 		os.RemoveAll(ts.dataDir)
 	}
@@ -137,7 +137,7 @@ func findAvailablePort(t *testing.T) int {
 		t.Fatalf("Failed to find available port: %v", err)
 	}
 	defer listener.Close()
-	
+
 	addr := listener.Addr().(*net.TCPAddr)
 	return addr.Port
 }
@@ -146,7 +146,7 @@ func findAvailablePort(t *testing.T) int {
 func waitForServer(host string, port int, timeout time.Duration) bool {
 	deadline := time.Now().Add(timeout)
 	address := net.JoinHostPort(host, fmt.Sprintf("%d", port))
-	
+
 	for time.Now().Before(deadline) {
 		conn, err := net.DialTimeout("tcp", address, 100*time.Millisecond)
 		if err == nil {
@@ -155,6 +155,6 @@ func waitForServer(host string, port int, timeout time.Duration) bool {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
-	
+
 	return false
 }

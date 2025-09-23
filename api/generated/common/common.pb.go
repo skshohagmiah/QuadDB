@@ -306,7 +306,7 @@ var File_api_proto_common_proto protoreflect.FileDescriptor
 
 const file_api_proto_common_proto_rawDesc = "" +
 	"\n" +
-	"\x16api/proto/common.proto\x12\fgomsg.common\"P\n" +
+	"\x16api/proto/common.proto\x12\rfluxdl.common\"P\n" +
 	"\x06Status\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x12\n" +
@@ -329,7 +329,7 @@ const file_api_proto_common_proto_rawDesc = "" +
 	"\aaddress\x18\x02 \x01(\tR\aaddress\x12\x1b\n" +
 	"\tis_leader\x18\x03 \x01(\bR\bisLeader\x12\x14\n" +
 	"\x05state\x18\x04 \x01(\tR\x05state\x12\x1b\n" +
-	"\tlast_seen\x18\x05 \x01(\x03R\blastSeenB\x1cZ\x1agomsg/api/generated/commonb\x06proto3"
+	"\tlast_seen\x18\x05 \x01(\x03R\blastSeenB5Z3github.com/skshohagmiah/fluxdl/api/generated/commonb\x06proto3"
 
 var (
 	file_api_proto_common_proto_rawDescOnce sync.Once
@@ -345,10 +345,10 @@ func file_api_proto_common_proto_rawDescGZIP() []byte {
 
 var file_api_proto_common_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_api_proto_common_proto_goTypes = []any{
-	(*Status)(nil),    // 0: gomsg.common.Status
-	(*KeyValue)(nil),  // 1: gomsg.common.KeyValue
-	(*Partition)(nil), // 2: gomsg.common.Partition
-	(*Node)(nil),      // 3: gomsg.common.Node
+	(*Status)(nil),    // 0: fluxdl.common.Status
+	(*KeyValue)(nil),  // 1: fluxdl.common.KeyValue
+	(*Partition)(nil), // 2: fluxdl.common.Partition
+	(*Node)(nil),      // 3: fluxdl.common.Node
 }
 var file_api_proto_common_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type

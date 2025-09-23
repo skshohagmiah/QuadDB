@@ -1,11 +1,11 @@
-# GoMsg Python SDK
+# fluxdl Python SDK
 
-Python client library for connecting to GoMsg Docker containers.
+Python client library for connecting to fluxdl Docker containers.
 
 ## Installation
 
 ```bash
-pip install gomsg-python-sdk
+pip install fluxdl-python-sdk
 # or
 pip install -e .  # for development
 ```
@@ -14,12 +14,14 @@ pip install -e .  # for development
 
 ```python
 import asyncio
-from gomsg_sdk import GoMsgClient
+from fluxdl_sdk import fluxdlClient
 
 async def main():
-    # Connect to GoMsg Docker container
-    client = await GoMsgClient.create(address="localhost:9000")
-
+    # Connect to fluxdl Docker container
+    client = await fluxdlClient.create(
+        address="localhost:9000",
+        timeout=10.0
+    )
     # Key-Value operations (Redis-like)
     await client.kv.set("user:1", "John Doe")
     user = await client.kv.get("user:1")
@@ -43,20 +45,20 @@ asyncio.run(main())
 - **📬 Message Queues**: RabbitMQ-like pub/sub messaging
 - **🌊 Event Streams**: Kafka-like streaming with partitions
 - **🔌 Async/Await**: Full async support with asyncio
-- **🐳 Docker Ready**: Works seamlessly with GoMsg containers
+- **🐳 Docker Ready**: Works seamlessly with fluxdl containers
 - **🛡️ Type Safety**: Full type hints and dataclasses
 - **⚡ High Performance**: gRPC-based communication
 
 ## Docker Integration
 
-Perfect for GoMsg Docker containers:
+Perfect for fluxdl Docker containers:
 
 ```bash
-# Run GoMsg container
-docker run -d -p 9000:9000 -v gomsg-data:/data --name gomsg shohag2100/gomsg:latest
+# Run fluxdl container
+docker run -d -p 9000:9000 -v fluxdl-data:/data --name fluxdl shohag2100/fluxdl:latest
 
 # Your Python app connects automatically
-client = await GoMsgClient.create(address="localhost:9000")
+client = await fluxdlClient.create(address="localhost:9000")
 ```
 
 ## API Reference
@@ -65,10 +67,10 @@ client = await GoMsgClient.create(address="localhost:9000")
 
 ```python
 # Create and connect
-client = await GoMsgClient.create(address="localhost:9000", timeout=30.0)
+client = await fluxdlClient.create(address="localhost:9000", timeout=30.0)
 
 # Or create then connect
-client = GoMsgClient(address="localhost:9000")
+client = fluxdlClient(address="localhost:9000")
 await client.connect()
 
 # Test connection
@@ -78,7 +80,7 @@ is_connected = await client.ping()
 await client.disconnect()
 
 # Use as context manager
-async with GoMsgClient.create() as client:
+async with fluxdlClient.create() as client:
     await client.kv.set("key", "value")
 ```
 
@@ -156,7 +158,7 @@ def message_handler(message):
 await client.stream.subscribe("stream-name", message_handler)
 
 # Advanced subscription
-from gomsg_sdk.stream import SubscribeOptions
+from fluxdl_sdk.stream import SubscribeOptions
 
 options = SubscribeOptions(group="my-group", partition=0, offset=100)
 await client.stream.subscribe("stream-name", message_handler, options)
@@ -209,7 +211,7 @@ class StreamInfo:
 ## Error Handling
 
 ```python
-from gomsg_sdk import GoMsgError, ConnectionError, TimeoutError
+from fluxdl_sdk import fluxdlClient, fluxdlError, ConnectionError, TimeoutError
 
 try:
     await client.kv.set("key", "value")
@@ -217,14 +219,14 @@ except ConnectionError:
     print("Connection failed")
 except TimeoutError:
     print("Request timed out")
-except GoMsgError as e:
-    print(f"GoMsg error: {e.message} (code: {e.code})")
+except fluxdlError as e:
+    print(f"fluxdl error: {e.message} (code: {e.code})")
 ```
 
 ## Configuration
 
 ```python
-client = GoMsgClient(
+client = fluxdlClient(
     address="localhost:9000",      # Server address
     timeout=30.0,                  # Request timeout in seconds
     credentials=None,              # gRPC credentials (None = insecure)
@@ -263,18 +265,18 @@ pip install -e ".[dev]"
 pytest
 
 # Format code
-black gomsg_sdk/
-isort gomsg_sdk/
+black fluxdl_sdk/
+isort fluxdl_sdk/
 
 # Type checking
-mypy gomsg_sdk/
+mypy fluxdl_sdk/
 ```
 
 ## Development Status
 
 🚧 **Work in Progress**: This SDK provides a complete async Python interface. For full functionality:
 
-1. Copy protobuf files from main GoMsg project
+1. Copy protobuf files from main fluxdl project
 2. Generate Python gRPC clients using `grpcio-tools`
 3. Replace placeholder implementations with actual gRPC calls
 
@@ -298,6 +300,6 @@ MIT License - see LICENSE file for details.
 
 ## Support
 
-- 📖 [Documentation](https://github.com/shohag2100/gomsg-python-sdk/wiki)
-- 🐛 [Issues](https://github.com/shohag2100/gomsg-python-sdk/issues)
-- 💬 [Discussions](https://github.com/shohag2100/gomsg-python-sdk/discussions)
+- 📖 [Documentation](https://github.com/shohag2100/fluxdl-python-sdk/wiki)
+- 🐛 [Issues](https://github.com/shohag2100/fluxdl-python-sdk/issues)
+- 💬 [Discussions](https://github.com/shohag2100/fluxdl-python-sdk/discussions)

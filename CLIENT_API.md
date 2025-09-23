@@ -1,4 +1,4 @@
-# GoMsg Client API Reference
+# fluxdl Client API Reference
 
 **Complete list of all client APIs based on actual server implementations.**
 
@@ -236,7 +236,7 @@ stats, err := client.Queue.Stats(ctx, "notifications")
 queues, err := client.Queue.ListQueues(ctx)
 
 // CREATE_QUEUE - Create queue with options
-options := &gomsg.QueueOptions{
+options := &fluxdl.QueueOptions{
     MaxRetries:    3,
     RetryDelay:    30 * time.Second,
     DeadLetterTTL: 24 * time.Hour,
@@ -319,7 +319,7 @@ headers := map[string]string{"source": "web", "version": "1.0"}
 msg, err := client.Stream.Publish(ctx, "user_events", "user:123", []byte(`{"action":"login"}`), headers)
 
 // PUBLISH_BATCH - Send multiple messages
-messages := []*gomsg.StreamMessage{
+messages := []*fluxdl.StreamMessage{
     {PartitionKey: "user:1", Data: []byte(`{"action":"login"}`)},
     {PartitionKey: "user:2", Data: []byte(`{"action":"logout"}`)},
 }

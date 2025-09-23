@@ -9,29 +9,29 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Storage  StorageConfig  `mapstructure:"storage"`
-	Cluster  ClusterConfig  `mapstructure:"cluster"`
-	Logging  LoggingConfig  `mapstructure:"logging"`
-	Metrics  MetricsConfig  `mapstructure:"metrics"`
+	Server  ServerConfig  `mapstructure:"server"`
+	Storage StorageConfig `mapstructure:"storage"`
+	Cluster ClusterConfig `mapstructure:"cluster"`
+	Logging LoggingConfig `mapstructure:"logging"`
+	Metrics MetricsConfig `mapstructure:"metrics"`
 }
 
 // ServerConfig contains server-related configuration
 type ServerConfig struct {
-	Host         string `mapstructure:"host"`
-	Port         int    `mapstructure:"port"`
-	ReadTimeout  int    `mapstructure:"read_timeout"`
-	WriteTimeout int    `mapstructure:"write_timeout"`
-	MaxConnections int  `mapstructure:"max_connections"`
+	Host           string `mapstructure:"host"`
+	Port           int    `mapstructure:"port"`
+	ReadTimeout    int    `mapstructure:"read_timeout"`
+	WriteTimeout   int    `mapstructure:"write_timeout"`
+	MaxConnections int    `mapstructure:"max_connections"`
 }
 
 // StorageConfig contains storage-related configuration
 type StorageConfig struct {
-	Backend   string `mapstructure:"backend"`
-	DataDir   string `mapstructure:"data_dir"`
-	BackupDir string `mapstructure:"backup_dir"`
-	GCInterval int   `mapstructure:"gc_interval"`
-	KVBackend string `mapstructure:"kv_backend"` // "memory" (default) or "badger"
+	Backend    string `mapstructure:"backend"`
+	DataDir    string `mapstructure:"data_dir"`
+	BackupDir  string `mapstructure:"backup_dir"`
+	GCInterval int    `mapstructure:"gc_interval"`
+	KVBackend  string `mapstructure:"kv_backend"` // "memory" (default) or "badger"
 }
 
 // ClusterConfig contains clustering configuration
@@ -63,13 +63,13 @@ type MetricsConfig struct {
 func LoadConfig(configPath string) (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	
+
 	if configPath != "" {
 		viper.SetConfigFile(configPath)
 	} else {
 		viper.AddConfigPath(".")
 		viper.AddConfigPath("./config")
-		viper.AddConfigPath("/etc/gomsg")
+		viper.AddConfigPath("/etc/fluxdl")
 	}
 
 	// Set defaults
@@ -77,7 +77,7 @@ func LoadConfig(configPath string) (*Config, error) {
 
 	// Read environment variables
 	viper.AutomaticEnv()
-	viper.SetEnvPrefix("GOMSG")
+	viper.SetEnvPrefix("fluxdl")
 
 	// Read config file
 	if err := viper.ReadInConfig(); err != nil {
@@ -140,10 +140,10 @@ func validateConfig(config *Config) error {
 	// Ensure data directories exist
 	config.Storage.DataDir = filepath.Clean(config.Storage.DataDir)
 	config.Storage.BackupDir = filepath.Clean(config.Storage.BackupDir)
-	
+
 	if config.Cluster.Enabled {
 		config.Cluster.DataDir = filepath.Clean(config.Cluster.DataDir)
-		
+
 		if config.Cluster.NodeID == "" {
 			return fmt.Errorf("cluster.node_id is required when clustering is enabled")
 		}
@@ -168,10 +168,10 @@ func validateConfig(config *Config) error {
 // GetDefaultConfig returns a default configuration
 func GetDefaultConfig() *Config {
 	setDefaults()
-	
+
 	var config Config
 	viper.Unmarshal(&config)
 	validateConfig(&config)
-	
+
 	return &config
 }

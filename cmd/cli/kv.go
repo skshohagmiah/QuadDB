@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	kvpb "gomsg/api/generated/kv"
+	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
 )
 
 func kvCmd() *cobra.Command {
@@ -33,13 +33,13 @@ func kvCmd() *cobra.Command {
 
 func kvSetCmd() *cobra.Command {
 	var ttl int64
-	
+
 	cmd := &cobra.Command{
 		Use:   "set <key> <value>",
 		Short: "Set a key-value pair",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -81,7 +81,7 @@ func kvGetCmd() *cobra.Command {
 		Short: "Get a value by key",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -118,7 +118,7 @@ func kvDelCmd() *cobra.Command {
 		Short: "Delete one or more keys",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -151,7 +151,7 @@ func kvExistsCmd() *cobra.Command {
 		Short: "Check if a key exists",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -184,13 +184,13 @@ func kvExistsCmd() *cobra.Command {
 
 func kvKeysCmd() *cobra.Command {
 	var limit int32
-	
+
 	cmd := &cobra.Command{
 		Use:   "keys <pattern>",
 		Short: "Find keys matching a pattern",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -229,13 +229,13 @@ func kvKeysCmd() *cobra.Command {
 
 func kvIncrCmd() *cobra.Command {
 	var by int64
-	
+
 	cmd := &cobra.Command{
 		Use:   "incr <key>",
 		Short: "Increment a counter",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -272,13 +272,13 @@ func kvIncrCmd() *cobra.Command {
 
 func kvDecrCmd() *cobra.Command {
 	var by int64
-	
+
 	cmd := &cobra.Command{
 		Use:   "decr <key>",
 		Short: "Decrement a counter",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -319,7 +319,7 @@ func kvTTLCmd() *cobra.Command {
 		Short: "Get remaining TTL for a key",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}

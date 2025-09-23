@@ -7,14 +7,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	streampb "gomsg/api/generated/stream"
-	"gomsg/tests/testutil"
+	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
+	"github.com/skshohagmiah/fluxdl/tests/testutil"
 )
 
 func setupStreamClient(t *testing.T) streampb.StreamServiceClient {
 	// Start test server automatically
 	testServer := testutil.StartTestServer(t)
-	
+
 	conn, err := grpc.Dial(testServer.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to connect to server: %v", err)
@@ -118,7 +118,7 @@ func TestStreamMultipleMessages(t *testing.T) {
 
 	// Create topic
 	client.CreateTopic(ctx, &streampb.CreateTopicRequest{
-		Name:      topicName,
+		Name:       topicName,
 		Partitions: 1,
 	})
 
@@ -162,11 +162,11 @@ func TestStreamMultipleMessages(t *testing.T) {
 	// Verify message order and content
 	for i, msg := range readResp.Messages[:3] {
 		if string(msg.Data) != messages[i] {
-			t.Fatalf("Message %d mismatch: expected '%s', got '%s'", 
+			t.Fatalf("Message %d mismatch: expected '%s', got '%s'",
 				i, messages[i], string(msg.Data))
 		}
 		if msg.Offset != offsets[i] {
-			t.Fatalf("Offset %d mismatch: expected %d, got %d", 
+			t.Fatalf("Offset %d mismatch: expected %d, got %d",
 				i, offsets[i], msg.Offset)
 		}
 	}
@@ -179,7 +179,7 @@ func TestStreamSeekOffset(t *testing.T) {
 
 	// Create topic and publish messages
 	client.CreateTopic(ctx, &streampb.CreateTopicRequest{
-		Name:      topicName,
+		Name:       topicName,
 		Partitions: 1,
 	})
 
@@ -228,7 +228,7 @@ func TestStreamListTopics(t *testing.T) {
 	topics := []string{"list_test_1", "list_test_2", "list_test_3"}
 	for _, topic := range topics {
 		client.CreateTopic(ctx, &streampb.CreateTopicRequest{
-			Name:      topic,
+			Name:       topic,
 			Partitions: 1,
 		})
 	}
@@ -259,7 +259,7 @@ func TestStreamPurge(t *testing.T) {
 
 	// Create topic and publish messages
 	client.CreateTopic(ctx, &streampb.CreateTopicRequest{
-		Name:      topicName,
+		Name:       topicName,
 		Partitions: 1,
 	})
 
@@ -304,7 +304,7 @@ func TestStreamDeleteTopic(t *testing.T) {
 
 	// Create topic
 	client.CreateTopic(ctx, &streampb.CreateTopicRequest{
-		Name:      topicName,
+		Name:       topicName,
 		Partitions: 1,
 	})
 

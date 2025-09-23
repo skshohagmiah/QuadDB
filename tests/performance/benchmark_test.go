@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	kvpb "gomsg/api/generated/kv"
-	queuepb "gomsg/api/generated/queue"
-	streampb "gomsg/api/generated/stream"
+	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
+	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
+	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
 )
 
 func setupBenchmarkClients(b *testing.B) (kvpb.KVServiceClient, queuepb.QueueServiceClient, streampb.StreamServiceClient) {
@@ -21,10 +21,10 @@ func setupBenchmarkClients(b *testing.B) (kvpb.KVServiceClient, queuepb.QueueSer
 		b.Fatalf("Failed to connect to server: %v", err)
 	}
 	b.Cleanup(func() { conn.Close() })
-	
-	return kvpb.NewKVServiceClient(conn), 
-		   queuepb.NewQueueServiceClient(conn), 
-		   streampb.NewStreamServiceClient(conn)
+
+	return kvpb.NewKVServiceClient(conn),
+		queuepb.NewQueueServiceClient(conn),
+		streampb.NewStreamServiceClient(conn)
 }
 
 func BenchmarkKVSet(b *testing.B) {
@@ -37,7 +37,7 @@ func BenchmarkKVSet(b *testing.B) {
 		for pb.Next() {
 			key := fmt.Sprintf("bench_set_%d", i)
 			value := []byte(fmt.Sprintf("value_%d", i))
-			
+
 			_, err := kvClient.Set(ctx, &kvpb.SetRequest{
 				Key:   key,
 				Value: value,
@@ -72,7 +72,7 @@ func BenchmarkKVGet(b *testing.B) {
 		i := 0
 		for pb.Next() {
 			key := fmt.Sprintf("bench_get_%d", i%numKeys)
-			
+
 			_, err := kvClient.Get(ctx, &kvpb.GetRequest{Key: key})
 			if err != nil {
 				b.Fatalf("Get failed: %v", err)
@@ -91,7 +91,7 @@ func BenchmarkKVIncrement(b *testing.B) {
 		i := 0
 		for pb.Next() {
 			key := fmt.Sprintf("bench_incr_%d", i%100) // Use 100 different counters
-			
+
 			_, err := kvClient.Incr(ctx, &kvpb.IncrRequest{
 				Key: key,
 				By:  1,
@@ -114,7 +114,7 @@ func BenchmarkQueuePush(b *testing.B) {
 		for pb.Next() {
 			queue := fmt.Sprintf("bench_queue_%d", i%10) // Use 10 different queues
 			data := []byte(fmt.Sprintf("message_%d", i))
-			
+
 			_, err := queueClient.Push(ctx, &queuepb.PushRequest{
 				Queue: queue,
 				Data:  data,
@@ -171,7 +171,7 @@ func BenchmarkStreamPublish(b *testing.B) {
 		for pb.Next() {
 			partitionKey := fmt.Sprintf("key_%d", i%100)
 			data := []byte(fmt.Sprintf(`{"event":"test","id":%d}`, i))
-			
+
 			_, err := streamClient.Publish(ctx, &streampb.PublishRequest{
 				Topic:        topicName,
 				PartitionKey: partitionKey,
@@ -485,7 +485,7 @@ func calculateLatencyStats(latencies []time.Duration) (avg, p95, p99 time.Durati
 	// Calculate percentiles
 	p95Index := int(float64(len(latencies)) * 0.95)
 	p99Index := int(float64(len(latencies)) * 0.99)
-	
+
 	if p95Index >= len(latencies) {
 		p95Index = len(latencies) - 1
 	}

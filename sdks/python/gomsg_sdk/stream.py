@@ -1,5 +1,5 @@
 """
-GoMsg Stream Client
+fluxdl Stream Client
 
 Kafka-like event streaming operations.
 """
@@ -8,7 +8,7 @@ from typing import Optional, List, Dict, Any, Callable, AsyncIterator
 from dataclasses import dataclass
 import asyncio
 import grpc
-from .exceptions import GoMsgError, StreamNotFoundError, TimeoutError
+from .exceptions import fluxdlError, StreamNotFoundError, TimeoutError
 
 
 @dataclass
@@ -85,7 +85,7 @@ class StreamClient:
         print(f"STREAM PUBLISH: {stream} <- {message}{key_str}{part_str}")
         
         if not stream or not message:
-            raise GoMsgError("Invalid stream name or message")
+            raise fluxdlError("Invalid stream name or message")
         
         return 12345  # Placeholder offset
 
@@ -103,7 +103,7 @@ class StreamClient:
         print(f"STREAM SUBSCRIBE: {stream} (group: {opts.group}, partition: {opts.partition})")
         
         if not stream or not handler:
-            raise GoMsgError("Invalid stream name or handler")
+            raise fluxdlError("Invalid stream name or handler")
         
         # Simulate receiving messages
         async def simulate_messages():
@@ -133,7 +133,7 @@ class StreamClient:
         print(f"STREAM CREATE: {stream} (partitions: {partitions}) with options: {options}")
         
         if not stream or partitions <= 0:
-            raise GoMsgError("Invalid stream name or partition count")
+            raise fluxdlError("Invalid stream name or partition count")
 
     async def list_streams(self) -> List[str]:
         """
@@ -160,7 +160,7 @@ class StreamClient:
         print(f"STREAM INFO: {stream}")
         
         if not stream:
-            raise GoMsgError("Invalid stream name")
+            raise fluxdlError("Invalid stream name")
         
         return StreamInfo(
             name=stream,
@@ -180,7 +180,7 @@ class StreamClient:
         print(f"STREAM DELETE: {stream}")
         
         if not stream:
-            raise GoMsgError("Invalid stream name")
+            raise fluxdlError("Invalid stream name")
 
     async def publish_batch(self, stream: str, messages: List[Dict[str, Any]]) -> List[int]:
         """
@@ -196,7 +196,7 @@ class StreamClient:
         print(f"STREAM PUBLISH BATCH: {stream} <- {len(messages)} messages")
         
         if not stream or not messages:
-            raise GoMsgError("Invalid stream name or empty messages")
+            raise fluxdlError("Invalid stream name or empty messages")
         
         return list(range(len(messages)))  # Placeholder offsets
 
@@ -217,7 +217,7 @@ class StreamClient:
         print(f"STREAM GET MESSAGES: {stream} partition={partition} offset={offset} limit={limit}")
         
         if not stream:
-            raise GoMsgError("Invalid stream name")
+            raise fluxdlError("Invalid stream name")
         
         # Placeholder implementation
         messages = []
@@ -247,7 +247,7 @@ class StreamClient:
               (f" group={group}" if group else ""))
         
         if not stream:
-            raise GoMsgError("Invalid stream name")
+            raise fluxdlError("Invalid stream name")
 
     async def commit_offset(self, stream: str, partition: int, offset: int, group: str) -> None:
         """
@@ -262,7 +262,7 @@ class StreamClient:
         print(f"STREAM COMMIT: {stream} partition={partition} offset={offset} group={group}")
         
         if not stream or not group:
-            raise GoMsgError("Invalid stream name or group")
+            raise fluxdlError("Invalid stream name or group")
 
     async def get_committed_offset(self, stream: str, partition: int, group: str) -> int:
         """
@@ -279,6 +279,6 @@ class StreamClient:
         print(f"STREAM GET COMMITTED: {stream} partition={partition} group={group}")
         
         if not stream or not group:
-            raise GoMsgError("Invalid stream name or group")
+            raise fluxdlError("Invalid stream name or group")
         
         return 100  # Placeholder offset

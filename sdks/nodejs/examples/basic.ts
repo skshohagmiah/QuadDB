@@ -1,10 +1,10 @@
-import { GoMsgClient } from '../src';
+import { fluxdlClient } from '../src';
 
 async function main() {
-  console.log('🚀 GoMsg Node.js SDK Example\n');
+  console.log('🚀 fluxdl Node.js SDK Example\n');
 
-  // Create and connect to GoMsg Docker container
-  const client = await GoMsgClient.connect({
+  // Create and connect to fluxdl Docker container
+  const client = await fluxdlClient.connect({
     address: 'localhost:9000',
     timeout: 10000
   });
@@ -30,7 +30,7 @@ async function main() {
 
     // Queue operations (RabbitMQ-like)
     console.log('📬 Queue Operations:');
-    await client.queue.push('notifications', 'Welcome to GoMsg!');
+    await client.queue.push('notifications', 'Welcome to fluxdl!');
     console.log(`   Pushed message to notifications queue`);
     
     const message = await client.queue.pop('notifications');

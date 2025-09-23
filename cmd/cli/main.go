@@ -14,9 +14,9 @@ var (
 
 func main() {
 	var rootCmd = &cobra.Command{
-		Use:   "gomsg",
-		Short: "gomsg - Fast data platform CLI",
-		Long:  `gomsg is a fast, simple data platform that replaces Redis + RabbitMQ + Kafka`,
+		Use:   "fluxdl",
+		Short: "fluxdl - Fast data platform CLI",
+		Long:  `fluxdl is a fast, simple data platform that replaces Redis + RabbitMQ + Kafka`,
 	}
 
 	rootCmd.SilenceUsage = true
@@ -28,6 +28,7 @@ func main() {
 	// Add subcommands
 	rootCmd.AddCommand(kvCmd())
 	rootCmd.AddCommand(queueCmd())
+	rootCmd.AddCommand(streamCmd())
 	rootCmd.AddCommand(clusterCmd())
 
 	if err := rootCmd.Execute(); err != nil {

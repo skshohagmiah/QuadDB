@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	queuepb "gomsg/api/generated/queue"
+	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
 )
 
 func queueCmd() *cobra.Command {
@@ -31,13 +31,13 @@ func queueCmd() *cobra.Command {
 
 func queuePushCmd() *cobra.Command {
 	var delay int64
-	
+
 	cmd := &cobra.Command{
 		Use:   "push <queue> <message>",
 		Short: "Push a message to a queue",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -75,13 +75,13 @@ func queuePushCmd() *cobra.Command {
 
 func queuePopCmd() *cobra.Command {
 	var popTimeout int32
-	
+
 	cmd := &cobra.Command{
 		Use:   "pop <queue>",
 		Short: "Pop a message from a queue",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -122,13 +122,13 @@ func queuePopCmd() *cobra.Command {
 
 func queuePeekCmd() *cobra.Command {
 	var limit int32
-	
+
 	cmd := &cobra.Command{
 		Use:   "peek <queue>",
 		Short: "Peek at messages in a queue without removing them",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -171,7 +171,7 @@ func queueStatsCmd() *cobra.Command {
 		Short: "Get queue statistics",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -208,7 +208,7 @@ func queueListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List all queues",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}
@@ -243,7 +243,7 @@ func queuePurgeCmd() *cobra.Command {
 		Short: "Remove all messages from a queue",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				return err
 			}

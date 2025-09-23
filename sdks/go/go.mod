@@ -1,4 +1,4 @@
-module github.com/shohag2100/gomsg-go-sdk
+module github.com/skshohagmiah/fluxdl-go-sdk
 
 go 1.24
 

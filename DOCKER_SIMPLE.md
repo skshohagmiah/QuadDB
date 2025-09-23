@@ -1,18 +1,18 @@
-# GoMsg Docker Quick Start
+# fluxdl Docker Quick Start
 
-Simple guide to run GoMsg with Docker.
+Simple guide to run fluxdl with Docker.
 
 ## Quick Start
 
 ### 1. Pull from Docker Hub (easiest)
 ```bash
-docker pull shohag2100/gomsg:latest
+docker pull shohag2100/fluxdl:latest
 ```
 
 ### 2. Run a single node
 ```bash
 make docker-run
-# or directly: docker run -d -p 9000:9000 -v gomsg-data:/data --name gomsg shohag2100/gomsg:latest
+# or directly: docker run -d -p 9000:9000 -v fluxdl-data:/data --name fluxdl shohag2100/fluxdl:latest
 ```
 
 ### 3. Run with Docker Compose (recommended)
@@ -31,14 +31,14 @@ make docker
 
 - **Single node**: Perfect for development and small deployments
 - **API endpoint**: http://localhost:9000
-- **Persistent data**: Stored in Docker volume `gomsg-data`
+- **Persistent data**: Stored in Docker volume `fluxdl-data`
 - **Health checks**: Built-in container health monitoring
 
 ## Basic commands
 
 ```bash
 # Pull from Docker Hub
-docker pull shohag2100/gomsg:latest
+docker pull shohag2100/fluxdl:latest
 
 # Build image (if you want to build locally)
 make docker
@@ -59,7 +59,7 @@ make docker-stop
 make docker-clean
 
 # View logs
-docker logs gomsg
+docker logs fluxdl
 # or: docker-compose -f docker-compose.simple.yml logs -f
 ```
 
@@ -77,14 +77,14 @@ This gives you:
 
 ## Using the published image
 
-Anyone can now use GoMsg directly from Docker Hub:
+Anyone can now use fluxdl directly from Docker Hub:
 
 ```bash
 # Quick start
-docker run -d -p 9000:9000 -v gomsg-data:/data --name gomsg shohag2100/gomsg:latest
+docker run -d -p 9000:9000 -v fluxdl-data:/data --name fluxdl shohag2100/fluxdl:latest
 
 # With custom tag
-docker run -d -p 9000:9000 -v gomsg-data:/data --name gomsg shohag2100/gomsg:v1.0.0
+docker run -d -p 9000:9000 -v fluxdl-data:/data --name fluxdl shohag2100/fluxdl:v1.0.0
 ```
 
 That's it! Keep it simple. 🚀

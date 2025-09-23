@@ -1,5 +1,5 @@
 import * as grpc from '@grpc/grpc-js';
-import { KVSetOptions, GoMsgError } from './types';
+import { KVSetOptions, fluxdlError } from './types';
 
 export class KVClient {
   constructor(private connection?: grpc.Client) {}
@@ -18,7 +18,7 @@ export class KVClient {
         if (key && value) {
           resolve('OK');
         } else {
-          reject(new GoMsgError('Invalid key or value'));
+          reject(new fluxdlError('Invalid key or value'));
         }
       }, 10);
     });
@@ -36,7 +36,7 @@ export class KVClient {
           // Simulate returning a value
           resolve(`value-for-${key}`);
         } else {
-          reject(new GoMsgError('Invalid key'));
+          reject(new fluxdlError('Invalid key'));
         }
       }, 10);
     });
@@ -53,7 +53,7 @@ export class KVClient {
         if (key) {
           resolve(true);
         } else {
-          reject(new GoMsgError('Invalid key'));
+          reject(new fluxdlError('Invalid key'));
         }
       }, 10);
     });
@@ -70,7 +70,7 @@ export class KVClient {
         if (key) {
           resolve(true);
         } else {
-          reject(new GoMsgError('Invalid key'));
+          reject(new fluxdlError('Invalid key'));
         }
       }, 10);
     });
@@ -101,7 +101,7 @@ export class KVClient {
         if (key) {
           resolve(by); // Simulate new value
         } else {
-          reject(new GoMsgError('Invalid key'));
+          reject(new fluxdlError('Invalid key'));
         }
       }, 10);
     });
@@ -118,7 +118,7 @@ export class KVClient {
         if (key) {
           resolve(-by); // Simulate new value
         } else {
-          reject(new GoMsgError('Invalid key'));
+          reject(new fluxdlError('Invalid key'));
         }
       }, 10);
     });
@@ -135,7 +135,7 @@ export class KVClient {
         if (Object.keys(pairs).length > 0) {
           resolve('OK');
         } else {
-          reject(new GoMsgError('No key-value pairs provided'));
+          reject(new fluxdlError('No key-value pairs provided'));
         }
       }, 10);
     });
@@ -152,7 +152,7 @@ export class KVClient {
         if (keys.length > 0) {
           resolve(keys.map(key => `value-for-${key}`));
         } else {
-          reject(new GoMsgError('No keys provided'));
+          reject(new fluxdlError('No keys provided'));
         }
       }, 10);
     });

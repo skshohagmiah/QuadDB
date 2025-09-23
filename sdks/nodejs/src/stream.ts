@@ -1,5 +1,5 @@
 import * as grpc from '@grpc/grpc-js';
-import { StreamMessage, StreamInfo, MessageHandler, SubscribeOptions, GoMsgError } from './types';
+import { StreamMessage, StreamInfo, MessageHandler, SubscribeOptions, fluxdlError } from './types';
 
 export class StreamClient {
   constructor(private connection?: grpc.Client) {}
@@ -15,7 +15,7 @@ export class StreamClient {
         if (stream && message) {
           resolve();
         } else {
-          reject(new GoMsgError('Invalid stream name or message'));
+          reject(new fluxdlError('Invalid stream name or message'));
         }
       }, 10);
     });
@@ -50,7 +50,7 @@ export class StreamClient {
           
           resolve();
         } else {
-          reject(new GoMsgError('Invalid stream name or handler'));
+          reject(new fluxdlError('Invalid stream name or handler'));
         }
       }, 10);
     });
@@ -67,7 +67,7 @@ export class StreamClient {
         if (stream && partitions > 0) {
           resolve();
         } else {
-          reject(new GoMsgError('Invalid stream name or partition count'));
+          reject(new fluxdlError('Invalid stream name or partition count'));
         }
       }, 10);
     });
@@ -101,7 +101,7 @@ export class StreamClient {
             messages: 1000
           });
         } else {
-          reject(new GoMsgError('Invalid stream name'));
+          reject(new fluxdlError('Invalid stream name'));
         }
       }, 10);
     });
@@ -118,7 +118,7 @@ export class StreamClient {
         if (stream) {
           resolve();
         } else {
-          reject(new GoMsgError('Invalid stream name'));
+          reject(new fluxdlError('Invalid stream name'));
         }
       }, 10);
     });
@@ -135,7 +135,7 @@ export class StreamClient {
         if (stream && messages.length > 0) {
           resolve();
         } else {
-          reject(new GoMsgError('Invalid stream name or empty messages'));
+          reject(new fluxdlError('Invalid stream name or empty messages'));
         }
       }, 10);
     });
@@ -160,7 +160,7 @@ export class StreamClient {
           }));
           resolve(messages);
         } else {
-          reject(new GoMsgError('Invalid stream name'));
+          reject(new fluxdlError('Invalid stream name'));
         }
       }, 10);
     });

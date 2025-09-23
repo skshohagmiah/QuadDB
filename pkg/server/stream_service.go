@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	commonpb "gomsg/api/generated/common"
-	streampb "gomsg/api/generated/stream"
-	"gomsg/storage"
+	commonpb "github.com/skshohagmiah/fluxdl/api/generated/common"
+	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
+	"github.com/skshohagmiah/fluxdl/storage"
 )
 
 // StreamService implements the Stream gRPC service
@@ -24,7 +24,8 @@ type StreamService struct {
 // NewStreamService creates a new Stream service
 func NewStreamService(store storage.Storage) *StreamService {
 	return &StreamService{
-		storage: store,
+		UnimplementedStreamServiceServer: streampb.UnimplementedStreamServiceServer{},
+		storage:                          store,
 	}
 }
 
@@ -116,7 +117,7 @@ func (s *StreamService) Read(ctx context.Context, req *streampb.ReadRequest) (*s
 			Timestamp:    message.Timestamp.Unix(),
 			Headers:      message.Headers,
 		})
-		
+
 		if message.Offset > nextOffset {
 			nextOffset = message.Offset
 		}
@@ -400,7 +401,7 @@ func (s *StreamService) ReadFrom(ctx context.Context, req *streampb.ReadFromRequ
 			Timestamp:    message.Timestamp.Unix(),
 			Headers:      message.Headers,
 		})
-		
+
 		if message.Offset > nextOffset {
 			nextOffset = message.Offset
 		}
@@ -455,17 +456,17 @@ func (s *StreamService) SubscribeGroup(req *streampb.SubscribeGroupRequest, stre
 	if req.Topic == "" {
 		return status.Error(codes.InvalidArgument, "topic cannot be empty")
 	}
-	
+
 	if req.GroupId == "" {
 		return status.Error(codes.InvalidArgument, "group ID cannot be empty")
 	}
-	
+
 	if req.ConsumerId == "" {
 		return status.Error(codes.InvalidArgument, "consumer ID cannot be empty")
 	}
 
 	ctx := stream.Context()
-	
+
 	// Subscribe to the consumer group
 	err := s.storage.StreamSubscribeGroup(ctx, req.Topic, req.GroupId, req.ConsumerId)
 	if err != nil {
@@ -517,7 +518,7 @@ func (s *StreamService) SubscribeGroup(req *streampb.SubscribeGroupRequest, stre
 						Message: "OK",
 					},
 				}
-				
+
 				if err := stream.Send(response); err != nil {
 					return err
 				}
