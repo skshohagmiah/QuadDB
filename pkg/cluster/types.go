@@ -50,3 +50,15 @@ type NodePartitionStats struct {
 	PrimaryPartitions int32
 	ReplicaPartitions int32
 }
+
+// ClusterHealth provides comprehensive cluster health information
+type ClusterHealth struct {
+	Status        string // "healthy", "no-quorum", "no-leader"
+	TotalNodes    int32
+	ActiveNodes   int32
+	HasQuorum     bool
+	IsLeader      bool
+	LeaderID      string
+	CanWrite      bool
+	ReadOnlyMode  bool
+}

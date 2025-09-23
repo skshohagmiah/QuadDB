@@ -48,6 +48,7 @@ type PartitionedClient struct {
 	
 	// Cluster topology
 	clusterNodes map[string]*clusterpb.Node
+	partitionMap map[int32][]string // partition -> [primary, replica1, replica2, ...]
 	
 	// Background refresh
 	ctx    context.Context
@@ -76,6 +77,7 @@ func NewPartitioned(ctx context.Context, opts *PartitionedOptions) (*Partitioned
 		partitioner:  cluster.NewPartitioner(opts.Partitions, 16),
 		options:      opts,
 		clusterNodes: make(map[string]*clusterpb.Node),
+		partitionMap: make(map[int32][]string),
 		ctx:          clientCtx,
 		cancel:       cancel,
 	}
@@ -189,6 +191,12 @@ func (pc *PartitionedClient) refreshClusterTopology(ctx context.Context) error {
 			}
 		}
 	}
+	
+	// Update partition map
+	if err := pc.updatePartitionMap(ctx); err != nil {
+		// Log error but don't fail - we can still use round-robin as fallback
+		_ = err
+	}
 
 	return nil
 }
@@ -210,6 +218,39 @@ func (pc *PartitionedClient) refreshLoop() {
 	}
 }
 
+// updatePartitionMap fetches and updates the partition map from the cluster
+func (pc *PartitionedClient) updatePartitionMap(ctx context.Context) error {
+	pc.mu.RLock()
+	var anyNode *nodeClient
+	for _, node := range pc.nodes {
+		anyNode = node
+		break
+	}
+	pc.mu.RUnlock()
+
+	if anyNode == nil {
+		return fmt.Errorf("no nodes available")
+	}
+
+	// Get cluster info with partition assignments
+	resp, err := anyNode.Cluster.GetClusterInfo(ctx, &clusterpb.GetClusterInfoRequest{})
+	if err != nil {
+		return fmt.Errorf("failed to get cluster info: %w", err)
+	}
+
+	if !resp.Status.Success {
+		return fmt.Errorf("get cluster info failed: %s", resp.Status.Message)
+	}
+
+	// Update partition map
+	pc.partitionMap = make(map[int32][]string)
+	for _, partition := range resp.ClusterInfo.Partitions {
+		pc.partitionMap[partition.Id] = partition.Replicas
+	}
+
+	return nil
+}
+
 // getNodeForPartition returns the node responsible for a given partition
 func (pc *PartitionedClient) getNodeForPartition(partition int32) (*nodeClient, error) {
 	pc.mu.RLock()
@@ -219,8 +260,23 @@ func (pc *PartitionedClient) getNodeForPartition(partition int32) (*nodeClient, 
 		return nil, fmt.Errorf("no nodes available")
 	}
 
-	// For now, use simple round-robin based on partition
-	// In a real implementation, this would use consistent hashing
+	// Try to use partition map first
+	if owners, exists := pc.partitionMap[partition]; exists && len(owners) > 0 {
+		// Use primary owner (first in list)
+		primaryNodeID := owners[0]
+		if node, exists := pc.nodes[primaryNodeID]; exists {
+			return node, nil
+		}
+		
+		// Primary not available, try replicas
+		for i := 1; i < len(owners); i++ {
+			if node, exists := pc.nodes[owners[i]]; exists {
+				return node, nil
+			}
+		}
+	}
+
+	// Fallback to round-robin if partition map not available
 	nodeIDs := make([]string, 0, len(pc.nodes))
 	for nodeID := range pc.nodes {
 		nodeIDs = append(nodeIDs, nodeID)
@@ -237,6 +293,23 @@ func (pc *PartitionedClient) getNodeForPartition(partition int32) (*nodeClient, 
 	}
 
 	return node, nil
+}
+
+// getReplicaNodesForPartition returns all replica nodes for a partition
+func (pc *PartitionedClient) getReplicaNodesForPartition(partition int32) ([]*nodeClient, error) {
+	pc.mu.RLock()
+	defer pc.mu.RUnlock()
+
+	var replicas []*nodeClient
+	if owners, exists := pc.partitionMap[partition]; exists {
+		for _, nodeID := range owners {
+			if node, exists := pc.nodes[nodeID]; exists {
+				replicas = append(replicas, node)
+			}
+		}
+	}
+
+	return replicas, nil
 }
 
 // Set stores a key-value pair

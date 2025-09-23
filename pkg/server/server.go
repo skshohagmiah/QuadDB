@@ -13,10 +13,10 @@ import (
 	"gomsg/config"
 	"gomsg/pkg/cluster"
 	"gomsg/storage"
-
-	clusterpb "gomsg/api/generated/cluster"
-	kvpb "gomsg/api/generated/kv"
-	queuepb "gomsg/api/generated/queue"
+	// TODO: Uncomment after generating gRPC code
+	// clusterpb "gomsg/api/generated/cluster"
+	// kvpb "gomsg/api/generated/kv"
+	// queuepb "gomsg/api/generated/queue"
 )
 
 // Server represents the gRPC server
@@ -28,14 +28,17 @@ type Server struct {
 	kvService      *KVService
 	queueService   *QueueService
 	clusterService *ClusterService
-	clusterMgr     *cluster.Manager
+	cluster        *cluster.Cluster
 }
 
-// nodeProviderAdapter adapts the in-process cluster.Manager to storage.NodeProvider
-type nodeProviderAdapter struct{ m *cluster.Manager }
+// nodeProviderAdapter adapts the cluster to storage.NodeProvider
+type nodeProviderAdapter struct{ c *cluster.Cluster }
 
 func (a nodeProviderAdapter) ListNodes() []storage.NodeInfo {
-	nodes := a.m.GetNodes()
+	if a.c == nil {
+		return []storage.NodeInfo{}
+	}
+	nodes := a.c.GetNodes()
 	out := make([]storage.NodeInfo, 0, len(nodes))
 	for _, n := range nodes {
 		out = append(out, storage.NodeInfo{ID: n.ID, Address: n.Address})
@@ -44,10 +47,11 @@ func (a nodeProviderAdapter) ListNodes() []storage.NodeInfo {
 }
 
 func (a nodeProviderAdapter) LeaderID() string {
-	if ln, ok := a.m.GetLeader(); ok {
-		return ln.ID
+	if a.c == nil {
+		return ""
 	}
-	return ""
+	health := a.c.GetClusterHealth()
+	return health.LeaderID
 }
 
 // NewServer creates a new server instance
@@ -77,47 +81,54 @@ func NewServer(cfg *config.Config, store storage.Storage) (*Server, error) {
 		grpc:    grpcServer,
 	}
 
-	// Initialize cluster manager using Raft if enabled
+	// Initialize cluster if enabled
 	if cfg.Cluster.Enabled {
-		mgr, err := cluster.Start(context.Background(), store, cluster.RaftConfig{
-			NodeID:    cfg.Cluster.NodeID,
-			BindAddr:  cfg.Cluster.BindAddr,
-			DataDir:   cfg.Storage.DataDir,
-			Bootstrap: cfg.Cluster.Bootstrap,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to start raft cluster: %w", err)
+		clusterConfig := cluster.Config{
+			NodeID:            cfg.Cluster.NodeID,
+			BindAddr:          cfg.Cluster.BindAddr,
+			DataDir:           cfg.Storage.DataDir,
+			Bootstrap:         cfg.Cluster.Bootstrap,
+			Partitions:        32, // Default partitions
+			ReplicationFactor: 3,  // Default replication
+			SeedNodes:         []string{}, // Would be populated from config
 		}
-		server.clusterMgr = mgr
+		
+		clstr, err := cluster.New(context.Background(), store, clusterConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to start cluster: %w", err)
+		}
+		server.cluster = clstr
 	} else {
-		server.clusterMgr = nil
+		server.cluster = nil
 	}
 
-	// Adapt cluster manager to storage.NodeProvider for stream leader/replica assignment
-	if bs, ok := store.(*storage.BadgerStorage); ok {
-		bs.SetNodeProvider(nodeProviderAdapter{m: server.clusterMgr})
-		if cfg.Cluster.Replicas > 0 {
-			bs.SetReplicationFactor(cfg.Cluster.Replicas)
+	// Adapt cluster to storage.NodeProvider for stream leader/replica assignment
+	if server.cluster != nil {
+		if bs, ok := store.(*storage.BadgerStorage); ok {
+			bs.SetNodeProvider(nodeProviderAdapter{c: server.cluster})
+			if cfg.Cluster.Replicas > 0 {
+				bs.SetReplicationFactor(cfg.Cluster.Replicas)
+			}
 		}
-	}
-	if cs, ok := store.(*storage.CompositeStorage); ok {
-		cs.SetNodeProviderIfSupported(nodeProviderAdapter{m: server.clusterMgr})
-		if cfg.Cluster.Replicas > 0 {
-			cs.SetReplicationFactorIfSupported(cfg.Cluster.Replicas)
+		if cs, ok := store.(*storage.CompositeStorage); ok {
+			cs.SetNodeProviderIfSupported(nodeProviderAdapter{c: server.cluster})
+			if cfg.Cluster.Replicas > 0 {
+				cs.SetReplicationFactorIfSupported(cfg.Cluster.Replicas)
+			}
 		}
 	}
 
 	// Initialize services
 	server.kvService = NewKVService(store)
 	server.queueService = NewQueueService(store)
-	server.clusterService = NewClusterService(server.clusterMgr, store)
+	server.clusterService = NewClusterService(server.cluster, store)
 
 	// Register services
-	kvpb.RegisterKVServiceServer(grpcServer, server.kvService)
-	queuepb.RegisterQueueServiceServer(grpcServer, server.queueService)
-	// TODO: Enable after generating stream gRPC code
+	// TODO: Uncomment after generating gRPC code with: protoc --go_out=. --go-grpc_out=. api/proto/*.proto
+	// kvpb.RegisterKVServiceServer(grpcServer, server.kvService)
+	// queuepb.RegisterQueueServiceServer(grpcServer, server.queueService)
 	// streampb.RegisterStreamServiceServer(grpcServer, server.streamService)
-	clusterpb.RegisterClusterServiceServer(grpcServer, server.clusterService)
+	// clusterpb.RegisterClusterServiceServer(grpcServer, server.clusterService)
 
 	return server, nil
 }
@@ -165,8 +176,8 @@ func (s *Server) Stop() error {
 		s.grpc.Stop()
 	}
 
-	if s.clusterMgr != nil {
-		s.clusterMgr.Close()
+	if s.cluster != nil {
+		s.cluster.Close()
 	}
 
 	return nil
