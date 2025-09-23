@@ -7,13 +7,18 @@ import "common.proto";
 service StreamService {
   rpc Publish(PublishRequest) returns (PublishResponse);
   rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse);
+  rpc SubscribeGroup(SubscribeGroupRequest) returns (stream SubscribeResponse);
   rpc Read(ReadRequest) returns (ReadResponse);
+  rpc ReadFrom(ReadFromRequest) returns (ReadFromResponse);
   rpc Seek(SeekRequest) returns (SeekResponse);
   rpc GetOffset(GetOffsetRequest) returns (GetOffsetResponse);
+  rpc CommitGroupOffset(CommitGroupOffsetRequest) returns (CommitGroupOffsetResponse);
+  rpc GetGroupOffset(GetGroupOffsetRequest) returns (GetGroupOffsetResponse);
   rpc CreateTopic(CreateTopicRequest) returns (CreateTopicResponse);
   rpc DeleteTopic(DeleteTopicRequest) returns (DeleteTopicResponse);
   rpc ListTopics(ListTopicsRequest) returns (ListTopicsResponse);
   rpc GetTopicInfo(GetTopicInfoRequest) returns (GetTopicInfoResponse);
+  rpc Purge(PurgeRequest) returns (PurgeResponse);
 }
 
 message StreamMessage {
@@ -127,5 +132,55 @@ message GetTopicInfoRequest {
 
 message GetTopicInfoResponse {
   TopicInfo info = 1;
+  gomsg.common.Status status = 2;
+}
+
+message ReadFromRequest {
+  string topic = 1;
+  int32 partition = 2;
+  int64 timestamp = 3;
+  int32 limit = 4;
+}
+
+message ReadFromResponse {
+  repeated StreamMessage messages = 1;
+  int64 next_offset = 2;
+  gomsg.common.Status status = 3;
+}
+
+message PurgeRequest {
+  string topic = 1;
+}
+
+message PurgeResponse {
+  int64 purged_count = 1;
+  gomsg.common.Status status = 2;
+}
+
+message SubscribeGroupRequest {
+  string topic = 1;
+  string group_id = 2;
+  string consumer_id = 3;
+}
+
+message CommitGroupOffsetRequest {
+  string topic = 1;
+  string group_id = 2;
+  int32 partition = 3;
+  int64 offset = 4;
+}
+
+message CommitGroupOffsetResponse {
+  gomsg.common.Status status = 1;
+}
+
+message GetGroupOffsetRequest {
+  string topic = 1;
+  string group_id = 2;
+  int32 partition = 3;
+}
+
+message GetGroupOffsetResponse {
+  int64 offset = 1;
   gomsg.common.Status status = 2;
 }
