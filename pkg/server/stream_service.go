@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/dgraph-io/badger/v4"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -323,13 +324,11 @@ func (s *StreamService) GetTopicInfo(ctx context.Context, req *streampb.GetTopic
 
 	info, err := s.storage.StreamGetTopicInfo(ctx, req.Topic)
 	if err != nil {
-		return &streampb.GetTopicInfoResponse{
-			Status: &commonpb.Status{
-				Success: false,
-				Message: err.Error(),
-				Code:    int32(codes.Internal),
-			},
-		}, nil
+		// Return gRPC error for topic not found
+		if err == badger.ErrKeyNotFound {
+			return nil, status.Error(codes.NotFound, "topic not found")
+		}
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	var partitionInfo []*commonpb.Partition

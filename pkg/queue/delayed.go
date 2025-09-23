@@ -20,5 +20,5 @@ func NewDelayed(s storage.Storage) *Delayed { return &Delayed{s: s} }
 
 // Enqueue schedules a message after the given delay.
 func (d *Delayed) Enqueue(ctx context.Context, queue string, data []byte, delay time.Duration) (string, error) {
-	return d.s.QueuePush(ctx, queue, data, delay)
+	return d.s.QueuePush(ctx, queue, data)
 }

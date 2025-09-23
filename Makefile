@@ -1,4 +1,4 @@
-GO_VERSION := 1.21
+GO_VERSION := 1.24
 PROTO_VERSION := 25.1
 BINARY_NAME := gomsg
 CLI_BINARY_NAME := gomsg-cli
@@ -74,13 +74,30 @@ install: build ## Install binaries to $GOPATH/bin
 	cp bin/$(CLI_BINARY_NAME) $(GOPATH)/bin/
 
 docker: ## Build Docker image
-	docker build -t gomsg:latest -f docker/Dockerfile .
+	./scripts/docker-build.sh
 
-docker-compose: ## Start with docker-compose
-	docker-compose -f docker/docker-compose.yml up -d
+docker-push: ## Push Docker image to Docker Hub
+	docker push shohag2100/gomsg:latest
+
+docker-run: ## Run Docker container
+	docker run -d -p 9000:9000 -p 7000:7000 -v gomsg-data:/data --name gomsg shohag2100/gomsg:latest
+
+docker-compose: ## Start with docker-compose (single node)
+	docker-compose -f docker-compose.simple.yml up -d
 
 docker-cluster: ## Start cluster with docker-compose
-	docker-compose -f docker/docker-compose.cluster.yml up -d
+	docker-compose up -d
+
+docker-stop: ## Stop all docker services
+	docker stop gomsg 2>/dev/null || true
+	docker-compose down 2>/dev/null || true
+	docker-compose -f docker-compose.simple.yml down 2>/dev/null || true
+
+docker-clean: ## Clean up Docker resources
+	docker stop gomsg 2>/dev/null || true
+	docker rm gomsg 2>/dev/null || true
+	docker-compose down -v 2>/dev/null || true
+	docker-compose -f docker-compose.simple.yml down -v 2>/dev/null || true
 
 run: build ## Run the server locally
 	./bin/$(BINARY_NAME) --data-dir=./data --port=9000

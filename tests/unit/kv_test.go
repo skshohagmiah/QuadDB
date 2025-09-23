@@ -9,10 +9,14 @@ import (
 
 	commonpb "gomsg/api/generated/common"
 	kvpb "gomsg/api/generated/kv"
+	"gomsg/tests/testutil"
 )
 
 func setupKVClient(t *testing.T) kvpb.KVServiceClient {
-	conn, err := grpc.Dial("localhost:9000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// Start test server automatically
+	testServer := testutil.StartTestServer(t)
+	
+	conn, err := grpc.Dial(testServer.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to connect to server: %v", err)
 	}

@@ -25,7 +25,7 @@ type Storage interface {
 	MGet(ctx context.Context, keys []string) (map[string][]byte, error)
 
 	// Queue operations
-	QueuePush(ctx context.Context, queue string, message []byte, delay time.Duration) (string, error)
+	QueuePush(ctx context.Context, queue string, message []byte) (string, error)
 	QueuePop(ctx context.Context, queue string, timeout time.Duration) (QueueMessage, error)
 	QueuePeek(ctx context.Context, queue string, limit int) ([]QueueMessage, error)
 	QueueAck(ctx context.Context, messageID string) error
@@ -36,7 +36,7 @@ type Storage interface {
 	QueueList(ctx context.Context) ([]string, error)
 	
 	// Queue batch operations
-	QueuePushBatch(ctx context.Context, queue string, messages [][]byte, delays []time.Duration) ([]string, error)
+	QueuePushBatch(ctx context.Context, queue string, messages [][]byte) ([]string, error)
 	QueuePopBatch(ctx context.Context, queue string, limit int, timeout time.Duration) ([]QueueMessage, error)
 
 	// Stream operations

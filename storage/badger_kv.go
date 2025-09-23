@@ -590,6 +590,31 @@ func (s *BadgerStorage) getOrCreateSeq(key string) (*badger.Sequence, error) {
     return sq, nil
 }
 
+// clearSequenceCache removes sequence entries for a given topic from the cache
+func (s *BadgerStorage) clearSequenceCache(topic string) {
+    s.seqMu.Lock()
+    defer s.seqMu.Unlock()
+    
+    // Remove all sequence entries that start with "seq:<topic>:"
+    prefix := "seq:" + topic + ":"
+    keysToDelete := make([]string, 0)
+    
+    for key := range s.seq {
+        if strings.HasPrefix(key, prefix) {
+            // Release the sequence before removing from cache
+            if seq := s.seq[key]; seq != nil {
+                seq.Release()
+            }
+            keysToDelete = append(keysToDelete, key)
+        }
+    }
+    
+    // Delete the keys
+    for _, key := range keysToDelete {
+        delete(s.seq, key)
+    }
+}
+
 // Backup creates a backup of the database
 func (s *BadgerStorage) Backup(ctx context.Context, path string) error {
     f, err := os.Create(path)
