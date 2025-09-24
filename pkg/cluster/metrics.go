@@ -151,12 +151,25 @@ func (m *Metrics) RecordClusterEvent(eventType string) {
 		atomic.AddUint64(&m.NodeJoins, 1)
 	case "node_leave":
 		atomic.AddUint64(&m.NodeLeaves, 1)
-	case "partition_migration":
+	case "partition_migrated":
 		atomic.AddUint64(&m.PartitionMigrations, 1)
 	case "replication_error":
 		atomic.AddUint64(&m.ReplicationErrors, 1)
 	case "cluster_error":
 		atomic.AddUint64(&m.ClusterErrors, 1)
+	}
+}
+
+// RecordClusterError records a cluster error with specific error type
+func (m *Metrics) RecordClusterError(errorType string) {
+	atomic.AddUint64(&m.ClusterErrors, 1)
+	
+	// Also record specific error types
+	switch errorType {
+	case "replication_failed":
+		atomic.AddUint64(&m.ReplicationErrors, 1)
+	case "data_migration_failed":
+		atomic.AddUint64(&m.PartitionMigrations, 1) // Count failed migrations too
 	}
 }
 

@@ -1,8 +1,29 @@
 // Client configuration
 export interface fluxdlConfig {
+  // Legacy mode (single node)
   address?: string;
   timeout?: number;
   credentials?: any;
+  
+  // Smart mode (multi-node cluster)
+  smartMode?: boolean;
+  seedNodes?: string[];
+  refreshInterval?: number;
+  connTimeout?: number;
+}
+
+// Partition information
+export interface PartitionInfo {
+  primary: string;
+  replicas: string[];
+}
+
+// Client statistics
+export interface ClientStats {
+  smartMode: boolean;
+  totalPartitions?: number;
+  connectedNodes: number;
+  partitionsCached?: number;
 }
 
 // Key-Value types
@@ -66,5 +87,12 @@ export class TimeoutError extends fluxdlError {
   constructor(message: string) {
     super(message, 'TIMEOUT_ERROR');
     this.name = 'TimeoutError';
+  }
+}
+
+export class PartitionError extends fluxdlError {
+  constructor(message: string) {
+    super(message, 'PARTITION_ERROR');
+    this.name = 'PartitionError';
   }
 }

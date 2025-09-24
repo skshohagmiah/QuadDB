@@ -21,7 +21,6 @@ go.work
 
 # FluxDL specific
 data/
-cluster/
 backups/
 dev-data/
 releases/

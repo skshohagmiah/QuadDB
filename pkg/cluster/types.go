@@ -62,3 +62,4 @@ type ClusterHealth struct {
 	CanWrite      bool
 	ReadOnlyMode  bool
 }
+
