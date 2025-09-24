@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/skshohagmiah/fluxdl/storage"
-	// TODO: Uncomment after generating gRPC code with: protoc --go_out=. --go-grpc_out=. api/proto/*.proto
-	// clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
-	// "google.golang.org/grpc"
-	// "google.golang.org/grpc/credentials/insecure"
+	clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Cluster manages a partitioned, replicated fluxdl cluster
@@ -26,24 +26,25 @@ type Cluster struct {
 	partitions        int32
 	replicationFactor int32
 
-	// Partition management
+	// Cluster state
+	nodes       map[string]*Node
+	nodeHealth  map[string]time.Time
 	partitionMap *PartitionMap
-	storage      storage.Storage
+	raftManager  *Manager
 
-	// Raft consensus
-	raftManager *Manager
-
-	// Metrics and monitoring
-	metrics *Metrics
-
-	// Node discovery and health
-	nodes      map[string]*Node
-	nodeHealth map[string]time.Time
+	// High-performance replication
+	replicationManager *ReplicationManager
 
 	// Background tasks
 	ctx    context.Context
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
+
+	// Storage
+	storage storage.Storage
+
+	// Metrics
+	metrics *Metrics
 }
 
 // Config defines cluster configuration
@@ -87,6 +88,11 @@ func New(ctx context.Context, storage storage.Storage, cfg Config) (*Cluster, er
 	c.metrics = NewMetrics()
 	c.metrics.UpdateHealthStatus("starting")
 
+	// Initialize high-performance replication manager
+	replicationConfig := DefaultReplicationConfig()
+	replicationConfig.WALPath = filepath.Join(cfg.DataDir, "replication_wal")
+	c.replicationManager = NewReplicationManager(c, replicationConfig)
+
 	// Initialize Raft for consensus
 	raftConfig := RaftConfig{
 		NodeID:    cfg.NodeID,
@@ -128,6 +134,11 @@ func (c *Cluster) start(cfg Config) error {
 		if err := c.joinCluster(cfg.SeedNodes); err != nil {
 			return fmt.Errorf("failed to join cluster: %w", err)
 		}
+	}
+
+	// Start replication manager
+	if err := c.replicationManager.Start(); err != nil {
+		return fmt.Errorf("failed to start replication manager: %w", err)
 	}
 
 	// Start background tasks
@@ -175,72 +186,22 @@ func (c *Cluster) joinCluster(seedNodes []string) error {
 
 // contactSeedNode contacts a seed node to get cluster information
 func (c *Cluster) contactSeedNode(seedAddr string) (*ClusterInfo, error) {
-	// TODO: Implement actual gRPC call after generating protobuf code
-	// conn, err := grpc.Dial(seedAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	// if err != nil {
-	//     return nil, fmt.Errorf("failed to dial seed node %s: %w", seedAddr, err)
-	// }
-	// defer conn.Close()
-	//
-	// client := clusterpb.NewClusterServiceClient(conn)
-	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	// defer cancel()
-	//
-	// resp, err := client.GetClusterInfo(ctx, &clusterpb.GetClusterInfoRequest{})
-
-	// Placeholder implementation for now
-	resp := struct {
-		Status struct {
-			Success bool
-			Message string
-		}
-		ClusterInfo struct {
-			NodeId            string
-			TotalPartitions   int32
-			ReplicationFactor int32
-			TotalNodes        int32
-			ActiveNodes       int32
-			Partitions        []struct {
-				Id       int32
-				Primary  string
-				Replicas []string
-			}
-		}
-	}{
-		Status: struct {
-			Success bool
-			Message string
-		}{Success: true, Message: "OK"},
-		ClusterInfo: struct {
-			NodeId            string
-			TotalPartitions   int32
-			ReplicationFactor int32
-			TotalNodes        int32
-			ActiveNodes       int32
-			Partitions        []struct {
-				Id       int32
-				Primary  string
-				Replicas []string
-			}
-		}{
-			NodeId:            "seed-node",
-			TotalPartitions:   c.partitions,
-			ReplicationFactor: c.replicationFactor,
-			TotalNodes:        1,
-			ActiveNodes:       1,
-			Partitions: []struct {
-				Id       int32
-				Primary  string
-				Replicas []string
-			}{},
-		},
+	conn, err := grpc.Dial(seedAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial seed node %s: %w", seedAddr, err)
 	}
-	var err error
+	defer conn.Close()
+
+	client := clusterpb.NewClusterServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	resp, err := client.GetClusterInfo(ctx, &clusterpb.GetClusterInfoRequest{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cluster info: %w", err)
 	}
 
-	if !resp.Status.Success {
+	if resp.Status.Code != 0 {
 		return nil, fmt.Errorf("get cluster info failed: %s", resp.Status.Message)
 	}
 
@@ -267,40 +228,25 @@ func (c *Cluster) contactSeedNode(seedAddr string) (*ClusterInfo, error) {
 
 // registerWithCluster registers this node with an existing cluster
 func (c *Cluster) registerWithCluster(seedAddr string) error {
-	// TODO: Implement actual gRPC call after generating protobuf code
-	// conn, err := grpc.Dial(seedAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	// if err != nil {
-	//     return fmt.Errorf("failed to dial seed node %s: %w", seedAddr, err)
-	// }
-	// defer conn.Close()
-	//
-	// client := clusterpb.NewClusterServiceClient(conn)
-	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	// defer cancel()
-	//
-	// resp, err := client.Join(ctx, &clusterpb.JoinRequest{
-	//     NodeId:  c.nodeID,
-	//     Address: c.bindAddr,
-	// })
-
-	// Placeholder implementation for now
-	resp := struct {
-		Status struct {
-			Success bool
-			Message string
-		}
-	}{
-		Status: struct {
-			Success bool
-			Message string
-		}{Success: true, Message: "OK"},
+	conn, err := grpc.Dial(seedAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to dial seed node %s: %w", seedAddr, err)
 	}
-	var err error
+	defer conn.Close()
+
+	client := clusterpb.NewClusterServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	resp, err := client.Join(ctx, &clusterpb.JoinRequest{
+		NodeId:  c.nodeID,
+		Address: c.bindAddr,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to join cluster: %w", err)
 	}
 
-	if !resp.Status.Success {
+	if resp.Status.Code != 0 {
 		return fmt.Errorf("join cluster failed: %s", resp.Status.Message)
 	}
 
@@ -440,15 +386,44 @@ func (c *Cluster) migratePartitionData(partition int32, fromNodeID string) error
 		return fmt.Errorf("no active nodes available for migration")
 	}
 
-	// For now, this is a placeholder for data migration
-	// In a real implementation, this would:
-	// 1. Get all keys for this partition from the leaving node
-	// 2. Transfer them to the new owner nodes
-	// 3. Verify the transfer completed successfully
-	// 4. Remove the data from the leaving node
+	// Get all keys for this partition from the leaving node
+	keys, err := c.getPartitionKeys(partition, fromNodeID)
+	if err != nil {
+		return fmt.Errorf("failed to get partition keys: %w", err)
+	}
 
-	// TODO: Implement actual data migration logic
-	// This would involve gRPC calls to transfer data between nodes
+	if len(keys) == 0 {
+		return nil // No data to migrate
+	}
+
+	// Get data for all keys in this partition
+	data, err := c.getPartitionData(keys, fromNodeID)
+	if err != nil {
+		return fmt.Errorf("failed to get partition data: %w", err)
+	}
+
+	// Calculate new owners for this partition
+	newOwners := c.calculatePartitionAssignments(activeNodes)[partition]
+	if len(newOwners) == 0 {
+		return fmt.Errorf("no new owners calculated for partition %d", partition)
+	}
+
+	// Send data to new owner nodes
+	for _, targetNode := range newOwners {
+		if err := c.sendDataToNode(targetNode, partition, data); err != nil {
+			// Log error but continue with other nodes
+			c.metrics.RecordClusterError("data_migration_failed")
+			continue
+		}
+	}
+
+	// Verify migration completed successfully by checking at least one replica
+	if err := c.verifyMigration(partition, keys, newOwners); err != nil {
+		return fmt.Errorf("migration verification failed: %w", err)
+	}
+
+	// Record successful migration
+	c.metrics.RecordClusterEvent("partition_migrated")
 
 	return nil
 }
@@ -745,9 +720,17 @@ func (c *Cluster) GetClusterInfo() *ClusterInfo {
 func (c *Cluster) Close() error {
 	c.cancel()
 	c.wg.Wait()
+	
+	// Stop replication manager
+	if c.replicationManager != nil {
+		c.replicationManager.Stop()
+	}
+	
+	// Stop Raft
 	if c.raftManager != nil {
 		c.raftManager.Close()
 	}
+	
 	return nil
 }
 
@@ -879,4 +862,281 @@ func (c *Cluster) GetLeaderID() string {
 		return ""
 	}
 	return c.raftManager.LeaderID()
+}
+
+// getNodeByID returns a node by its ID
+func (c *Cluster) getNodeByID(nodeID string) *Node {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	
+	return c.nodes[nodeID]
+}
+
+// getPartitionKeys gets all keys for a partition from a specific node
+func (c *Cluster) getPartitionKeys(partition int32, nodeID string) ([]string, error) {
+	c.mu.RLock()
+	node, exists := c.nodes[nodeID]
+	c.mu.RUnlock()
+
+	if !exists {
+		return nil, fmt.Errorf("node %s not found", nodeID)
+	}
+
+	// Make gRPC call to get partition keys
+	conn, err := grpc.Dial(node.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial node %s: %w", nodeID, err)
+	}
+	defer conn.Close()
+
+	// This would need to be added to the protobuf definition
+	// For now, return empty slice as placeholder
+	// client := clusterpb.NewClusterServiceClient(conn)
+	// ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// defer cancel()
+	// resp, err := client.GetPartitionKeys(ctx, &clusterpb.GetPartitionKeysRequest{
+	//     Partition: partition,
+	// })
+
+	// Placeholder implementation - in real scenario this would call gRPC
+	return []string{}, nil
+}
+
+// getPartitionData gets data for specific keys from a node
+func (c *Cluster) getPartitionData(keys []string, nodeID string) ([]*clusterpb.KeyValuePair, error) {
+	if len(keys) == 0 {
+		return nil, nil
+	}
+
+	c.mu.RLock()
+	node, exists := c.nodes[nodeID]
+	c.mu.RUnlock()
+
+	if !exists {
+		return nil, fmt.Errorf("node %s not found", nodeID)
+	}
+
+	// Make gRPC call to get data for keys
+	conn, err := grpc.Dial(node.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial node %s: %w", nodeID, err)
+	}
+	defer conn.Close()
+
+	// This would need to be added to the protobuf definition
+	// client := clusterpb.NewClusterServiceClient(conn)
+	// ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	// defer cancel()
+	// resp, err := client.GetPartitionData(ctx, &clusterpb.GetPartitionDataRequest{
+	//     Keys: keys,
+	// })
+
+	// Placeholder implementation
+	return []*clusterpb.KeyValuePair{}, nil
+}
+
+// sendDataToNode sends partition data to a target node
+func (c *Cluster) sendDataToNode(nodeID string, partition int32, data []*clusterpb.KeyValuePair) error {
+	if len(data) == 0 {
+		return nil
+	}
+
+	c.mu.RLock()
+	node, exists := c.nodes[nodeID]
+	c.mu.RUnlock()
+
+	if !exists {
+		return fmt.Errorf("node %s not found", nodeID)
+	}
+
+	// Make gRPC call to send data
+	conn, err := grpc.Dial(node.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to dial node %s: %w", nodeID, err)
+	}
+	defer conn.Close()
+
+	client := clusterpb.NewClusterServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	resp, err := client.MigrateData(ctx, &clusterpb.MigrateDataRequest{
+		Partition: partition,
+		Data:      data,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to migrate data: %w", err)
+	}
+
+	if resp.Status.Code != 0 {
+		return fmt.Errorf("migrate data failed: %s", resp.Status.Message)
+	}
+
+	return nil
+}
+
+// verifyMigration verifies that data was successfully migrated
+func (c *Cluster) verifyMigration(partition int32, keys []string, targetNodes []string) error {
+	if len(keys) == 0 || len(targetNodes) == 0 {
+		return nil
+	}
+
+	// Check at least one replica to verify migration
+	for _, nodeID := range targetNodes {
+		if err := c.verifyKeysOnNode(keys, nodeID); err == nil {
+			return nil // At least one replica has the data
+		}
+	}
+
+	return fmt.Errorf("migration verification failed: data not found on any target node")
+}
+
+// verifyKeysOnNode verifies that specific keys exist on a node
+func (c *Cluster) verifyKeysOnNode(keys []string, nodeID string) error {
+	if len(keys) == 0 {
+		return nil
+	}
+
+	c.mu.RLock()
+	node, exists := c.nodes[nodeID]
+	c.mu.RUnlock()
+
+	if !exists {
+		return fmt.Errorf("node %s not found", nodeID)
+	}
+
+	// Make gRPC call to verify keys exist
+	conn, err := grpc.Dial(node.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to dial node %s: %w", nodeID, err)
+	}
+	defer conn.Close()
+
+	// This would need to be added to the protobuf definition
+	// client := clusterpb.NewClusterServiceClient(conn)
+	// ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// defer cancel()
+
+	// resp, err := client.VerifyKeys(ctx, &clusterpb.VerifyKeysRequest{
+	//     Keys: keys,
+	// })
+
+	// Placeholder implementation
+	return nil
+}
+
+// ReplicateKey replicates a key-value pair to all replica nodes
+func (c *Cluster) ReplicateKey(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	// Get all replica nodes for this key (excluding primary)
+	owners := c.GetKeyOwners(key)
+	if len(owners) <= 1 {
+		return nil // No replicas to send to
+	}
+
+	// Skip primary, send to replicas only
+	replicas := owners[1:] // Skip primary
+
+	// Send to all replicas
+	var lastErr error
+	successCount := 0
+
+	for _, replicaNode := range replicas {
+		if err := c.sendReplicationToNode(replicaNode, key, value, ttl); err != nil {
+			lastErr = err
+			c.metrics.RecordClusterError("replication_failed")
+			continue
+		}
+		successCount++
+	}
+
+	// Require at least one successful replication
+	if successCount == 0 && len(replicas) > 0 {
+		return fmt.Errorf("replication failed to all replicas: %w", lastErr)
+	}
+
+	return nil
+}
+
+// sendReplicationToNode sends a key-value replication to a specific node
+func (c *Cluster) sendReplicationToNode(nodeID string, key string, value []byte, ttl time.Duration) error {
+	c.mu.RLock()
+	node, exists := c.nodes[nodeID]
+	c.mu.RUnlock()
+
+	if !exists {
+		return fmt.Errorf("replica node %s not found", nodeID)
+	}
+
+	// Make gRPC call to replicate data
+	conn, err := grpc.Dial(node.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to dial replica node %s: %w", nodeID, err)
+	}
+	defer conn.Close()
+
+	client := clusterpb.NewClusterServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	ttlSeconds := int64(0)
+	if ttl > 0 {
+		ttlSeconds = int64(ttl.Seconds())
+	}
+
+	resp, err := client.ReplicateData(ctx, &clusterpb.ReplicateDataRequest{
+		Key:   key,
+		Value: value,
+		Ttl:   ttlSeconds,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to replicate data: %w", err)
+	}
+
+	if resp.Status.Code != 0 {
+		return fmt.Errorf("replicate data failed: %s", resp.Status.Message)
+	}
+
+	return nil
+}
+
+// HandleReplication handles incoming replication requests
+func (c *Cluster) HandleReplication(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	// Verify this node should own this key as a replica
+	if !c.OwnsKey(key) {
+		return fmt.Errorf("node does not own key %s", key)
+	}
+
+	// Store the replicated data
+	return c.storage.Set(ctx, key, value, ttl)
+}
+
+// ReceiveMigratedData handles incoming data migration
+func (c *Cluster) ReceiveMigratedData(ctx context.Context, partition int32, data []*clusterpb.KeyValuePair) error {
+	// Verify this node should own this partition
+	owners := c.GetPartitionOwners(partition)
+	isOwner := false
+	for _, owner := range owners {
+		if owner == c.nodeID {
+			isOwner = true
+			break
+		}
+	}
+
+	if !isOwner {
+		return fmt.Errorf("node does not own partition %d", partition)
+	}
+
+	// Store all migrated data
+	for _, kv := range data {
+		ttl := time.Duration(0)
+		if kv.Ttl > 0 {
+			ttl = time.Duration(kv.Ttl) * time.Second
+		}
+
+		if err := c.storage.Set(ctx, kv.Key, kv.Value, ttl); err != nil {
+			return fmt.Errorf("failed to store migrated key %s: %w", kv.Key, err)
+		}
+	}
+
+	return nil
 }

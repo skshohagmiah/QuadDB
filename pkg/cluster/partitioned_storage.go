@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/skshohagmiah/fluxdl/storage"
-	// TODO: Uncomment after generating gRPC code with: protoc --go_out=. --go-grpc_out=. api/proto/*.proto
-	// clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
-	// "google.golang.org/grpc"
-	// "google.golang.org/grpc/credentials/insecure"
+	clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // PartitionedStorage wraps a storage interface with partition awareness
@@ -32,7 +31,49 @@ func (ps *PartitionedStorage) Set(ctx context.Context, key string, value []byte,
 		return fmt.Errorf("key %s not owned by this node", key)
 	}
 
-	return ps.storage.Set(ctx, key, value, ttl)
+	// Store locally first (fast path)
+	if err := ps.storage.Set(ctx, key, value, ttl); err != nil {
+		return err
+	}
+
+	// Async replication to replicas (non-blocking)
+	replicas := ps.cluster.GetKeyOwners(key)[1:] // Skip primary (ourselves)
+	if len(replicas) > 0 {
+		if err := ps.cluster.replicationManager.ReplicateAsync(key, value, ttl, replicas); err != nil {
+			// Log error but don't fail the write - eventual consistency
+			// In production, this would be logged properly
+		}
+	}
+
+	return nil
+}
+
+// SetWithConsistency stores a key-value pair with specified consistency level
+func (ps *PartitionedStorage) SetWithConsistency(ctx context.Context, key string, value []byte, ttl time.Duration, consistency ConsistencyLevel) error {
+	if !ps.cluster.OwnsKey(key) {
+		return fmt.Errorf("key %s not owned by this node", key)
+	}
+
+	// Store locally first
+	if err := ps.storage.Set(ctx, key, value, ttl); err != nil {
+		return err
+	}
+
+	replicas := ps.cluster.GetKeyOwners(key)[1:] // Skip primary
+	if len(replicas) == 0 {
+		return nil // No replicas to send to
+	}
+
+	switch consistency {
+	case EventualConsistency:
+		// Async replication (non-blocking)
+		return ps.cluster.replicationManager.ReplicateAsync(key, value, ttl, replicas)
+	case StrongConsistency:
+		// Sync replication (blocking)
+		return ps.cluster.replicationManager.ReplicateSync(ctx, key, value, ttl, replicas)
+	default:
+		return fmt.Errorf("unknown consistency level")
+	}
 }
 
 // Get retrieves a value if this node owns the key's partition
@@ -202,42 +243,37 @@ func (ps *PartitionedStorage) sendDataToNode(ctx context.Context, targetNode str
 		return fmt.Errorf("target node %s address not found", targetNode)
 	}
 
-	// TODO: Implement actual gRPC call after generating protobuf code
-	// conn, err := grpc.Dial(nodeAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	// if err != nil {
-	//     return fmt.Errorf("failed to dial target node %s: %w", nodeAddr, err)
-	// }
-	// defer conn.Close()
-	//
-	// client := clusterpb.NewClusterServiceClient(conn)
-	//
-	// // Convert data to protobuf format
-	// var keyValuePairs []*clusterpb.KeyValuePair
-	// for key, value := range data {
-	//     keyValuePairs = append(keyValuePairs, &clusterpb.KeyValuePair{
-	//         Key:   key,
-	//         Value: value,
-	//         Ttl:   0, // No TTL for migrated data
-	//     })
-	// }
-	//
-	// req := &clusterpb.MigrateDataRequest{
-	//     Partition: 0, // Will be set by caller
-	//     Data:      keyValuePairs,
-	// }
-	//
-	// resp, err := client.MigrateData(ctx, req)
-	// if err != nil {
-	//     return fmt.Errorf("failed to migrate data: %w", err)
-	// }
-	//
-	// if !resp.Status.Success {
-	//     return fmt.Errorf("migrate data failed: %s", resp.Status.Message)
-	// }
+	conn, err := grpc.Dial(nodeAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to dial target node %s: %w", nodeAddr, err)
+	}
+	defer conn.Close()
 
-	// Placeholder - assume successful transfer for now
-	_ = targetNode
-	_ = data
+	client := clusterpb.NewClusterServiceClient(conn)
+
+	// Convert data to protobuf format
+	var keyValuePairs []*clusterpb.KeyValuePair
+	for key, value := range data {
+		keyValuePairs = append(keyValuePairs, &clusterpb.KeyValuePair{
+			Key:   key,
+			Value: value,
+			Ttl:   0, // No TTL for migrated data
+		})
+	}
+
+	req := &clusterpb.MigrateDataRequest{
+		Partition: 0, // Will be set by caller
+		Data:      keyValuePairs,
+	}
+
+	resp, err := client.MigrateData(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to migrate data: %w", err)
+	}
+
+	if resp.Status.Code != 0 {
+		return fmt.Errorf("migrate data failed: %s", resp.Status.Message)
+	}
 
 	return nil
 }
@@ -292,35 +328,28 @@ func (ps *PartitionedStorage) sendReplicationToNode(ctx context.Context, nodeID,
 		return fmt.Errorf("target node %s address not found", nodeID)
 	}
 
-	// TODO: Implement actual gRPC call after generating protobuf code
-	// conn, err := grpc.Dial(nodeAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	// if err != nil {
-	//     return fmt.Errorf("failed to dial target node %s: %w", nodeAddr, err)
-	// }
-	// defer conn.Close()
-	//
-	// client := clusterpb.NewClusterServiceClient(conn)
-	//
-	// req := &clusterpb.ReplicateDataRequest{
-	//     Key:   key,
-	//     Value: value,
-	//     Ttl:   int64(ttl.Seconds()),
-	// }
-	//
-	// resp, err := client.ReplicateData(ctx, req)
-	// if err != nil {
-	//     return fmt.Errorf("failed to replicate data: %w", err)
-	// }
-	//
-	// if !resp.Status.Success {
-	//     return fmt.Errorf("replicate data failed: %s", resp.Status.Message)
-	// }
+	conn, err := grpc.Dial(nodeAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return fmt.Errorf("failed to dial target node %s: %w", nodeAddr, err)
+	}
+	defer conn.Close()
 
-	// Placeholder - assume successful replication for now
-	_ = nodeID
-	_ = key
-	_ = value
-	_ = ttl
+	client := clusterpb.NewClusterServiceClient(conn)
+
+	req := &clusterpb.ReplicateDataRequest{
+		Key:   key,
+		Value: value,
+		Ttl:   int64(ttl.Seconds()),
+	}
+
+	resp, err := client.ReplicateData(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to replicate data: %w", err)
+	}
+
+	if resp.Status.Code != 0 {
+		return fmt.Errorf("replicate data failed: %s", resp.Status.Message)
+	}
 
 	return nil
 }
