@@ -1,11 +1,17 @@
 package storage
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
@@ -18,15 +24,72 @@ const (
 	offsetPrefix     = "of:"
 	partitionPrefix  = "pt:"
 	
-	// Performance constants
-	maxBatchPublish  = 10000  // Maximum messages per batch
-	defaultReadLimit = 1000   // Default read limit
-	cacheHotThreshold = 100   // Messages per second to consider "hot"
-	compressionThreshold = 1024 // Compress messages larger than 1KB
+	// Performance optimization constants
+	maxBatchPublish     = 10000  // Maximum messages per batch
+	defaultReadLimit    = 1000   // Default read limit
+	cacheHotThreshold   = 100    // Messages per second to consider "hot"
+	compressionThreshold = 1024  // Compress messages larger than 1KB
+	streamPrefetchSize  = 500    // Prefetch messages for better read performance
+	offsetCacheSize     = 1000   // Cache recent offsets for faster access
+	partitionCacheSize  = 100    // Cache partition metadata
+	
+	// Compression constants
+	compressionMarker = 0x1F    // GZIP compression marker
+	maxCacheSize     = 10000   // Maximum cached messages per partition
+	cacheExpiry      = 5 * time.Minute // Cache expiry time
 )
+
+// PartitionCache represents a cache for a single partition
+type PartitionCache struct {
+	messages    []StreamMessage
+	lastAccess  time.Time
+	accessCount int64
+	mu          sync.RWMutex
+}
+
+// StreamCache manages hot partition caches
+type StreamCache struct {
+	partitions map[string]*PartitionCache // key: "topic:partition"
+	mu         sync.RWMutex
+	lastCleanup time.Time
+	// Metrics
+	cacheHits   int64
+	cacheMisses int64
+	compressionSavings int64
+}
+
+// StreamMetrics holds performance metrics for stream operations
+type StreamMetrics struct {
+	PublishCount    int64
+	ReadCount       int64
+	CompressionHits int64
+	CacheHits       int64
+	CacheMisses     int64
+	ErrorCount      int64
+	AvgLatency      time.Duration
+}
 
 // StreamPublish publishes a message to a stream with optimized performance
 func (s *BadgerStorage) StreamPublish(ctx context.Context, topic string, partitionKey string, data []byte, headers map[string]string) (StreamMessage, error) {
+	start := time.Now()
+	defer func() {
+		latency := time.Since(start)
+		if s.streamCache != nil {
+			atomic.AddInt64(&s.streamCache.compressionSavings, int64(latency.Nanoseconds()))
+		}
+	}()
+	
+	// Input validation
+	if topic == "" {
+		return StreamMessage{}, fmt.Errorf("topic cannot be empty")
+	}
+	if len(data) == 0 {
+		return StreamMessage{}, fmt.Errorf("message data cannot be empty")
+	}
+	if len(data) > 10<<20 { // 10MB limit
+		return StreamMessage{}, fmt.Errorf("message size %d exceeds maximum allowed size of 10MB", len(data))
+	}
+	
 	messageID := uuid.New().String()
 	timestamp := time.Now()
 
@@ -40,7 +103,17 @@ func (s *BadgerStorage) StreamPublish(ctx context.Context, topic string, partiti
 	}
 
 	// Compress data if it's large enough
+	originalSize := len(data)
 	compressedData := s.compressIfNeeded(data)
+	if len(compressedData) < originalSize {
+		// Track compression savings
+		if s.streamCache != nil {
+			atomic.AddInt64(&s.streamCache.compressionSavings, int64(originalSize-len(compressedData)))
+		}
+		log.Printf("[DEBUG] Compressed message from %d to %d bytes (%.1f%% savings)", 
+			originalSize, len(compressedData), 
+			float64(originalSize-len(compressedData))/float64(originalSize)*100)
+	}
 
 	message := StreamMessage{
 		ID:           messageID,
@@ -67,17 +140,25 @@ func (s *BadgerStorage) StreamPublish(ctx context.Context, topic string, partiti
 		if ttlStr, exists := headers["ttl"]; exists {
 			if ttl, err := time.ParseDuration(ttlStr); err == nil {
 				entry = entry.WithTTL(ttl)
+				log.Printf("[DEBUG] Set TTL %v for message %s", ttl, messageID)
+			} else {
+				log.Printf("[WARN] Invalid TTL format '%s' for message %s: %v", ttlStr, messageID, err)
 			}
 		}
 		return txn.SetEntry(entry)
 	})
 	
-	// Update hot partition cache
-	if err == nil {
-		s.updateHotPartitionCache(topic, partition, message)
+	if err != nil {
+		log.Printf("[ERROR] Failed to store message %s in topic %s: %v", messageID, topic, err)
+		return StreamMessage{}, fmt.Errorf("failed to store message: %w", err)
 	}
+	
+	// Update hot partition cache and metrics
+	s.updateHotPartitionCache(topic, partition, message)
+	log.Printf("[INFO] Published message %s to topic %s partition %d at offset %d", 
+		messageID, topic, partition, offset)
 
-	return message, err
+	return message, nil
 }
 
 // StreamPublishBatch publishes multiple messages in a single transaction (Kafka-like)
@@ -192,52 +273,288 @@ func (s *BadgerStorage) getNextOffsetBatch(topic string, partition int32, count 
 	return int64(v), nil
 }
 
-// compressIfNeeded compresses data if it exceeds threshold
+// compressIfNeeded compresses data using GZIP if it exceeds threshold
 func (s *BadgerStorage) compressIfNeeded(data []byte) []byte {
 	if len(data) < compressionThreshold {
 		return data
 	}
 	
-	// Simple compression marker + compressed data
-	// In production, use LZ4 or Snappy for better performance
-	compressed := make([]byte, len(data)) // Placeholder - implement actual compression
-	copy(compressed, data)
-	return compressed
+	// Use GZIP compression for good compression ratio
+	var buf bytes.Buffer
+	buf.WriteByte(compressionMarker) // Mark as compressed
+	
+	gzWriter := gzip.NewWriter(&buf)
+	if _, err := gzWriter.Write(data); err != nil {
+		return data // Compression failed, return original
+	}
+	if err := gzWriter.Close(); err != nil {
+		return data // Compression failed, return original
+	}
+	
+	return buf.Bytes()
+}
+
+// decompressIfNeeded decompresses GZIP compressed data if needed
+func (s *BadgerStorage) decompressIfNeeded(data []byte) []byte {
+	if len(data) == 0 {
+		return data
+	}
+	
+	// Check for compression marker
+	if data[0] != compressionMarker {
+		return data // Not compressed
+	}
+	
+	// Decompress using GZIP
+	reader := bytes.NewReader(data[1:])
+	gzReader, err := gzip.NewReader(reader)
+	if err != nil {
+		return data // Decompression failed, return original
+	}
+	defer gzReader.Close()
+	
+	decompressed, err := io.ReadAll(gzReader)
+	if err != nil {
+		return data // Decompression failed, return original
+	}
+	
+	return decompressed
+}
+
+// initStreamCache initializes the stream cache if not already done
+func (s *BadgerStorage) initStreamCache() {
+	if s.streamCache == nil {
+		s.streamCache = &StreamCache{
+			partitions:  make(map[string]*PartitionCache),
+			lastCleanup: time.Now(),
+		}
+	}
 }
 
 // updateHotPartitionCache updates cache for frequently accessed partitions
 func (s *BadgerStorage) updateHotPartitionCache(topic string, partition int32, message StreamMessage) {
-	// Implement hot partition caching logic
-	// This would cache recent messages in memory for faster reads
-	_ = topic
-	_ = partition
-	_ = message
+	s.initStreamCache()
+	
+	key := fmt.Sprintf("%s:%d", topic, partition)
+	s.streamCache.mu.Lock()
+	defer s.streamCache.mu.Unlock()
+	
+	// Get or create partition cache
+	partCache, exists := s.streamCache.partitions[key]
+	if !exists {
+		partCache = &PartitionCache{
+			messages:    make([]StreamMessage, 0, maxCacheSize/10),
+			lastAccess:  time.Now(),
+			accessCount: 0,
+		}
+		s.streamCache.partitions[key] = partCache
+	}
+	
+	partCache.mu.Lock()
+	defer partCache.mu.Unlock()
+	
+	// Add message to cache (keep only recent messages)
+	partCache.messages = append(partCache.messages, message)
+	if len(partCache.messages) > maxCacheSize {
+		// Remove oldest messages, keep most recent
+		copy(partCache.messages, partCache.messages[len(partCache.messages)-maxCacheSize:])
+		partCache.messages = partCache.messages[:maxCacheSize]
+	}
+	
+	partCache.lastAccess = time.Now()
+	partCache.accessCount++
+	
+	// Periodic cleanup of expired caches
+	if time.Since(s.streamCache.lastCleanup) > cacheExpiry {
+		s.cleanupExpiredCaches()
+		s.streamCache.lastCleanup = time.Now()
+	}
 }
 
 // getFromHotCache tries to get messages from hot cache
 func (s *BadgerStorage) getFromHotCache(topic string, partition int32, offset int64, limit int32) []StreamMessage {
-	// Placeholder for hot cache implementation
-	// In production, this would check an in-memory cache for recent messages
-	_ = topic
-	_ = partition
-	_ = offset
-	_ = limit
-	return nil
+	if s.streamCache == nil {
+		return nil
+	}
+	
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[ERROR] Panic in getFromHotCache: %v", r)
+		}
+	}()
+	
+	key := fmt.Sprintf("%s:%d", topic, partition)
+	s.streamCache.mu.RLock()
+	partCache, exists := s.streamCache.partitions[key]
+	s.streamCache.mu.RUnlock()
+	
+	if !exists {
+		return nil
+	}
+	
+	partCache.mu.RLock()
+	defer partCache.mu.RUnlock()
+	
+	// Check if cache is still valid
+	if time.Since(partCache.lastAccess) > cacheExpiry {
+		return nil
+	}
+	
+	// Find messages starting from the requested offset
+	var result []StreamMessage
+	for _, msg := range partCache.messages {
+		if msg.Offset >= offset && int32(len(result)) < limit {
+			result = append(result, msg)
+		}
+		if int32(len(result)) >= limit {
+			break
+		}
+	}
+	
+	// Update access statistics
+	partCache.accessCount++
+	partCache.lastAccess = time.Now()
+	
+	return result
 }
 
 // updateHotCacheRead updates cache with read results
 func (s *BadgerStorage) updateHotCacheRead(topic string, partition int32, messages []StreamMessage) {
-	// Placeholder for hot cache update
-	_ = topic
-	_ = partition
-	_ = messages
+	if len(messages) == 0 {
+		return
+	}
+	
+	s.initStreamCache()
+	
+	key := fmt.Sprintf("%s:%d", topic, partition)
+	s.streamCache.mu.Lock()
+	defer s.streamCache.mu.Unlock()
+	
+	// Get or create partition cache
+	partCache, exists := s.streamCache.partitions[key]
+	if !exists {
+		partCache = &PartitionCache{
+			messages:    make([]StreamMessage, 0, maxCacheSize/10),
+			lastAccess:  time.Now(),
+			accessCount: 0,
+		}
+		s.streamCache.partitions[key] = partCache
+	}
+	
+	partCache.mu.Lock()
+	defer partCache.mu.Unlock()
+	
+	// Merge new messages with existing cache, avoiding duplicates
+	for _, newMsg := range messages {
+		// Check if message already exists in cache
+		found := false
+		for _, existingMsg := range partCache.messages {
+			if existingMsg.Offset == newMsg.Offset && existingMsg.ID == newMsg.ID {
+				found = true
+				break
+			}
+		}
+		
+		if !found {
+			partCache.messages = append(partCache.messages, newMsg)
+		}
+	}
+	
+	// Sort messages by offset for efficient searching
+	if len(partCache.messages) > 1 {
+		// Simple bubble sort for small arrays, or implement quicksort for larger
+		for i := 0; i < len(partCache.messages)-1; i++ {
+			for j := 0; j < len(partCache.messages)-i-1; j++ {
+				if partCache.messages[j].Offset > partCache.messages[j+1].Offset {
+					partCache.messages[j], partCache.messages[j+1] = partCache.messages[j+1], partCache.messages[j]
+				}
+			}
+		}
+	}
+	
+	// Trim cache if it exceeds maximum size
+	if len(partCache.messages) > maxCacheSize {
+		// Keep most recent messages
+		partCache.messages = partCache.messages[len(partCache.messages)-maxCacheSize:]
+	}
+	
+	partCache.lastAccess = time.Now()
+	partCache.accessCount++
 }
 
-// decompressIfNeeded decompresses data if it was compressed
-func (s *BadgerStorage) decompressIfNeeded(data []byte) []byte {
-	// Placeholder for decompression logic
-	// In production, detect compression marker and decompress
-	return data
+// cleanupExpiredCaches removes expired partition caches
+func (s *BadgerStorage) cleanupExpiredCaches() {
+	now := time.Now()
+	cleanedCount := 0
+	for key, partCache := range s.streamCache.partitions {
+		partCache.mu.RLock()
+		expired := now.Sub(partCache.lastAccess) > cacheExpiry
+		partCache.mu.RUnlock()
+		
+		if expired {
+			delete(s.streamCache.partitions, key)
+			cleanedCount++
+		}
+	}
+	if cleanedCount > 0 {
+		log.Printf("[INFO] Cleaned up %d expired partition caches", cleanedCount)
+	}
+}
+
+// GetStreamMetrics returns current stream performance metrics
+func (s *BadgerStorage) GetStreamMetrics() StreamMetrics {
+	if s.streamCache == nil {
+		return StreamMetrics{}
+	}
+	
+	s.streamCache.mu.RLock()
+	defer s.streamCache.mu.RUnlock()
+	
+	return StreamMetrics{
+		CacheHits:          atomic.LoadInt64(&s.streamCache.cacheHits),
+		CacheMisses:        atomic.LoadInt64(&s.streamCache.cacheMisses),
+		CompressionHits:    atomic.LoadInt64(&s.streamCache.compressionSavings),
+	}
+}
+
+// GetCacheStats returns detailed cache statistics
+func (s *BadgerStorage) GetCacheStats() map[string]interface{} {
+	if s.streamCache == nil {
+		return map[string]interface{}{"enabled": false}
+	}
+	
+	s.streamCache.mu.RLock()
+	defer s.streamCache.mu.RUnlock()
+	
+	totalMessages := 0
+	totalAccesses := int64(0)
+	for _, partCache := range s.streamCache.partitions {
+		partCache.mu.RLock()
+		totalMessages += len(partCache.messages)
+		totalAccesses += partCache.accessCount
+		partCache.mu.RUnlock()
+	}
+	
+	cacheHits := atomic.LoadInt64(&s.streamCache.cacheHits)
+	cacheMisses := atomic.LoadInt64(&s.streamCache.cacheMisses)
+	totalRequests := cacheHits + cacheMisses
+	
+	hitRatio := 0.0
+	if totalRequests > 0 {
+		hitRatio = float64(cacheHits) / float64(totalRequests) * 100
+	}
+	
+	return map[string]interface{}{
+		"enabled":           true,
+		"partitions":        len(s.streamCache.partitions),
+		"total_messages":    totalMessages,
+		"total_accesses":    totalAccesses,
+		"cache_hits":        cacheHits,
+		"cache_misses":      cacheMisses,
+		"hit_ratio_percent": hitRatio,
+		"compression_savings": atomic.LoadInt64(&s.streamCache.compressionSavings),
+		"last_cleanup":     s.streamCache.lastCleanup.Format(time.RFC3339),
+	}
 }
 
 // getPartitionOptimized determines partition with improved hashing (FNV-1a)
@@ -316,16 +633,41 @@ func (s *BadgerStorage) getNextOffset(topic string, partition int32) (int64, err
 
 // StreamRead reads messages from a stream with optimized performance
 func (s *BadgerStorage) StreamRead(ctx context.Context, topic string, partition int32, offset int64, limit int32) ([]StreamMessage, error) {
+	start := time.Now()
+	defer func() {
+		latency := time.Since(start)
+		log.Printf("[DEBUG] StreamRead for topic %s partition %d took %v", topic, partition, latency)
+	}()
+	
+	// Input validation
+	if topic == "" {
+		return nil, fmt.Errorf("topic cannot be empty")
+	}
+	if offset < 0 {
+		return nil, fmt.Errorf("offset cannot be negative")
+	}
+	
 	if limit <= 0 {
 		limit = defaultReadLimit
 	}
 	if limit > defaultReadLimit {
 		limit = defaultReadLimit // Cap for memory safety
+		log.Printf("[WARN] Read limit capped to %d for safety", defaultReadLimit)
 	}
 	
 	// Try hot cache first for recent messages
 	if cachedMessages := s.getFromHotCache(topic, partition, offset, limit); len(cachedMessages) > 0 {
+		log.Printf("[DEBUG] Cache hit: returned %d messages from cache for topic %s partition %d", 
+			len(cachedMessages), topic, partition)
+		if s.streamCache != nil {
+			atomic.AddInt64(&s.streamCache.cacheHits, 1)
+		}
 		return cachedMessages, nil
+	}
+	
+	// Cache miss - read from disk
+	if s.streamCache != nil {
+		atomic.AddInt64(&s.streamCache.cacheMisses, 1)
 	}
 	
 	messages := make([]StreamMessage, 0, limit)
@@ -377,7 +719,12 @@ func (s *BadgerStorage) StreamRead(ctx context.Context, topic string, partition 
 			}
 			
 			// Decompress if needed
+			originalData := message.Data
 			message.Data = s.decompressIfNeeded(message.Data)
+			if len(originalData) != len(message.Data) {
+				log.Printf("[DEBUG] Decompressed message from %d to %d bytes", 
+					len(originalData), len(message.Data))
+			}
 
 			messages = append(messages, message)
 			count++
@@ -389,6 +736,10 @@ func (s *BadgerStorage) StreamRead(ctx context.Context, topic string, partition 
 	// Update hot cache with read results
 	if err == nil && len(messages) > 0 {
 		s.updateHotCacheRead(topic, partition, messages)
+		log.Printf("[INFO] Read %d messages from topic %s partition %d starting at offset %d", 
+			len(messages), topic, partition, offset)
+	} else if err != nil {
+		log.Printf("[ERROR] Failed to read from topic %s partition %d: %v", topic, partition, err)
 	}
 
 	return messages, err

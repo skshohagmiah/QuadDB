@@ -3,145 +3,18 @@ package storage
 import (
 	"context"
 	"encoding/binary"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
-	"github.com/dgraph-io/ristretto"
 )
-
-// BadgerStorage implements Storage interface using BadgerDB
-type BadgerStorage struct {
-	db           *badger.DB
-	cache        *ristretto.Cache
-	seqMu        sync.Mutex
-	seq          map[string]*badger.Sequence
-	nodeProvider NodeProvider
-	// replicationFactor suggests how many replicas to pick for streams (including leader)
-	replicationFactor int
-}
-
-// SetReplicationFactor sets the desired replication factor for stream topics.
-func (s *BadgerStorage) SetReplicationFactor(n int) {
-	s.seqMu.Lock()
-	s.replicationFactor = n
-	s.seqMu.Unlock()
-}
-
-// NodeInfo is a minimal description of a cluster node used by storage.
-type NodeInfo struct {
-	ID      string
-	Address string
-}
-
-// NodeProvider provides current nodes and leader identity to storage.
-type NodeProvider interface {
-	ListNodes() []NodeInfo
-	LeaderID() string
-}
-
-// SetNodeProvider attaches a node provider for cluster-aware operations.
-func (s *BadgerStorage) SetNodeProvider(p NodeProvider) {
-	s.seqMu.Lock()
-	s.nodeProvider = p
-	s.seqMu.Unlock()
-}
-
-// NewBadgerStorage creates a new BadgerDB storage instance with optimized settings
-func NewBadgerStorage(dataDir string) (*BadgerStorage, error) {
-	opts := badger.DefaultOptions(dataDir).
-		WithLogger(nil).
-		WithLoggingLevel(badger.ERROR).
-		// Remove compression line - BadgerDB v4 handles compression automatically
-		WithBlockCacheSize(64 << 20).       // 64MB block cache
-		WithIndexCacheSize(32 << 20).       // 32MB index cache
-		WithNumMemtables(3).                // More memtables for better write performance
-		WithMemTableSize(32 << 20).         // 32MB memtable size
-		WithValueThreshold(1024).           // Store values > 1KB separately
-		WithNumLevelZeroTables(2).          // Fewer L0 tables for faster compaction
-		WithNumLevelZeroTablesStall(4)      // Stall writes at 4 L0 tables
-
-	db, err := badger.Open(opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open badger db: %w", err)
-	}
-
-	// Initialize larger in-memory cache for Redis-like performance
-	rc, err := ristretto.NewCache(&ristretto.Config{
-		NumCounters: 1e7,       // number of keys to track frequency (~10x of items)
-		MaxCost:     256 << 20, // 256 MiB cache budget (4x larger)
-		BufferItems: 128,       // per-get buffers (2x larger)
-		Metrics:     true,      // Enable metrics for monitoring
-	})
-	if err != nil {
-		// If cache fails to init, continue without cache
-		rc = nil
-	}
-
-	storage := &BadgerStorage{db: db, cache: rc, seq: make(map[string]*badger.Sequence), replicationFactor: 1}
-
-	// Start background tasks
-	go storage.runGC()
-	go storage.runCacheStats()
-
-	return storage, nil
-}
-
-// runGC runs the garbage collector periodically with optimized settings
-func (s *BadgerStorage) runGC() {
-	ticker := time.NewTicker(2 * time.Minute) // More frequent GC
-	defer ticker.Stop()
-	
-	for range ticker.C {
-		// More aggressive GC for better performance
-		s.db.RunValueLogGC(0.5)
-	}
-}
-
-// runCacheStats logs cache performance periodically with detailed monitoring
-func (s *BadgerStorage) runCacheStats() {
-	if s.cache == nil {
-		return
-	}
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
-	
-	for range ticker.C {
-		metrics := s.cache.Metrics
-		// Log cache hit ratio for monitoring
-		if metrics.KeysAdded() > 0 {
-			hits := float64(metrics.Hits())
-			misses := float64(metrics.Misses())
-			if hits+misses > 0 {
-				hitRatio := hits / (hits + misses) * 100
-				
-				// Log performance stats (can be integrated with monitoring system)
-				if hitRatio < 80 { // Alert if hit ratio drops below 80%
-					// Low cache hit ratio - consider increasing cache size
-					_ = hitRatio
-				}
-				
-				// Monitor BadgerDB LSM stats for production
-				lsm := s.db.LevelsToString()
-				_ = lsm // Log LSM tree stats for monitoring
-				
-				// Track memory usage and trigger optimization if needed
-				if lsmSize, vlogSize := s.db.Size(); lsmSize+vlogSize > 1<<30 { // 1GB threshold
-					go s.db.RunValueLogGC(0.5)
-				}
-			}
-		}
-	}
-}
 
 // Set stores a key-value pair with optional TTL
 func (s *BadgerStorage) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
-	// Fast path: cache-first for small values
-	if s.cache != nil && len(value) < 1024 { // Cache small values immediately
+	// Optimize for small values - cache first for immediate reads
+	if s.cache != nil && len(value) <= 2048 { // Increased threshold for caching
 		v := append([]byte{}, value...)
 		cost := int64(len(v))
 		if ttl > 0 {
@@ -160,8 +33,8 @@ func (s *BadgerStorage) Set(ctx context.Context, key string, value []byte, ttl t
 		return txn.SetEntry(entry)
 	})
 	
-	// Cache larger values only after successful write
-	if err == nil && s.cache != nil && len(value) >= 1024 {
+	// Cache medium-sized values after successful write (write-through cache)
+	if err == nil && s.cache != nil && len(value) > 2048 && len(value) <= 8192 {
 		v := append([]byte{}, value...)
 		s.cache.Set(key, v, int64(len(v)))
 	}
@@ -354,7 +227,7 @@ func matchesPattern(key, pattern string) bool {
 	return strings.HasPrefix(key, parts[0])
 }
 
-// Expire sets TTL for a key
+// Expire sets TTL for an existing key
 func (s *BadgerStorage) Expire(ctx context.Context, key string, ttl time.Duration) error {
 	return s.db.Update(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(key))

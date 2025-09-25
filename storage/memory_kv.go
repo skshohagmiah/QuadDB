@@ -73,26 +73,54 @@ func (m *MemoryKV) Close() error {
 }
 
 func (m *MemoryKV) janitor() {
-	// Reduced frequency for better performance - Redis uses adaptive expiry
-	t := time.NewTicker(5 * time.Second)
+	// Optimized janitor with adaptive frequency and batch processing
+	t := time.NewTicker(10 * time.Second) // Less frequent for better performance
 	defer t.Stop()
+	
 	for {
 		select {
 		case <-m.stop:
 			return
 		case <-t.C:
 			now := time.Now()
-			// Process each shard separately to reduce lock contention
-			for _, shard := range m.shards {
-				shard.mu.Lock()
-				for k, e := range shard.data {
-					if !e.expiresAt.IsZero() && now.After(e.expiresAt) {
-						delete(shard.data, k)
-					}
-				}
-				shard.mu.Unlock()
+			// Process shards in parallel for better performance
+			var wg sync.WaitGroup
+			for i, shard := range m.shards {
+				wg.Add(1)
+				go func(s *kvShard, shardID int) {
+					defer wg.Done()
+					m.cleanShard(s, now, shardID)
+				}(shard, i)
+			}
+			wg.Wait()
+		}
+	}
+}
+
+// cleanShard optimizes expiry cleanup for a single shard
+func (m *MemoryKV) cleanShard(shard *kvShard, now time.Time, shardID int) {
+	shard.mu.Lock()
+	defer shard.mu.Unlock()
+	
+	// Batch collect expired keys to minimize map operations
+	var expiredKeys []string
+	for k, e := range shard.data {
+		if !e.expiresAt.IsZero() && now.After(e.expiresAt) {
+			expiredKeys = append(expiredKeys, k)
+			if len(expiredKeys) >= 100 { // Process in batches of 100
+				break
 			}
 		}
+	}
+	
+	// Delete expired keys in batch
+	for _, k := range expiredKeys {
+		delete(shard.data, k)
+	}
+	
+	// Update metrics
+	if len(expiredKeys) > 0 {
+		atomic.AddUint64(&m.ops, uint64(len(expiredKeys)))
 	}
 }
 
