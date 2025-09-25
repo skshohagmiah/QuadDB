@@ -17,10 +17,12 @@ const (
 	consumerPrefix = "c:"
 	statsPrefix    = "s:"
 
-	// Optimization constants
-	maxBatchSize   = 1000
-	defaultTimeout = 30 * time.Second
-	pollInterval   = 10 * time.Millisecond
+	// Performance optimization constants
+	maxBatchSize      = 5000    // Increased batch size for better throughput
+	defaultTimeout    = 30 * time.Second
+	pollInterval      = 5 * time.Millisecond  // Faster polling for lower latency
+	prefetchSize      = 200     // Prefetch more messages for batch operations
+	writeBatchThreshold = 50    // Use write batch for >50 operations
 )
 
 // QueuePush adds a message to a queue
