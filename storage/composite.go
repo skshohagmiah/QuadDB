@@ -209,6 +209,88 @@ func (c *CompositeStorage) StreamCommitGroupOffset(ctx context.Context, topic st
 	return c.badger.StreamCommitGroupOffset(ctx, topic, groupID, partition, offset)
 }
 
+// ------- Document database operations (Badger) -------
+
+// Collection management
+func (c *CompositeStorage) DocCreateCollection(ctx context.Context, collection string, options CollectionOptions) error {
+	return c.badger.DocCreateCollection(ctx, collection, options)
+}
+
+func (c *CompositeStorage) DocDropCollection(ctx context.Context, collection string) error {
+	return c.badger.DocDropCollection(ctx, collection)
+}
+
+func (c *CompositeStorage) DocListCollections(ctx context.Context) ([]string, error) {
+	return c.badger.DocListCollections(ctx)
+}
+
+func (c *CompositeStorage) DocGetCollectionInfo(ctx context.Context, collection string) (CollectionInfo, error) {
+	return c.badger.DocGetCollectionInfo(ctx, collection)
+}
+
+// Document operations
+func (c *CompositeStorage) DocInsertOne(ctx context.Context, collection string, document map[string]interface{}) (string, error) {
+	return c.badger.DocInsertOne(ctx, collection, document)
+}
+
+func (c *CompositeStorage) DocInsertMany(ctx context.Context, collection string, documents []map[string]interface{}, ordered bool) ([]string, error) {
+	return c.badger.DocInsertMany(ctx, collection, documents, ordered)
+}
+
+func (c *CompositeStorage) DocFindOne(ctx context.Context, collection string, filter map[string]interface{}, projection map[string]interface{}) (DocumentResult, error) {
+	return c.badger.DocFindOne(ctx, collection, filter, projection)
+}
+
+func (c *CompositeStorage) DocFindMany(ctx context.Context, collection string, query DocumentQuery) ([]DocumentResult, int64, error) {
+	return c.badger.DocFindMany(ctx, collection, query)
+}
+
+func (c *CompositeStorage) DocUpdateOne(ctx context.Context, collection string, filter map[string]interface{}, update DocumentUpdate, upsert bool) (DocumentWriteResult, error) {
+	return c.badger.DocUpdateOne(ctx, collection, filter, update, upsert)
+}
+
+func (c *CompositeStorage) DocUpdateMany(ctx context.Context, collection string, filter map[string]interface{}, update DocumentUpdate) (DocumentWriteResult, error) {
+	return c.badger.DocUpdateMany(ctx, collection, filter, update)
+}
+
+func (c *CompositeStorage) DocDeleteOne(ctx context.Context, collection string, filter map[string]interface{}) (DocumentWriteResult, error) {
+	return c.badger.DocDeleteOne(ctx, collection, filter)
+}
+
+func (c *CompositeStorage) DocDeleteMany(ctx context.Context, collection string, filter map[string]interface{}) (DocumentWriteResult, error) {
+	return c.badger.DocDeleteMany(ctx, collection, filter)
+}
+
+func (c *CompositeStorage) DocReplaceOne(ctx context.Context, collection string, filter map[string]interface{}, replacement map[string]interface{}, upsert bool) (DocumentWriteResult, error) {
+	return c.badger.DocReplaceOne(ctx, collection, filter, replacement, upsert)
+}
+
+// Aggregation operations
+func (c *CompositeStorage) DocAggregate(ctx context.Context, collection string, pipeline []map[string]interface{}) ([]map[string]interface{}, error) {
+	return c.badger.DocAggregate(ctx, collection, pipeline)
+}
+
+func (c *CompositeStorage) DocCount(ctx context.Context, collection string, filter map[string]interface{}) (int64, error) {
+	return c.badger.DocCount(ctx, collection, filter)
+}
+
+func (c *CompositeStorage) DocDistinct(ctx context.Context, collection string, field string, filter map[string]interface{}) ([]interface{}, error) {
+	return c.badger.DocDistinct(ctx, collection, field, filter)
+}
+
+// Index management
+func (c *CompositeStorage) DocCreateIndex(ctx context.Context, collection string, index IndexSpec) error {
+	return c.badger.DocCreateIndex(ctx, collection, index)
+}
+
+func (c *CompositeStorage) DocDropIndex(ctx context.Context, collection string, indexName string) error {
+	return c.badger.DocDropIndex(ctx, collection, indexName)
+}
+
+func (c *CompositeStorage) DocListIndexes(ctx context.Context, collection string) ([]IndexSpec, error) {
+	return c.badger.DocListIndexes(ctx, collection)
+}
+
 // Helpers to expose Badger-only capabilities where needed.
 func (c *CompositeStorage) SetNodeProviderIfSupported(p NodeProvider) {
     if c.badger != nil {

@@ -1,0 +1,389 @@
+syntax = "proto3";
+
+package document;
+
+option go_package = "github.com/skshohagmiah/fluxdl/api/generated/document";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// DocumentService provides MongoDB/Cassandra-like document database operations
+service DocumentService {
+  // Collection management
+  rpc CreateCollection(CreateCollectionRequest) returns (CreateCollectionResponse);
+  rpc DropCollection(DropCollectionRequest) returns (DropCollectionResponse);
+  rpc ListCollections(ListCollectionsRequest) returns (ListCollectionsResponse);
+  rpc GetCollectionInfo(GetCollectionInfoRequest) returns (GetCollectionInfoResponse);
+
+  // Document operations
+  rpc InsertOne(InsertOneRequest) returns (InsertOneResponse);
+  rpc InsertMany(InsertManyRequest) returns (InsertManyResponse);
+  rpc FindOne(FindOneRequest) returns (FindOneResponse);
+  rpc FindMany(FindManyRequest) returns (FindManyResponse);
+  rpc UpdateOne(UpdateOneRequest) returns (UpdateOneResponse);
+  rpc UpdateMany(UpdateManyRequest) returns (UpdateManyResponse);
+  rpc DeleteOne(DeleteOneRequest) returns (DeleteOneResponse);
+  rpc DeleteMany(DeleteManyRequest) returns (DeleteManyResponse);
+  rpc ReplaceOne(ReplaceOneRequest) returns (ReplaceOneResponse);
+  rpc UpsertOne(UpsertOneRequest) returns (UpsertOneResponse);
+
+  // Aggregation operations
+  rpc Aggregate(AggregateRequest) returns (AggregateResponse);
+  rpc Count(CountRequest) returns (CountResponse);
+  rpc Distinct(DistinctRequest) returns (DistinctResponse);
+
+  // Index management
+  rpc CreateIndex(CreateIndexRequest) returns (CreateIndexResponse);
+  rpc DropIndex(DropIndexRequest) returns (DropIndexResponse);
+  rpc ListIndexes(ListIndexesRequest) returns (ListIndexesResponse);
+
+  // Batch operations
+  rpc BulkWrite(BulkWriteRequest) returns (BulkWriteResponse);
+
+  // Transaction support
+  rpc BeginTransaction(BeginTransactionRequest) returns (BeginTransactionResponse);
+  rpc CommitTransaction(CommitTransactionRequest) returns (CommitTransactionResponse);
+  rpc AbortTransaction(AbortTransactionRequest) returns (AbortTransactionResponse);
+}
+
+// Document represents a JSON document
+message Document {
+  string id = 1;                                    // Document ID (_id field)
+  google.protobuf.Struct data = 2;                 // Document data as JSON
+  google.protobuf.Timestamp created_at = 3;        // Creation timestamp
+  google.protobuf.Timestamp updated_at = 4;        // Last update timestamp
+  int64 version = 5;                               // Document version for optimistic locking
+}
+
+// Query represents a MongoDB-style query
+message Query {
+  google.protobuf.Struct filter = 1;               // Query filter (e.g., {"name": "John", "age": {"$gt": 25}})
+  google.protobuf.Struct sort = 2;                 // Sort specification (e.g., {"name": 1, "age": -1})
+  int32 limit = 3;                                 // Maximum number of documents to return
+  int32 skip = 4;                                  // Number of documents to skip
+  google.protobuf.Struct projection = 5;           // Fields to include/exclude
+}
+
+// Update represents a MongoDB-style update operation
+message Update {
+  google.protobuf.Struct set = 1;                  // $set operations
+  google.protobuf.Struct unset = 2;                // $unset operations
+  google.protobuf.Struct inc = 3;                  // $inc operations
+  google.protobuf.Struct push = 4;                 // $push operations
+  google.protobuf.Struct pull = 5;                 // $pull operations
+  google.protobuf.Struct add_to_set = 6;           // $addToSet operations
+}
+
+// Index specification
+message IndexSpec {
+  string name = 1;                                 // Index name
+  google.protobuf.Struct keys = 2;                 // Index keys (e.g., {"name": 1, "email": -1})
+  bool unique = 3;                                 // Whether index should be unique
+  bool sparse = 4;                                 // Whether index should be sparse
+  int32 ttl_seconds = 5;                           // TTL for documents (0 = no TTL)
+  google.protobuf.Struct partial_filter = 6;       // Partial index filter
+}
+
+// Collection information
+message CollectionInfo {
+  string name = 1;                                 // Collection name
+  int64 document_count = 2;                        // Number of documents
+  int64 size_bytes = 3;                            // Collection size in bytes
+  repeated IndexSpec indexes = 4;                  // Collection indexes
+  google.protobuf.Timestamp created_at = 5;        // Creation timestamp
+  CollectionOptions options = 6;                   // Collection options
+}
+
+// Collection creation options
+message CollectionOptions {
+  bool capped = 1;                                 // Whether collection is capped
+  int64 max_size = 2;                              // Maximum size for capped collections
+  int64 max_documents = 3;                         // Maximum documents for capped collections
+  google.protobuf.Struct validator = 4;            // Document validation schema
+}
+
+// Aggregation pipeline stage
+message PipelineStage {
+  string stage = 1;                                // Stage name (e.g., "$match", "$group", "$sort")
+  google.protobuf.Struct spec = 2;                 // Stage specification
+}
+
+// Bulk write operation
+message BulkOperation {
+  oneof operation {
+    InsertOneRequest insert_one = 1;
+    UpdateOneRequest update_one = 2;
+    UpdateManyRequest update_many = 3;
+    DeleteOneRequest delete_one = 4;
+    DeleteManyRequest delete_many = 5;
+    ReplaceOneRequest replace_one = 6;
+    UpsertOneRequest upsert_one = 7;
+  }
+}
+
+// Write result for bulk operations
+message WriteResult {
+  bool acknowledged = 1;                           // Whether operation was acknowledged
+  int64 inserted_count = 2;                        // Number of documents inserted
+  int64 matched_count = 3;                         // Number of documents matched
+  int64 modified_count = 4;                        // Number of documents modified
+  int64 deleted_count = 5;                         // Number of documents deleted
+  repeated string inserted_ids = 6;                // IDs of inserted documents
+  repeated string upserted_ids = 7;                // IDs of upserted documents
+}
+
+// Transaction context
+message TransactionContext {
+  string transaction_id = 1;                       // Transaction ID
+  google.protobuf.Timestamp started_at = 2;       // Transaction start time
+  int32 timeout_seconds = 3;                       // Transaction timeout
+}
+
+// Collection management requests/responses
+message CreateCollectionRequest {
+  string collection = 1;
+  CollectionOptions options = 2;
+}
+
+message CreateCollectionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DropCollectionRequest {
+  string collection = 1;
+}
+
+message DropCollectionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListCollectionsRequest {
+  // Empty - lists all collections
+}
+
+message ListCollectionsResponse {
+  repeated string collections = 1;
+}
+
+message GetCollectionInfoRequest {
+  string collection = 1;
+}
+
+message GetCollectionInfoResponse {
+  CollectionInfo info = 1;
+}
+
+// Document operation requests/responses
+message InsertOneRequest {
+  string collection = 1;
+  google.protobuf.Struct document = 2;
+  TransactionContext transaction = 3;
+}
+
+message InsertOneResponse {
+  string inserted_id = 1;
+  WriteResult result = 2;
+}
+
+message InsertManyRequest {
+  string collection = 1;
+  repeated google.protobuf.Struct documents = 2;
+  bool ordered = 3;                                // Whether to stop on first error
+  TransactionContext transaction = 4;
+}
+
+message InsertManyResponse {
+  repeated string inserted_ids = 1;
+  WriteResult result = 2;
+}
+
+message FindOneRequest {
+  string collection = 1;
+  Query query = 2;
+  TransactionContext transaction = 3;
+}
+
+message FindOneResponse {
+  Document document = 1;
+  bool found = 2;
+}
+
+message FindManyRequest {
+  string collection = 1;
+  Query query = 2;
+  TransactionContext transaction = 3;
+}
+
+message FindManyResponse {
+  repeated Document documents = 1;
+  int64 total_count = 2;                           // Total matching documents (ignoring limit/skip)
+}
+
+message UpdateOneRequest {
+  string collection = 1;
+  google.protobuf.Struct filter = 2;
+  Update update = 3;
+  bool upsert = 4;                                 // Whether to insert if not found
+  TransactionContext transaction = 5;
+}
+
+message UpdateOneResponse {
+  WriteResult result = 1;
+}
+
+message UpdateManyRequest {
+  string collection = 1;
+  google.protobuf.Struct filter = 2;
+  Update update = 3;
+  TransactionContext transaction = 4;
+}
+
+message UpdateManyResponse {
+  WriteResult result = 1;
+}
+
+message DeleteOneRequest {
+  string collection = 1;
+  google.protobuf.Struct filter = 2;
+  TransactionContext transaction = 3;
+}
+
+message DeleteOneResponse {
+  WriteResult result = 1;
+}
+
+message DeleteManyRequest {
+  string collection = 1;
+  google.protobuf.Struct filter = 2;
+  TransactionContext transaction = 3;
+}
+
+message DeleteManyResponse {
+  WriteResult result = 1;
+}
+
+message ReplaceOneRequest {
+  string collection = 1;
+  google.protobuf.Struct filter = 2;
+  google.protobuf.Struct replacement = 3;
+  bool upsert = 4;
+  TransactionContext transaction = 5;
+}
+
+message ReplaceOneResponse {
+  WriteResult result = 1;
+}
+
+message UpsertOneRequest {
+  string collection = 1;
+  google.protobuf.Struct filter = 2;
+  google.protobuf.Struct document = 3;
+  TransactionContext transaction = 4;
+}
+
+message UpsertOneResponse {
+  WriteResult result = 1;
+}
+
+// Aggregation requests/responses
+message AggregateRequest {
+  string collection = 1;
+  repeated PipelineStage pipeline = 2;
+  TransactionContext transaction = 3;
+}
+
+message AggregateResponse {
+  repeated google.protobuf.Struct results = 1;
+}
+
+message CountRequest {
+  string collection = 1;
+  google.protobuf.Struct filter = 2;
+  TransactionContext transaction = 3;
+}
+
+message CountResponse {
+  int64 count = 1;
+}
+
+message DistinctRequest {
+  string collection = 1;
+  string field = 2;
+  google.protobuf.Struct filter = 3;
+  TransactionContext transaction = 4;
+}
+
+message DistinctResponse {
+  repeated google.protobuf.Value values = 1;
+}
+
+// Index management requests/responses
+message CreateIndexRequest {
+  string collection = 1;
+  IndexSpec index = 2;
+}
+
+message CreateIndexResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DropIndexRequest {
+  string collection = 1;
+  string index_name = 2;
+}
+
+message DropIndexResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListIndexesRequest {
+  string collection = 1;
+}
+
+message ListIndexesResponse {
+  repeated IndexSpec indexes = 1;
+}
+
+// Bulk operations
+message BulkWriteRequest {
+  string collection = 1;
+  repeated BulkOperation operations = 2;
+  bool ordered = 3;
+  TransactionContext transaction = 4;
+}
+
+message BulkWriteResponse {
+  WriteResult result = 1;
+  repeated string errors = 2;                      // Error messages for failed operations
+}
+
+// Transaction requests/responses
+message BeginTransactionRequest {
+  int32 timeout_seconds = 1;                       // Transaction timeout (default: 60s)
+}
+
+message BeginTransactionResponse {
+  TransactionContext transaction = 1;
+}
+
+message CommitTransactionRequest {
+  string transaction_id = 1;
+}
+
+message CommitTransactionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message AbortTransactionRequest {
+  string transaction_id = 1;
+}
+
+message AbortTransactionResponse {
+  bool success = 1;
+  string message = 2;
+}
