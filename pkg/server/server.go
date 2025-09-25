@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
+	documentpb "github.com/skshohagmiah/fluxdl/api/generated/document"
 	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
 	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
 	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
@@ -26,11 +27,12 @@ type Server struct {
 	storage storage.Storage
 	grpc    *grpc.Server
 
-	kvService      *KVService
-	queueService   *QueueService
-	streamService  *StreamService
-	clusterService *ClusterService
-	cluster        *cluster.Cluster
+	kvService       *KVService
+	queueService    *QueueService
+	streamService   *StreamService
+	dbService *DBService
+	clusterService  *ClusterService
+	cluster         *cluster.Cluster
 }
 
 // nodeProviderAdapter adapts the cluster to storage.NodeProvider
@@ -124,6 +126,7 @@ func NewServer(cfg *config.Config, store storage.Storage) (*Server, error) {
 	server.kvService = NewKVService(store)
 	server.queueService = NewQueueService(store)
 	server.streamService = NewStreamService(store)
+	server.dbService = NewDBService(store)
 	server.clusterService = NewClusterService(server.cluster, store)
 
 	// Register services
@@ -133,6 +136,8 @@ func NewServer(cfg *config.Config, store storage.Storage) (*Server, error) {
 	queuepb.RegisterQueueServiceServer(grpcServer, server.queueService)
 	log.Printf("Registering Stream service...")
 	streampb.RegisterStreamServiceServer(grpcServer, server.streamService)
+	log.Printf("Registering Document service...")
+	documentpb.RegisterDocumentServiceServer(grpcServer, server.dbService)
 	log.Printf("Registering Cluster service...")
 	clusterpb.RegisterClusterServiceServer(grpcServer, server.clusterService)
 

@@ -69,6 +69,40 @@
 - `CommitGroupOffset` - Commit offset for consumer group
 - `GetGroupOffset` - Get current group offset
 
+## 📄 Document Database APIs (21 methods)
+
+**Collection Management:**
+- `CreateCollection` - Create new collection with options
+- `DropCollection` - Delete collection and all documents
+- `ListCollections` - Get all collection names
+- `GetCollectionInfo` - Get collection metadata and stats
+
+**Document Operations:**
+- `InsertOne` - Insert single document
+- `InsertMany` - Insert multiple documents (with ordered option)
+- `FindOne` - Find single document with filter and projection
+- `FindMany` - Find multiple documents with query, sort, limit, skip
+- `UpdateOne` - Update single document with upsert option
+- `UpdateMany` - Update multiple documents matching filter
+- `DeleteOne` - Delete single document matching filter
+- `DeleteMany` - Delete multiple documents matching filter
+- `ReplaceOne` - Replace entire document with upsert option
+
+**Aggregation Operations:**
+- `Aggregate` - Run aggregation pipeline ($match, $sort, $limit, $skip)
+- `Count` - Count documents matching filter
+- `Distinct` - Get distinct values for field
+
+**Index Management:**
+- `CreateIndex` - Create index with unique, sparse, TTL options
+- `DropIndex` - Remove index by name
+- `ListIndexes` - Get all indexes for collection
+
+**Advanced Features:**
+- MongoDB-style queries with operators: `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`
+- Update operators: `$set`, `$unset`, `$inc`, `$push`, `$pull`, `$addToSet`
+- System fields: `_id`, `_createdAt`, `_updatedAt`, `_version` (auto-managed)
+
 ## 🔧 Connection APIs (3 methods)
 
 - `Connect` - Connect to cluster
@@ -84,8 +118,9 @@
 | **KV** | 12 methods | **12** |
 | **Queue** | 10 methods | **10** |
 | **Stream** | 13 methods | **13** |
+| **Document DB** | 21 methods | **21** |
 | **Connection** | 3 methods | **3** |
-| **TOTAL** | | **38 APIs** |
+| **TOTAL** | | **59 APIs** |
 
 ## 🎯 Key Notes
 
@@ -93,11 +128,13 @@
 - KV: `Incr/Decr` (not `Increment/Decrement`)
 - Queue: `Del` (not `Delete` for keys)
 - Stream: Consumer groups with `GroupId/ConsumerId`
+- Document DB: MongoDB-compatible method names and operators
 
 **Parameters:**
 - `Incr/Decr` support optional `by` parameter
 - `Keys` supports `limit` parameter
 - `Peek/PopBatch` support `limit` parameter
+- Document operations support MongoDB-style filters and updates
 - All operations include proper timeout handling
 
 **Enterprise Features:**
@@ -106,9 +143,11 @@
 - Real-time streaming with gRPC
 - Batch operations for performance
 - Pattern-based operations
+- MongoDB-style document queries and aggregation
+- Index management with unique, sparse, TTL options
 - Comprehensive statistics
 
-This provides **full Redis + Kafka + RabbitMQ functionality** in 38 unified APIs! 🚀
+This provides **full Redis + Kafka + RabbitMQ + MongoDB functionality** in 59 unified APIs! 🚀
 
 ---
 
@@ -486,7 +525,11 @@ await client.stream.compact('user_events');
 | **Stream Consumption** | 4 methods | 4 methods | **8** |
 | **Stream Groups** | 6 methods | 6 methods | **12** |
 | **Stream Management** | 4 methods | 4 methods | **8** |
-| **TOTAL** | **60 APIs** | **60 APIs** | **120 APIs** |
+| **Document Collections** | 4 methods | 4 methods | **8** |
+| **Document CRUD** | 9 methods | 9 methods | **18** |
+| **Document Aggregation** | 3 methods | 3 methods | **6** |
+| **Document Indexes** | 3 methods | 3 methods | **6** |
+| **TOTAL** | **81 APIs** | **81 APIs** | **162 APIs** |
 
 ---
 
@@ -528,4 +571,153 @@ for msg := range msgChan {
 }
 ```
 
-This comprehensive API provides **enterprise-grade functionality** comparable to Redis + Kafka + RabbitMQ combined! 🎯
+### Complete Document Database Example
+```go
+// Go - Complete Document Database workflow
+// Collection management
+client.DB.CreateCollection(ctx, "users", CollectionOptions{})
+client.DB.CreateIndex(ctx, "users", IndexSpec{
+    Name: "email_idx",
+    Keys: map[string]interface{}{"email": 1},
+    Unique: true,
+})
+
+// Document operations
+userDoc := map[string]interface{}{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "age": 30,
+    "tags": []string{"developer", "golang"},
+}
+docID, _ := client.DB.InsertOne(ctx, "users", userDoc)
+
+// Complex queries with MongoDB-style operators
+filter := map[string]interface{}{
+    "age": map[string]interface{}{"$gte": 25},
+    "tags": map[string]interface{}{"$in": []string{"developer"}},
+}
+docs, count, _ := client.DB.FindMany(ctx, "users", DocumentQuery{
+    Filter: filter,
+    Sort: map[string]interface{}{"name": 1},
+    Limit: 10,
+})
+
+// Updates with operators
+update := DocumentUpdate{
+    Set: map[string]interface{}{"lastLogin": time.Now()},
+    Inc: map[string]interface{}{"loginCount": 1},
+}
+result, _ := client.DB.UpdateOne(ctx, "users", 
+    map[string]interface{}{"email": "john@example.com"}, 
+    update, false)
+
+// Aggregation pipeline
+pipeline := []map[string]interface{}{
+    {"$match": map[string]interface{}{"age": map[string]interface{}{"$gte": 25}}},
+    {"$sort": map[string]interface{}{"name": 1}},
+    {"$limit": 5},
+}
+results, _ := client.DB.Aggregate(ctx, "users", pipeline)
+
+// Count and distinct operations
+count, _ := client.DB.Count(ctx, "users", map[string]interface{}{"age": map[string]interface{}{"$gte": 25}})
+distinctAges, _ := client.DB.Distinct(ctx, "users", "age", map[string]interface{}{})
+```
+
+```javascript
+// Node.js - Complete Document Database workflow
+// Collection management
+await client.db.createCollection('users', {});
+await client.db.createIndex('users', {
+    name: 'email_idx',
+    keys: { email: 1 },
+    unique: true
+});
+
+// Document operations
+const userDoc = {
+    name: 'John Doe',
+    email: 'john@example.com',
+    age: 30,
+    tags: ['developer', 'nodejs']
+};
+const docId = await client.db.insertOne('users', userDoc);
+
+// Complex queries
+const filter = {
+    age: { $gte: 25 },
+    tags: { $in: ['developer'] }
+};
+const { docs, count } = await client.db.findMany('users', {
+    filter: filter,
+    sort: { name: 1 },
+    limit: 10
+});
+
+// Updates with operators
+const update = {
+    $set: { lastLogin: new Date() },
+    $inc: { loginCount: 1 }
+};
+const result = await client.db.updateOne('users', 
+    { email: 'john@example.com' }, 
+    update, false);
+
+// Aggregation pipeline
+const pipeline = [
+    { $match: { age: { $gte: 25 } } },
+    { $sort: { name: 1 } },
+    { $limit: 5 }
+];
+const results = await client.db.aggregate('users', pipeline);
+```
+
+```python
+# Python - Complete Document Database workflow
+# Collection management
+await client.db.create_collection("users", {})
+await client.db.create_index("users", {
+    "name": "email_idx",
+    "keys": {"email": 1},
+    "unique": True
+})
+
+# Document operations
+user_doc = {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "age": 30,
+    "tags": ["developer", "python"]
+}
+doc_id = await client.db.insert_one("users", user_doc)
+
+# Complex queries
+filter_query = {
+    "age": {"$gte": 25},
+    "tags": {"$in": ["developer"]}
+}
+docs, count = await client.db.find_many("users", {
+    "filter": filter_query,
+    "sort": {"name": 1},
+    "limit": 10
+})
+
+# Updates with operators
+update = {
+    "$set": {"lastLogin": datetime.now()},
+    "$inc": {"loginCount": 1}
+}
+result = await client.db.update_one("users", 
+    {"email": "john@example.com"}, 
+    update, False)
+
+# Aggregation pipeline
+pipeline = [
+    {"$match": {"age": {"$gte": 25}}},
+    {"$sort": {"name": 1}},
+    {"$limit": 5}
+]
+results = await client.db.aggregate("users", pipeline)
+```
+
+This comprehensive API provides **enterprise-grade functionality** comparable to Redis + Kafka + RabbitMQ + MongoDB combined! 🎯

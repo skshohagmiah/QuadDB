@@ -50,12 +50,39 @@ type Storage interface {
 	StreamListTopics(ctx context.Context) ([]string, error)
 	StreamGetTopicInfo(ctx context.Context, topic string) (TopicInfo, error)
 	StreamPurge(ctx context.Context, topic string) (int64, error)
-	
 	// Stream consumer group operations
 	StreamSubscribeGroup(ctx context.Context, topic string, groupID string, consumerID string) error
 	StreamUnsubscribeGroup(ctx context.Context, topic string, groupID string, consumerID string) error
 	StreamGetGroupOffset(ctx context.Context, topic string, groupID string, partition int32) (int64, error)
 	StreamCommitGroupOffset(ctx context.Context, topic string, groupID string, partition int32, offset int64) error
+
+	// Document database operations
+	// Collection management
+	DocCreateCollection(ctx context.Context, collection string, options CollectionOptions) error
+	DocDropCollection(ctx context.Context, collection string) error
+	DocListCollections(ctx context.Context) ([]string, error)
+	DocGetCollectionInfo(ctx context.Context, collection string) (CollectionInfo, error)
+	
+	// Document operations
+	DocInsertOne(ctx context.Context, collection string, document map[string]interface{}) (string, error)
+	DocInsertMany(ctx context.Context, collection string, documents []map[string]interface{}, ordered bool) ([]string, error)
+	DocFindOne(ctx context.Context, collection string, filter map[string]interface{}, projection map[string]interface{}) (DocumentResult, error)
+	DocFindMany(ctx context.Context, collection string, query DocumentQuery) ([]DocumentResult, int64, error)
+	DocUpdateOne(ctx context.Context, collection string, filter map[string]interface{}, update DocumentUpdate, upsert bool) (DocumentWriteResult, error)
+	DocUpdateMany(ctx context.Context, collection string, filter map[string]interface{}, update DocumentUpdate) (DocumentWriteResult, error)
+	DocDeleteOne(ctx context.Context, collection string, filter map[string]interface{}) (DocumentWriteResult, error)
+	DocDeleteMany(ctx context.Context, collection string, filter map[string]interface{}) (DocumentWriteResult, error)
+	DocReplaceOne(ctx context.Context, collection string, filter map[string]interface{}, replacement map[string]interface{}, upsert bool) (DocumentWriteResult, error)
+	
+	// Aggregation operations
+	DocAggregate(ctx context.Context, collection string, pipeline []map[string]interface{}) ([]map[string]interface{}, error)
+	DocCount(ctx context.Context, collection string, filter map[string]interface{}) (int64, error)
+	DocDistinct(ctx context.Context, collection string, field string, filter map[string]interface{}) ([]interface{}, error)
+	
+	// Index management
+	DocCreateIndex(ctx context.Context, collection string, index IndexSpec) error
+	DocDropIndex(ctx context.Context, collection string, indexName string) error
+	DocListIndexes(ctx context.Context, collection string) ([]IndexSpec, error)
 
 	// Lifecycle
 	Close() error
@@ -110,4 +137,73 @@ type PartitionInfo struct {
 	Leader   string
 	Replicas []string
 	Offset   int64
+}
+
+// Document database types
+
+// CollectionOptions represents options for creating a collection
+type CollectionOptions struct {
+	Capped       bool                   `json:"capped,omitempty"`
+	MaxSize      int64                  `json:"maxSize,omitempty"`
+	MaxDocuments int64                  `json:"maxDocuments,omitempty"`
+	Validator    map[string]interface{} `json:"validator,omitempty"`
+}
+
+// CollectionInfo represents information about a collection
+type CollectionInfo struct {
+	Name          string            `json:"name"`
+	DocumentCount int64             `json:"documentCount"`
+	SizeBytes     int64             `json:"sizeBytes"`
+	Indexes       []IndexSpec       `json:"indexes"`
+	CreatedAt     time.Time         `json:"createdAt"`
+	Options       CollectionOptions `json:"options"`
+}
+
+// DocumentResult represents a document returned from a query
+type DocumentResult struct {
+	ID        string                 `json:"_id"`
+	Data      map[string]interface{} `json:"data"`
+	CreatedAt time.Time              `json:"createdAt"`
+	UpdatedAt time.Time              `json:"updatedAt"`
+	Version   int64                  `json:"version"`
+}
+
+// DocumentQuery represents a query for finding documents
+type DocumentQuery struct {
+	Filter     map[string]interface{} `json:"filter"`
+	Sort       map[string]interface{} `json:"sort"`
+	Limit      int32                  `json:"limit"`
+	Skip       int32                  `json:"skip"`
+	Projection map[string]interface{} `json:"projection"`
+}
+
+// DocumentUpdate represents an update operation
+type DocumentUpdate struct {
+	Set      map[string]interface{} `json:"$set,omitempty"`
+	Unset    map[string]interface{} `json:"$unset,omitempty"`
+	Inc      map[string]interface{} `json:"$inc,omitempty"`
+	Push     map[string]interface{} `json:"$push,omitempty"`
+	Pull     map[string]interface{} `json:"$pull,omitempty"`
+	AddToSet map[string]interface{} `json:"$addToSet,omitempty"`
+}
+
+// DocumentWriteResult represents the result of a write operation
+type DocumentWriteResult struct {
+	Acknowledged  bool     `json:"acknowledged"`
+	InsertedCount int64    `json:"insertedCount"`
+	MatchedCount  int64    `json:"matchedCount"`
+	ModifiedCount int64    `json:"modifiedCount"`
+	DeletedCount  int64    `json:"deletedCount"`
+	InsertedIDs   []string `json:"insertedIds"`
+	UpsertedIDs   []string `json:"upsertedIds"`
+}
+
+// IndexSpec represents an index specification
+type IndexSpec struct {
+	Name          string                 `json:"name"`
+	Keys          map[string]interface{} `json:"keys"`
+	Unique        bool                   `json:"unique"`
+	Sparse        bool                   `json:"sparse"`
+	TTLSeconds    int32                  `json:"ttlSeconds"`
+	PartialFilter map[string]interface{} `json:"partialFilter"`
 }
