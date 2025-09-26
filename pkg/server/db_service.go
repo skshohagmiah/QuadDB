@@ -163,7 +163,7 @@ func (s *DBService) InsertOne(ctx context.Context, req *documentpb.InsertOneRequ
 	}
 
 	document := req.Document.AsMap()
-	
+
 	insertedID, err := s.storage.DocInsertOne(ctx, req.Collection, document)
 	if err != nil {
 		log.Printf("Failed to insert document in %s: %v", req.Collection, err)
@@ -262,7 +262,7 @@ func (s *DBService) FindMany(ctx context.Context, req *documentpb.FindManyReques
 	}
 
 	query := storage.DocumentQuery{}
-	
+
 	if req.Query != nil {
 		if req.Query.Filter != nil {
 			query.Filter = req.Query.Filter.AsMap()
@@ -716,8 +716,8 @@ func (s *DBService) BeginTransaction(ctx context.Context, req *documentpb.BeginT
 	// In a full implementation, this would create an actual transaction
 	return &documentpb.BeginTransactionResponse{
 		Transaction: &documentpb.TransactionContext{
-			TransactionId: "tx_" + fmt.Sprintf("%d", ctx.Value("request_id")),
-			StartedAt:     timestamppb.Now(),
+			TransactionId:  "tx_" + fmt.Sprintf("%d", ctx.Value("request_id")),
+			StartedAt:      timestamppb.Now(),
 			TimeoutSeconds: req.TimeoutSeconds,
 		},
 	}, nil
