@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
+	streampb "github.com/skshohagmiah/gomsg/api/generated/stream"
 )
 
 func streamCmd() *cobra.Command {

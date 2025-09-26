@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package document;
 
-option go_package = "github.com/skshohagmiah/fluxdl/api/generated/document";
+option go_package = "github.com/skshohagmiah/gomsg/api/generated/document";
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";

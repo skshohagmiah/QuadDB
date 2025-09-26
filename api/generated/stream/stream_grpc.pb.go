@@ -19,20 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StreamService_Publish_FullMethodName           = "/fluxdl.stream.StreamService/Publish"
-	StreamService_Subscribe_FullMethodName         = "/fluxdl.stream.StreamService/Subscribe"
-	StreamService_SubscribeGroup_FullMethodName    = "/fluxdl.stream.StreamService/SubscribeGroup"
-	StreamService_Read_FullMethodName              = "/fluxdl.stream.StreamService/Read"
-	StreamService_ReadFrom_FullMethodName          = "/fluxdl.stream.StreamService/ReadFrom"
-	StreamService_Seek_FullMethodName              = "/fluxdl.stream.StreamService/Seek"
-	StreamService_GetOffset_FullMethodName         = "/fluxdl.stream.StreamService/GetOffset"
-	StreamService_CommitGroupOffset_FullMethodName = "/fluxdl.stream.StreamService/CommitGroupOffset"
-	StreamService_GetGroupOffset_FullMethodName    = "/fluxdl.stream.StreamService/GetGroupOffset"
-	StreamService_CreateTopic_FullMethodName       = "/fluxdl.stream.StreamService/CreateTopic"
-	StreamService_DeleteTopic_FullMethodName       = "/fluxdl.stream.StreamService/DeleteTopic"
-	StreamService_ListTopics_FullMethodName        = "/fluxdl.stream.StreamService/ListTopics"
-	StreamService_GetTopicInfo_FullMethodName      = "/fluxdl.stream.StreamService/GetTopicInfo"
-	StreamService_Purge_FullMethodName             = "/fluxdl.stream.StreamService/Purge"
+	StreamService_Publish_FullMethodName           = "/gomsg.stream.StreamService/Publish"
+	StreamService_Subscribe_FullMethodName         = "/gomsg.stream.StreamService/Subscribe"
+	StreamService_SubscribeGroup_FullMethodName    = "/gomsg.stream.StreamService/SubscribeGroup"
+	StreamService_Read_FullMethodName              = "/gomsg.stream.StreamService/Read"
+	StreamService_ReadFrom_FullMethodName          = "/gomsg.stream.StreamService/ReadFrom"
+	StreamService_Seek_FullMethodName              = "/gomsg.stream.StreamService/Seek"
+	StreamService_GetOffset_FullMethodName         = "/gomsg.stream.StreamService/GetOffset"
+	StreamService_CommitGroupOffset_FullMethodName = "/gomsg.stream.StreamService/CommitGroupOffset"
+	StreamService_GetGroupOffset_FullMethodName    = "/gomsg.stream.StreamService/GetGroupOffset"
+	StreamService_CreateTopic_FullMethodName       = "/gomsg.stream.StreamService/CreateTopic"
+	StreamService_DeleteTopic_FullMethodName       = "/gomsg.stream.StreamService/DeleteTopic"
+	StreamService_ListTopics_FullMethodName        = "/gomsg.stream.StreamService/ListTopics"
+	StreamService_GetTopicInfo_FullMethodName      = "/gomsg.stream.StreamService/GetTopicInfo"
+	StreamService_Purge_FullMethodName             = "/gomsg.stream.StreamService/Purge"
 )
 
 // StreamServiceClient is the client API for StreamService service.
@@ -554,7 +554,7 @@ func _StreamService_Purge_Handler(srv interface{}, ctx context.Context, dec func
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var StreamService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "fluxdl.stream.StreamService",
+	ServiceName: "gomsg.stream.StreamService",
 	HandlerType: (*StreamServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

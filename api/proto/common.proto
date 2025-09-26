@@ -1,6 +1,6 @@
 syntax = "proto3";
-package fluxdl.common;
-option go_package = "github.com/skshohagmiah/fluxdl/api/generated/common";
+package gomsg.common;
+option go_package = "github.com/skshohagmiah/gomsg/api/generated/common";
 
 // Common message types
 message Status {

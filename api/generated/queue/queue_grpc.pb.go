@@ -19,17 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	QueueService_Push_FullMethodName      = "/fluxdl.queue.QueueService/Push"
-	QueueService_Pop_FullMethodName       = "/fluxdl.queue.QueueService/Pop"
-	QueueService_PushBatch_FullMethodName = "/fluxdl.queue.QueueService/PushBatch"
-	QueueService_PopBatch_FullMethodName  = "/fluxdl.queue.QueueService/PopBatch"
-	QueueService_Peek_FullMethodName      = "/fluxdl.queue.QueueService/Peek"
-	QueueService_Ack_FullMethodName       = "/fluxdl.queue.QueueService/Ack"
-	QueueService_Nack_FullMethodName      = "/fluxdl.queue.QueueService/Nack"
-	QueueService_Stats_FullMethodName     = "/fluxdl.queue.QueueService/Stats"
-	QueueService_Purge_FullMethodName     = "/fluxdl.queue.QueueService/Purge"
-	QueueService_Delete_FullMethodName    = "/fluxdl.queue.QueueService/Delete"
-	QueueService_List_FullMethodName      = "/fluxdl.queue.QueueService/List"
+	QueueService_Push_FullMethodName      = "/gomsg.queue.QueueService/Push"
+	QueueService_Pop_FullMethodName       = "/gomsg.queue.QueueService/Pop"
+	QueueService_PushBatch_FullMethodName = "/gomsg.queue.QueueService/PushBatch"
+	QueueService_PopBatch_FullMethodName  = "/gomsg.queue.QueueService/PopBatch"
+	QueueService_Peek_FullMethodName      = "/gomsg.queue.QueueService/Peek"
+	QueueService_Ack_FullMethodName       = "/gomsg.queue.QueueService/Ack"
+	QueueService_Nack_FullMethodName      = "/gomsg.queue.QueueService/Nack"
+	QueueService_Stats_FullMethodName     = "/gomsg.queue.QueueService/Stats"
+	QueueService_Purge_FullMethodName     = "/gomsg.queue.QueueService/Purge"
+	QueueService_Delete_FullMethodName    = "/gomsg.queue.QueueService/Delete"
+	QueueService_List_FullMethodName      = "/gomsg.queue.QueueService/List"
 )
 
 // QueueServiceClient is the client API for QueueService service.
@@ -448,7 +448,7 @@ func _QueueService_List_Handler(srv interface{}, ctx context.Context, dec func(i
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var QueueService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "fluxdl.queue.QueueService",
+	ServiceName: "gomsg.queue.QueueService",
 	HandlerType: (*QueueServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

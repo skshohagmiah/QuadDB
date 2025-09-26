@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
-	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
-	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
+	kvpb "github.com/skshohagmiah/gomsg/api/generated/kv"
+	queuepb "github.com/skshohagmiah/gomsg/api/generated/queue"
+	streampb "github.com/skshohagmiah/gomsg/api/generated/stream"
 )
 
 func setupBenchmarkClients(b *testing.B) (kvpb.KVServiceClient, queuepb.QueueServiceClient, streampb.StreamServiceClient) {

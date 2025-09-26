@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	commonpb "github.com/skshohagmiah/fluxdl/api/generated/common"
-	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
-	"github.com/skshohagmiah/fluxdl/storage"
+	commonpb "github.com/skshohagmiah/gomsg/api/generated/common"
+	streampb "github.com/skshohagmiah/gomsg/api/generated/stream"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // StreamService implements the Stream gRPC service

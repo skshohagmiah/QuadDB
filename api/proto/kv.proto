@@ -1,6 +1,6 @@
 syntax = "proto3";
-package fluxdl.kv;
-option go_package = "github.com/skshohagmiah/fluxdl/api/generated/kv";
+package gomsg.kv;
+option go_package = "github.com/skshohagmiah/gomsg/api/generated/kv";
 
 import "common.proto";
 
@@ -26,7 +26,7 @@ message SetRequest {
 }
 
 message SetResponse {
-  fluxdl.common.Status status = 1;
+  gomsg.common.Status status = 1;
 }
 
 message GetRequest {
@@ -36,7 +36,7 @@ message GetRequest {
 message GetResponse {
   bytes value = 1;
   bool found = 2;
-  fluxdl.common.Status status = 3;
+  gomsg.common.Status status = 3;
 }
 
 message DelRequest {
@@ -45,7 +45,7 @@ message DelRequest {
 
 message DelResponse {
   int32 deleted_count = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message ExistsRequest {
@@ -54,7 +54,7 @@ message ExistsRequest {
 
 message ExistsResponse {
   bool exists = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message IncrRequest {
@@ -64,7 +64,7 @@ message IncrRequest {
 
 message IncrResponse {
   int64 value = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message DecrRequest {
@@ -74,7 +74,7 @@ message DecrRequest {
 
 message DecrResponse {
   int64 value = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message MGetRequest {
@@ -82,16 +82,16 @@ message MGetRequest {
 }
 
 message MGetResponse {
-  repeated fluxdl.common.KeyValue values = 1;
-  fluxdl.common.Status status = 2;
+  repeated gomsg.common.KeyValue values = 1;
+  gomsg.common.Status status = 2;
 }
 
 message MSetRequest {
-  repeated fluxdl.common.KeyValue values = 1;
+  repeated gomsg.common.KeyValue values = 1;
 }
 
 message MSetResponse {
-  fluxdl.common.Status status = 1;
+  gomsg.common.Status status = 1;
 }
 
 message KeysRequest {
@@ -101,7 +101,7 @@ message KeysRequest {
 
 message KeysResponse {
   repeated string keys = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message ExpireRequest {
@@ -110,7 +110,7 @@ message ExpireRequest {
 }
 
 message ExpireResponse {
-  fluxdl.common.Status status = 1;
+  gomsg.common.Status status = 1;
 }
 
 message TTLRequest {
@@ -119,7 +119,7 @@ message TTLRequest {
 
 message TTLResponse {
   int64 ttl = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message DelPatternRequest {
@@ -128,5 +128,5 @@ message DelPatternRequest {
 
 message DelPatternResponse {
   int32 deleted_count = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }

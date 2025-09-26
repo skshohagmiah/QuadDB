@@ -6,9 +6,9 @@ import (
 
 	"google.golang.org/grpc/codes"
 
-	commonpb "github.com/skshohagmiah/fluxdl/api/generated/common"
-	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
-	"github.com/skshohagmiah/fluxdl/storage"
+	commonpb "github.com/skshohagmiah/gomsg/api/generated/common"
+	kvpb "github.com/skshohagmiah/gomsg/api/generated/kv"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // KVService implements the KV gRPC service

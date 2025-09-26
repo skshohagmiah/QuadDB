@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/skshohagmiah/fluxdl/config"
-	"github.com/skshohagmiah/fluxdl/pkg/server"
-	"github.com/skshohagmiah/fluxdl/storage"
+	"github.com/skshohagmiah/gomsg/config"
+	"github.com/skshohagmiah/gomsg/pkg/server"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 var (

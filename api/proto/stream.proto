@@ -1,6 +1,6 @@
 syntax = "proto3";
-package fluxdl.stream;
-option go_package = "github.com/skshohagmiah/fluxdl/api/generated/stream";
+package gomsg.stream;
+option go_package = "github.com/skshohagmiah/gomsg/api/generated/stream";
 
 import "common.proto";
 
@@ -35,7 +35,7 @@ message TopicInfo {
   string name = 1;
   int32 partitions = 2;
   int64 total_messages = 3;
-  repeated fluxdl.common.Partition partition_info = 4;
+  repeated gomsg.common.Partition partition_info = 4;
 }
 
 message PublishRequest {
@@ -49,7 +49,7 @@ message PublishResponse {
   string message_id = 1;
   int64 offset = 2;
   int32 partition = 3;
-  fluxdl.common.Status status = 4;
+  gomsg.common.Status status = 4;
 }
 
 message SubscribeRequest {
@@ -62,7 +62,7 @@ message SubscribeRequest {
 
 message SubscribeResponse {
   StreamMessage message = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message ReadRequest {
@@ -75,7 +75,7 @@ message ReadRequest {
 message ReadResponse {
   repeated StreamMessage messages = 1;
   int64 next_offset = 2;
-  fluxdl.common.Status status = 3;
+  gomsg.common.Status status = 3;
 }
 
 message SeekRequest {
@@ -86,7 +86,7 @@ message SeekRequest {
 }
 
 message SeekResponse {
-  fluxdl.common.Status status = 1;
+  gomsg.common.Status status = 1;
 }
 
 message GetOffsetRequest {
@@ -97,7 +97,7 @@ message GetOffsetRequest {
 
 message GetOffsetResponse {
   int64 offset = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message CreateTopicRequest {
@@ -107,7 +107,7 @@ message CreateTopicRequest {
 }
 
 message CreateTopicResponse {
-  fluxdl.common.Status status = 1;
+  gomsg.common.Status status = 1;
 }
 
 message DeleteTopicRequest {
@@ -115,7 +115,7 @@ message DeleteTopicRequest {
 }
 
 message DeleteTopicResponse {
-  fluxdl.common.Status status = 1;
+  gomsg.common.Status status = 1;
 }
 
 message ListTopicsRequest {
@@ -123,7 +123,7 @@ message ListTopicsRequest {
 
 message ListTopicsResponse {
   repeated string topics = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message GetTopicInfoRequest {
@@ -132,7 +132,7 @@ message GetTopicInfoRequest {
 
 message GetTopicInfoResponse {
   TopicInfo info = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message ReadFromRequest {
@@ -145,7 +145,7 @@ message ReadFromRequest {
 message ReadFromResponse {
   repeated StreamMessage messages = 1;
   int64 next_offset = 2;
-  fluxdl.common.Status status = 3;
+  gomsg.common.Status status = 3;
 }
 
 message PurgeRequest {
@@ -154,7 +154,7 @@ message PurgeRequest {
 
 message PurgeResponse {
   int64 purged_count = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message SubscribeGroupRequest {
@@ -171,7 +171,7 @@ message CommitGroupOffsetRequest {
 }
 
 message CommitGroupOffsetResponse {
-  fluxdl.common.Status status = 1;
+  gomsg.common.Status status = 1;
 }
 
 message GetGroupOffsetRequest {
@@ -182,5 +182,5 @@ message GetGroupOffsetRequest {
 
 message GetGroupOffsetResponse {
   int64 offset = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }

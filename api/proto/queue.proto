@@ -1,6 +1,6 @@
 syntax = "proto3";
-package fluxdl.queue;
-option go_package = "github.com/skshohagmiah/fluxdl/api/generated/queue";
+package gomsg.queue;
+option go_package = "github.com/skshohagmiah/gomsg/api/generated/queue";
 
 import "common.proto";
 
@@ -46,7 +46,7 @@ message PushRequest {
 
 message PushResponse {
   string message_id = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message PopRequest {
@@ -57,7 +57,7 @@ message PopRequest {
 
 message PopResponse {
   QueueMessage message = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message PeekRequest {
@@ -67,7 +67,7 @@ message PeekRequest {
 
 message PeekResponse {
   repeated QueueMessage messages = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message AckRequest {
@@ -75,7 +75,7 @@ message AckRequest {
 }
 
 message AckResponse {
-  fluxdl.common.Status status = 1;
+  gomsg.common.Status status = 1;
 }
 
 message NackRequest {
@@ -83,7 +83,7 @@ message NackRequest {
 }
 
 message NackResponse {
-  fluxdl.common.Status status = 1;
+  gomsg.common.Status status = 1;
 }
 
 message StatsRequest {
@@ -92,7 +92,7 @@ message StatsRequest {
 
 message StatsResponse {
   QueueStats stats = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message PurgeRequest {
@@ -101,7 +101,7 @@ message PurgeRequest {
 
 message PurgeResponse {
   int64 purged_count = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message DeleteRequest {
@@ -109,7 +109,7 @@ message DeleteRequest {
 }
 
 message DeleteResponse {
-  fluxdl.common.Status status = 1;
+  gomsg.common.Status status = 1;
 }
 
 message ListRequest {
@@ -117,7 +117,7 @@ message ListRequest {
 
 message ListResponse {
   repeated string queues = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message BatchMessage {
@@ -132,7 +132,7 @@ message PushBatchRequest {
 
 message PushBatchResponse {
   repeated string message_ids = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }
 
 message PopBatchRequest {
@@ -144,5 +144,5 @@ message PopBatchRequest {
 
 message PopBatchResponse {
   repeated QueueMessage messages = 1;
-  fluxdl.common.Status status = 2;
+  gomsg.common.Status status = 2;
 }

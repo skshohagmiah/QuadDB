@@ -29,6 +29,7 @@ func main() {
 	rootCmd.AddCommand(kvCmd())
 	rootCmd.AddCommand(queueCmd())
 	rootCmd.AddCommand(streamCmd())
+	rootCmd.AddCommand(dbCmd())
 	rootCmd.AddCommand(clusterCmd())
 
 	if err := rootCmd.Execute(); err != nil {

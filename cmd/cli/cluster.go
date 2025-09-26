@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
+	clusterpb "github.com/skshohagmiah/gomsg/api/generated/cluster"
 )
 
 func clusterCmd() *cobra.Command {

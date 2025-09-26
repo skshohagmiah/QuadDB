@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/skshohagmiah/fluxdl/config"
-	"github.com/skshohagmiah/fluxdl/pkg/server"
-	"github.com/skshohagmiah/fluxdl/storage"
+	"github.com/skshohagmiah/gomsg/config"
+	"github.com/skshohagmiah/gomsg/pkg/server"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // TestServer manages a test server instance

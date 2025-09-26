@@ -10,8 +10,8 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	documentpb "github.com/skshohagmiah/fluxdl/api/generated/db"
-	"github.com/skshohagmiah/fluxdl/storage"
+	documentpb "github.com/skshohagmiah/gomsg/api/generated/document"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // DBService implements the document database gRPC service

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
+	clusterpb "github.com/skshohagmiah/gomsg/api/generated/cluster"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

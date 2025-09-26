@@ -1,7 +1,7 @@
 GO_VERSION := 1.24
 PROTO_VERSION := 25.1
-BINARY_NAME := fluxdl
-CLI_BINARY_NAME := fluxdl-cli
+BINARY_NAME := gomsg
+CLI_BINARY_NAME := gomsg-cli
 
 .PHONY: help build test clean install proto docker deps
 
@@ -17,26 +17,29 @@ deps: ## Install dependencies
 
 proto: ## Generate protobuf code
 	@echo "Generating protobuf code..."
-	@mkdir -p api/generated/{common,kv,queue,stream,cluster}
-	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/fluxdl \
-		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/fluxdl \
+	@mkdir -p api/generated/{common,kv,queue,stream,cluster,document}
+	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
+		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
 		api/proto/common.proto
-	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/fluxdl \
-		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/fluxdl \
+	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
+		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
 		-I api/proto api/proto/kv.proto
-	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/fluxdl \
-		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/fluxdl \
+	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
+		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
 		-I api/proto api/proto/queue.proto
-	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/fluxdl \
-		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/fluxdl \
+	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
+		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
 		-I api/proto api/proto/stream.proto
-	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/fluxdl \
-		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/fluxdl \
+	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
+		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
 		-I api/proto api/proto/cluster.proto
+	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
+		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
+		-I api/proto api/proto/db.proto
 
 build: deps proto ## Build the server and CLI binaries
 	@echo "Building server..."
-	go build -ldflags="-s -w" -o bin/$(BINARY_NAME) ./cmd/fluxdl
+	go build -ldflags="-s -w" -o bin/$(BINARY_NAME) ./cmd/gomsg
 	@echo "Building CLI..."
 	go build -ldflags="-s -w" -o bin/$(CLI_BINARY_NAME) ./cmd/cli
 
@@ -77,10 +80,10 @@ docker: ## Build Docker image
 	./scripts/docker-build.sh
 
 docker-push: ## Push Docker image to Docker Hub
-	docker push shohag2100/fluxdl:latest
+	docker push shohag2100/gomsg:latest
 
 docker-run: ## Run Docker container
-	docker run -d -p 9000:9000 -p 7000:7000 -v fluxdl-data:/data --name fluxdl shohag2100/fluxdl:latest
+	docker run -d -p 9000:9000 -p 7000:7000 -v gomsg-data:/data --name gomsg shohag2100/gomsg:latest
 
 docker-compose: ## Start with docker-compose (single node)
 	docker-compose -f docker-compose.simple.yml up -d
@@ -89,13 +92,13 @@ docker-cluster: ## Start cluster with docker-compose
 	docker-compose up -d
 
 docker-stop: ## Stop all docker services
-	docker stop fluxdl 2>/dev/null || true
+	docker stop gomsg 2>/dev/null || true
 	docker-compose down 2>/dev/null || true
 	docker-compose -f docker-compose.simple.yml down 2>/dev/null || true
 
 docker-clean: ## Clean up Docker resources
-	docker stop fluxdl 2>/dev/null || true
-	docker rm fluxdl 2>/dev/null || true
+	docker stop gomsg 2>/dev/null || true
+	docker rm gomsg 2>/dev/null || true
 	docker-compose down -v 2>/dev/null || true
 	docker-compose -f docker-compose.simple.yml down -v 2>/dev/null || true
 

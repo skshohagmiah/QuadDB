@@ -7,7 +7,7 @@
 package cluster
 
 import (
-	common "github.com/skshohagmiah/fluxdl/api/generated/common"
+	common "github.com/skshohagmiah/gomsg/api/generated/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -1214,7 +1214,7 @@ var File_cluster_proto protoreflect.FileDescriptor
 
 const file_cluster_proto_rawDesc = "" +
 	"\n" +
-	"\rcluster.proto\x12\x0efluxdl.cluster\x1a\fcommon.proto\"\xa9\x01\n" +
+	"\rcluster.proto\x12\rgomsg.cluster\x1a\fcommon.proto\"\xa9\x01\n" +
 	"\rClusterStatus\x12\x18\n" +
 	"\ahealthy\x18\x01 \x01(\bR\ahealthy\x12\x1b\n" +
 	"\tleader_id\x18\x02 \x01(\tR\bleaderId\x12\x1f\n" +
@@ -1232,74 +1232,74 @@ const file_cluster_proto_rawDesc = "" +
 	"\fmemory_usage\x18\x05 \x01(\x03R\vmemoryUsage\x12\x1d\n" +
 	"\n" +
 	"disk_usage\x18\x06 \x01(\x03R\tdiskUsage\"\x11\n" +
-	"\x0fGetNodesRequest\"l\n" +
-	"\x10GetNodesResponse\x12)\n" +
-	"\x05nodes\x18\x01 \x03(\v2\x13.fluxdl.common.NodeR\x05nodes\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"\x12\n" +
-	"\x10GetStatusRequest\"\x8a\x01\n" +
-	"\x11GetStatusResponse\x125\n" +
-	"\x06status\x18\x01 \x01(\v2\x1d.fluxdl.cluster.ClusterStatusR\x06status\x12>\n" +
-	"\x0fresponse_status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x0eresponseStatus\"\x12\n" +
-	"\x10GetLeaderRequest\"o\n" +
-	"\x11GetLeaderResponse\x12+\n" +
-	"\x06leader\x18\x01 \x01(\v2\x13.fluxdl.common.NodeR\x06leader\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"@\n" +
+	"\x0fGetNodesRequest\"j\n" +
+	"\x10GetNodesResponse\x12(\n" +
+	"\x05nodes\x18\x01 \x03(\v2\x12.gomsg.common.NodeR\x05nodes\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"\x12\n" +
+	"\x10GetStatusRequest\"\x88\x01\n" +
+	"\x11GetStatusResponse\x124\n" +
+	"\x06status\x18\x01 \x01(\v2\x1c.gomsg.cluster.ClusterStatusR\x06status\x12=\n" +
+	"\x0fresponse_status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x0eresponseStatus\"\x12\n" +
+	"\x10GetLeaderRequest\"m\n" +
+	"\x11GetLeaderResponse\x12*\n" +
+	"\x06leader\x18\x01 \x01(\v2\x12.gomsg.common.NodeR\x06leader\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"@\n" +
 	"\vJoinRequest\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x18\n" +
-	"\aaddress\x18\x02 \x01(\tR\aaddress\"=\n" +
-	"\fJoinResponse\x12-\n" +
-	"\x06status\x18\x01 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"'\n" +
+	"\aaddress\x18\x02 \x01(\tR\aaddress\"<\n" +
+	"\fJoinResponse\x12,\n" +
+	"\x06status\x18\x01 \x01(\v2\x14.gomsg.common.StatusR\x06status\"'\n" +
 	"\fLeaveRequest\x12\x17\n" +
-	"\anode_id\x18\x01 \x01(\tR\x06nodeId\">\n" +
-	"\rLeaveResponse\x12-\n" +
-	"\x06status\x18\x01 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"\x11\n" +
-	"\x0fGetStatsRequest\"u\n" +
-	"\x10GetStatsResponse\x122\n" +
-	"\x05stats\x18\x01 \x01(\v2\x1c.fluxdl.cluster.ClusterStatsR\x05stats\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"U\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\"=\n" +
+	"\rLeaveResponse\x12,\n" +
+	"\x06status\x18\x01 \x01(\v2\x14.gomsg.common.StatusR\x06status\"\x11\n" +
+	"\x0fGetStatsRequest\"s\n" +
+	"\x10GetStatsResponse\x121\n" +
+	"\x05stats\x18\x01 \x01(\v2\x1b.gomsg.cluster.ClusterStatsR\x05stats\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"U\n" +
 	"\rPartitionInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x18\n" +
 	"\aprimary\x18\x02 \x01(\tR\aprimary\x12\x1a\n" +
-	"\breplicas\x18\x03 \x03(\tR\breplicas\"\x83\x02\n" +
+	"\breplicas\x18\x03 \x03(\tR\breplicas\"\x82\x02\n" +
 	"\vClusterInfo\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12)\n" +
 	"\x10total_partitions\x18\x02 \x01(\x05R\x0ftotalPartitions\x12-\n" +
 	"\x12replication_factor\x18\x03 \x01(\x05R\x11replicationFactor\x12\x1f\n" +
 	"\vtotal_nodes\x18\x04 \x01(\x05R\n" +
 	"totalNodes\x12!\n" +
-	"\factive_nodes\x18\x05 \x01(\x05R\vactiveNodes\x12=\n" +
+	"\factive_nodes\x18\x05 \x01(\x05R\vactiveNodes\x12<\n" +
 	"\n" +
-	"partitions\x18\x06 \x03(\v2\x1d.fluxdl.cluster.PartitionInfoR\n" +
+	"partitions\x18\x06 \x03(\v2\x1c.gomsg.cluster.PartitionInfoR\n" +
 	"partitions\"\x17\n" +
-	"\x15GetClusterInfoRequest\"\x87\x01\n" +
-	"\x16GetClusterInfoResponse\x12>\n" +
-	"\fcluster_info\x18\x01 \x01(\v2\x1b.fluxdl.cluster.ClusterInfoR\vclusterInfo\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"H\n" +
+	"\x15GetClusterInfoRequest\"\x85\x01\n" +
+	"\x16GetClusterInfoResponse\x12=\n" +
+	"\fcluster_info\x18\x01 \x01(\v2\x1a.gomsg.cluster.ClusterInfoR\vclusterInfo\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"H\n" +
 	"\fKeyValuePair\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\fR\x05value\x12\x10\n" +
-	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\"d\n" +
+	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\"c\n" +
 	"\x12MigrateDataRequest\x12\x1c\n" +
-	"\tpartition\x18\x01 \x01(\x05R\tpartition\x120\n" +
-	"\x04data\x18\x02 \x03(\v2\x1c.fluxdl.cluster.KeyValuePairR\x04data\"D\n" +
-	"\x13MigrateDataResponse\x12-\n" +
-	"\x06status\x18\x01 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"P\n" +
+	"\tpartition\x18\x01 \x01(\x05R\tpartition\x12/\n" +
+	"\x04data\x18\x02 \x03(\v2\x1b.gomsg.cluster.KeyValuePairR\x04data\"C\n" +
+	"\x13MigrateDataResponse\x12,\n" +
+	"\x06status\x18\x01 \x01(\v2\x14.gomsg.common.StatusR\x06status\"P\n" +
 	"\x14ReplicateDataRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\fR\x05value\x12\x10\n" +
-	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\"F\n" +
-	"\x15ReplicateDataResponse\x12-\n" +
-	"\x06status\x18\x01 \x01(\v2\x15.fluxdl.common.StatusR\x06status2\xf2\x05\n" +
-	"\x0eClusterService\x12M\n" +
-	"\bGetNodes\x12\x1f.fluxdl.cluster.GetNodesRequest\x1a .fluxdl.cluster.GetNodesResponse\x12P\n" +
-	"\tGetStatus\x12 .fluxdl.cluster.GetStatusRequest\x1a!.fluxdl.cluster.GetStatusResponse\x12P\n" +
-	"\tGetLeader\x12 .fluxdl.cluster.GetLeaderRequest\x1a!.fluxdl.cluster.GetLeaderResponse\x12A\n" +
-	"\x04Join\x12\x1b.fluxdl.cluster.JoinRequest\x1a\x1c.fluxdl.cluster.JoinResponse\x12D\n" +
-	"\x05Leave\x12\x1c.fluxdl.cluster.LeaveRequest\x1a\x1d.fluxdl.cluster.LeaveResponse\x12M\n" +
-	"\bGetStats\x12\x1f.fluxdl.cluster.GetStatsRequest\x1a .fluxdl.cluster.GetStatsResponse\x12_\n" +
-	"\x0eGetClusterInfo\x12%.fluxdl.cluster.GetClusterInfoRequest\x1a&.fluxdl.cluster.GetClusterInfoResponse\x12V\n" +
-	"\vMigrateData\x12\".fluxdl.cluster.MigrateDataRequest\x1a#.fluxdl.cluster.MigrateDataResponse\x12\\\n" +
-	"\rReplicateData\x12$.fluxdl.cluster.ReplicateDataRequest\x1a%.fluxdl.cluster.ReplicateDataResponseB6Z4github.com/skshohagmiah/fluxdl/api/generated/clusterb\x06proto3"
+	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\"E\n" +
+	"\x15ReplicateDataResponse\x12,\n" +
+	"\x06status\x18\x01 \x01(\v2\x14.gomsg.common.StatusR\x06status2\xe0\x05\n" +
+	"\x0eClusterService\x12K\n" +
+	"\bGetNodes\x12\x1e.gomsg.cluster.GetNodesRequest\x1a\x1f.gomsg.cluster.GetNodesResponse\x12N\n" +
+	"\tGetStatus\x12\x1f.gomsg.cluster.GetStatusRequest\x1a .gomsg.cluster.GetStatusResponse\x12N\n" +
+	"\tGetLeader\x12\x1f.gomsg.cluster.GetLeaderRequest\x1a .gomsg.cluster.GetLeaderResponse\x12?\n" +
+	"\x04Join\x12\x1a.gomsg.cluster.JoinRequest\x1a\x1b.gomsg.cluster.JoinResponse\x12B\n" +
+	"\x05Leave\x12\x1b.gomsg.cluster.LeaveRequest\x1a\x1c.gomsg.cluster.LeaveResponse\x12K\n" +
+	"\bGetStats\x12\x1e.gomsg.cluster.GetStatsRequest\x1a\x1f.gomsg.cluster.GetStatsResponse\x12]\n" +
+	"\x0eGetClusterInfo\x12$.gomsg.cluster.GetClusterInfoRequest\x1a%.gomsg.cluster.GetClusterInfoResponse\x12T\n" +
+	"\vMigrateData\x12!.gomsg.cluster.MigrateDataRequest\x1a\".gomsg.cluster.MigrateDataResponse\x12Z\n" +
+	"\rReplicateData\x12#.gomsg.cluster.ReplicateDataRequest\x1a$.gomsg.cluster.ReplicateDataResponseB5Z3github.com/skshohagmiah/gomsg/api/generated/clusterb\x06proto3"
 
 var (
 	file_cluster_proto_rawDescOnce sync.Once
@@ -1315,67 +1315,67 @@ func file_cluster_proto_rawDescGZIP() []byte {
 
 var file_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_cluster_proto_goTypes = []any{
-	(*ClusterStatus)(nil),          // 0: fluxdl.cluster.ClusterStatus
-	(*ClusterStats)(nil),           // 1: fluxdl.cluster.ClusterStats
-	(*GetNodesRequest)(nil),        // 2: fluxdl.cluster.GetNodesRequest
-	(*GetNodesResponse)(nil),       // 3: fluxdl.cluster.GetNodesResponse
-	(*GetStatusRequest)(nil),       // 4: fluxdl.cluster.GetStatusRequest
-	(*GetStatusResponse)(nil),      // 5: fluxdl.cluster.GetStatusResponse
-	(*GetLeaderRequest)(nil),       // 6: fluxdl.cluster.GetLeaderRequest
-	(*GetLeaderResponse)(nil),      // 7: fluxdl.cluster.GetLeaderResponse
-	(*JoinRequest)(nil),            // 8: fluxdl.cluster.JoinRequest
-	(*JoinResponse)(nil),           // 9: fluxdl.cluster.JoinResponse
-	(*LeaveRequest)(nil),           // 10: fluxdl.cluster.LeaveRequest
-	(*LeaveResponse)(nil),          // 11: fluxdl.cluster.LeaveResponse
-	(*GetStatsRequest)(nil),        // 12: fluxdl.cluster.GetStatsRequest
-	(*GetStatsResponse)(nil),       // 13: fluxdl.cluster.GetStatsResponse
-	(*PartitionInfo)(nil),          // 14: fluxdl.cluster.PartitionInfo
-	(*ClusterInfo)(nil),            // 15: fluxdl.cluster.ClusterInfo
-	(*GetClusterInfoRequest)(nil),  // 16: fluxdl.cluster.GetClusterInfoRequest
-	(*GetClusterInfoResponse)(nil), // 17: fluxdl.cluster.GetClusterInfoResponse
-	(*KeyValuePair)(nil),           // 18: fluxdl.cluster.KeyValuePair
-	(*MigrateDataRequest)(nil),     // 19: fluxdl.cluster.MigrateDataRequest
-	(*MigrateDataResponse)(nil),    // 20: fluxdl.cluster.MigrateDataResponse
-	(*ReplicateDataRequest)(nil),   // 21: fluxdl.cluster.ReplicateDataRequest
-	(*ReplicateDataResponse)(nil),  // 22: fluxdl.cluster.ReplicateDataResponse
-	(*common.Node)(nil),            // 23: fluxdl.common.Node
-	(*common.Status)(nil),          // 24: fluxdl.common.Status
+	(*ClusterStatus)(nil),          // 0: gomsg.cluster.ClusterStatus
+	(*ClusterStats)(nil),           // 1: gomsg.cluster.ClusterStats
+	(*GetNodesRequest)(nil),        // 2: gomsg.cluster.GetNodesRequest
+	(*GetNodesResponse)(nil),       // 3: gomsg.cluster.GetNodesResponse
+	(*GetStatusRequest)(nil),       // 4: gomsg.cluster.GetStatusRequest
+	(*GetStatusResponse)(nil),      // 5: gomsg.cluster.GetStatusResponse
+	(*GetLeaderRequest)(nil),       // 6: gomsg.cluster.GetLeaderRequest
+	(*GetLeaderResponse)(nil),      // 7: gomsg.cluster.GetLeaderResponse
+	(*JoinRequest)(nil),            // 8: gomsg.cluster.JoinRequest
+	(*JoinResponse)(nil),           // 9: gomsg.cluster.JoinResponse
+	(*LeaveRequest)(nil),           // 10: gomsg.cluster.LeaveRequest
+	(*LeaveResponse)(nil),          // 11: gomsg.cluster.LeaveResponse
+	(*GetStatsRequest)(nil),        // 12: gomsg.cluster.GetStatsRequest
+	(*GetStatsResponse)(nil),       // 13: gomsg.cluster.GetStatsResponse
+	(*PartitionInfo)(nil),          // 14: gomsg.cluster.PartitionInfo
+	(*ClusterInfo)(nil),            // 15: gomsg.cluster.ClusterInfo
+	(*GetClusterInfoRequest)(nil),  // 16: gomsg.cluster.GetClusterInfoRequest
+	(*GetClusterInfoResponse)(nil), // 17: gomsg.cluster.GetClusterInfoResponse
+	(*KeyValuePair)(nil),           // 18: gomsg.cluster.KeyValuePair
+	(*MigrateDataRequest)(nil),     // 19: gomsg.cluster.MigrateDataRequest
+	(*MigrateDataResponse)(nil),    // 20: gomsg.cluster.MigrateDataResponse
+	(*ReplicateDataRequest)(nil),   // 21: gomsg.cluster.ReplicateDataRequest
+	(*ReplicateDataResponse)(nil),  // 22: gomsg.cluster.ReplicateDataResponse
+	(*common.Node)(nil),            // 23: gomsg.common.Node
+	(*common.Status)(nil),          // 24: gomsg.common.Status
 }
 var file_cluster_proto_depIdxs = []int32{
-	23, // 0: fluxdl.cluster.GetNodesResponse.nodes:type_name -> fluxdl.common.Node
-	24, // 1: fluxdl.cluster.GetNodesResponse.status:type_name -> fluxdl.common.Status
-	0,  // 2: fluxdl.cluster.GetStatusResponse.status:type_name -> fluxdl.cluster.ClusterStatus
-	24, // 3: fluxdl.cluster.GetStatusResponse.response_status:type_name -> fluxdl.common.Status
-	23, // 4: fluxdl.cluster.GetLeaderResponse.leader:type_name -> fluxdl.common.Node
-	24, // 5: fluxdl.cluster.GetLeaderResponse.status:type_name -> fluxdl.common.Status
-	24, // 6: fluxdl.cluster.JoinResponse.status:type_name -> fluxdl.common.Status
-	24, // 7: fluxdl.cluster.LeaveResponse.status:type_name -> fluxdl.common.Status
-	1,  // 8: fluxdl.cluster.GetStatsResponse.stats:type_name -> fluxdl.cluster.ClusterStats
-	24, // 9: fluxdl.cluster.GetStatsResponse.status:type_name -> fluxdl.common.Status
-	14, // 10: fluxdl.cluster.ClusterInfo.partitions:type_name -> fluxdl.cluster.PartitionInfo
-	15, // 11: fluxdl.cluster.GetClusterInfoResponse.cluster_info:type_name -> fluxdl.cluster.ClusterInfo
-	24, // 12: fluxdl.cluster.GetClusterInfoResponse.status:type_name -> fluxdl.common.Status
-	18, // 13: fluxdl.cluster.MigrateDataRequest.data:type_name -> fluxdl.cluster.KeyValuePair
-	24, // 14: fluxdl.cluster.MigrateDataResponse.status:type_name -> fluxdl.common.Status
-	24, // 15: fluxdl.cluster.ReplicateDataResponse.status:type_name -> fluxdl.common.Status
-	2,  // 16: fluxdl.cluster.ClusterService.GetNodes:input_type -> fluxdl.cluster.GetNodesRequest
-	4,  // 17: fluxdl.cluster.ClusterService.GetStatus:input_type -> fluxdl.cluster.GetStatusRequest
-	6,  // 18: fluxdl.cluster.ClusterService.GetLeader:input_type -> fluxdl.cluster.GetLeaderRequest
-	8,  // 19: fluxdl.cluster.ClusterService.Join:input_type -> fluxdl.cluster.JoinRequest
-	10, // 20: fluxdl.cluster.ClusterService.Leave:input_type -> fluxdl.cluster.LeaveRequest
-	12, // 21: fluxdl.cluster.ClusterService.GetStats:input_type -> fluxdl.cluster.GetStatsRequest
-	16, // 22: fluxdl.cluster.ClusterService.GetClusterInfo:input_type -> fluxdl.cluster.GetClusterInfoRequest
-	19, // 23: fluxdl.cluster.ClusterService.MigrateData:input_type -> fluxdl.cluster.MigrateDataRequest
-	21, // 24: fluxdl.cluster.ClusterService.ReplicateData:input_type -> fluxdl.cluster.ReplicateDataRequest
-	3,  // 25: fluxdl.cluster.ClusterService.GetNodes:output_type -> fluxdl.cluster.GetNodesResponse
-	5,  // 26: fluxdl.cluster.ClusterService.GetStatus:output_type -> fluxdl.cluster.GetStatusResponse
-	7,  // 27: fluxdl.cluster.ClusterService.GetLeader:output_type -> fluxdl.cluster.GetLeaderResponse
-	9,  // 28: fluxdl.cluster.ClusterService.Join:output_type -> fluxdl.cluster.JoinResponse
-	11, // 29: fluxdl.cluster.ClusterService.Leave:output_type -> fluxdl.cluster.LeaveResponse
-	13, // 30: fluxdl.cluster.ClusterService.GetStats:output_type -> fluxdl.cluster.GetStatsResponse
-	17, // 31: fluxdl.cluster.ClusterService.GetClusterInfo:output_type -> fluxdl.cluster.GetClusterInfoResponse
-	20, // 32: fluxdl.cluster.ClusterService.MigrateData:output_type -> fluxdl.cluster.MigrateDataResponse
-	22, // 33: fluxdl.cluster.ClusterService.ReplicateData:output_type -> fluxdl.cluster.ReplicateDataResponse
+	23, // 0: gomsg.cluster.GetNodesResponse.nodes:type_name -> gomsg.common.Node
+	24, // 1: gomsg.cluster.GetNodesResponse.status:type_name -> gomsg.common.Status
+	0,  // 2: gomsg.cluster.GetStatusResponse.status:type_name -> gomsg.cluster.ClusterStatus
+	24, // 3: gomsg.cluster.GetStatusResponse.response_status:type_name -> gomsg.common.Status
+	23, // 4: gomsg.cluster.GetLeaderResponse.leader:type_name -> gomsg.common.Node
+	24, // 5: gomsg.cluster.GetLeaderResponse.status:type_name -> gomsg.common.Status
+	24, // 6: gomsg.cluster.JoinResponse.status:type_name -> gomsg.common.Status
+	24, // 7: gomsg.cluster.LeaveResponse.status:type_name -> gomsg.common.Status
+	1,  // 8: gomsg.cluster.GetStatsResponse.stats:type_name -> gomsg.cluster.ClusterStats
+	24, // 9: gomsg.cluster.GetStatsResponse.status:type_name -> gomsg.common.Status
+	14, // 10: gomsg.cluster.ClusterInfo.partitions:type_name -> gomsg.cluster.PartitionInfo
+	15, // 11: gomsg.cluster.GetClusterInfoResponse.cluster_info:type_name -> gomsg.cluster.ClusterInfo
+	24, // 12: gomsg.cluster.GetClusterInfoResponse.status:type_name -> gomsg.common.Status
+	18, // 13: gomsg.cluster.MigrateDataRequest.data:type_name -> gomsg.cluster.KeyValuePair
+	24, // 14: gomsg.cluster.MigrateDataResponse.status:type_name -> gomsg.common.Status
+	24, // 15: gomsg.cluster.ReplicateDataResponse.status:type_name -> gomsg.common.Status
+	2,  // 16: gomsg.cluster.ClusterService.GetNodes:input_type -> gomsg.cluster.GetNodesRequest
+	4,  // 17: gomsg.cluster.ClusterService.GetStatus:input_type -> gomsg.cluster.GetStatusRequest
+	6,  // 18: gomsg.cluster.ClusterService.GetLeader:input_type -> gomsg.cluster.GetLeaderRequest
+	8,  // 19: gomsg.cluster.ClusterService.Join:input_type -> gomsg.cluster.JoinRequest
+	10, // 20: gomsg.cluster.ClusterService.Leave:input_type -> gomsg.cluster.LeaveRequest
+	12, // 21: gomsg.cluster.ClusterService.GetStats:input_type -> gomsg.cluster.GetStatsRequest
+	16, // 22: gomsg.cluster.ClusterService.GetClusterInfo:input_type -> gomsg.cluster.GetClusterInfoRequest
+	19, // 23: gomsg.cluster.ClusterService.MigrateData:input_type -> gomsg.cluster.MigrateDataRequest
+	21, // 24: gomsg.cluster.ClusterService.ReplicateData:input_type -> gomsg.cluster.ReplicateDataRequest
+	3,  // 25: gomsg.cluster.ClusterService.GetNodes:output_type -> gomsg.cluster.GetNodesResponse
+	5,  // 26: gomsg.cluster.ClusterService.GetStatus:output_type -> gomsg.cluster.GetStatusResponse
+	7,  // 27: gomsg.cluster.ClusterService.GetLeader:output_type -> gomsg.cluster.GetLeaderResponse
+	9,  // 28: gomsg.cluster.ClusterService.Join:output_type -> gomsg.cluster.JoinResponse
+	11, // 29: gomsg.cluster.ClusterService.Leave:output_type -> gomsg.cluster.LeaveResponse
+	13, // 30: gomsg.cluster.ClusterService.GetStats:output_type -> gomsg.cluster.GetStatsResponse
+	17, // 31: gomsg.cluster.ClusterService.GetClusterInfo:output_type -> gomsg.cluster.GetClusterInfoResponse
+	20, // 32: gomsg.cluster.ClusterService.MigrateData:output_type -> gomsg.cluster.MigrateDataResponse
+	22, // 33: gomsg.cluster.ClusterService.ReplicateData:output_type -> gomsg.cluster.ReplicateDataResponse
 	25, // [25:34] is the sub-list for method output_type
 	16, // [16:25] is the sub-list for method input_type
 	16, // [16:16] is the sub-list for extension type_name

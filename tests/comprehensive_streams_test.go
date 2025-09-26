@@ -8,8 +8,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
-	"github.com/skshohagmiah/fluxdl/tests/testutil"
+	streampb "github.com/skshohagmiah/gomsg/api/generated/stream"
+	"github.com/skshohagmiah/gomsg/tests/testutil"
 )
 
 func setupComprehensiveStreamClient(t *testing.T) streampb.StreamServiceClient {

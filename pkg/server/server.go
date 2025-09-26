@@ -11,14 +11,14 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 
-	clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
-	documentpb "github.com/skshohagmiah/fluxdl/api/generated/document"
-	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
-	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
-	streampb "github.com/skshohagmiah/fluxdl/api/generated/stream"
-	"github.com/skshohagmiah/fluxdl/config"
-	"github.com/skshohagmiah/fluxdl/pkg/cluster"
-	"github.com/skshohagmiah/fluxdl/storage"
+	clusterpb "github.com/skshohagmiah/gomsg/api/generated/cluster"
+	documentpb "github.com/skshohagmiah/gomsg/api/generated/document"
+	kvpb "github.com/skshohagmiah/gomsg/api/generated/kv"
+	queuepb "github.com/skshohagmiah/gomsg/api/generated/queue"
+	streampb "github.com/skshohagmiah/gomsg/api/generated/stream"
+	"github.com/skshohagmiah/gomsg/config"
+	"github.com/skshohagmiah/gomsg/pkg/cluster"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // Server represents the gRPC server

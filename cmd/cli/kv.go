@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
+	kvpb "github.com/skshohagmiah/gomsg/api/generated/kv"
 )
 
 func kvCmd() *cobra.Command {

@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 
-	"github.com/skshohagmiah/fluxdl/storage"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // Manager handles document database operations

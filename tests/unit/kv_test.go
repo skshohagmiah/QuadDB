@@ -7,9 +7,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	commonpb "github.com/skshohagmiah/fluxdl/api/generated/common"
-	kvpb "github.com/skshohagmiah/fluxdl/api/generated/kv"
-	"github.com/skshohagmiah/fluxdl/tests/testutil"
+	commonpb "github.com/skshohagmiah/gomsg/api/generated/common"
+	kvpb "github.com/skshohagmiah/gomsg/api/generated/kv"
+	"github.com/skshohagmiah/gomsg/tests/testutil"
 )
 
 func setupKVClient(t *testing.T) kvpb.KVServiceClient {

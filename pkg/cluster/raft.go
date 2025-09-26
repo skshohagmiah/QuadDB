@@ -10,7 +10,7 @@ import (
 	hraft "github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
 
-	"github.com/skshohagmiah/fluxdl/storage"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // RaftConfig defines how to start the local raft node

@@ -5,7 +5,7 @@ import (
 	"hash/fnv"
 	"time"
 
-	"github.com/skshohagmiah/fluxdl/storage"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // Storage abstracts the backend used by the stream package. We rely on the existing storage.Storage.

@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
+	queuepb "github.com/skshohagmiah/gomsg/api/generated/queue"
 )
 
 func queueCmd() *cobra.Command {

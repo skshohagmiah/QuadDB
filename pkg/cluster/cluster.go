@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/skshohagmiah/fluxdl/storage"
-	clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
+	"github.com/skshohagmiah/gomsg/storage"
+	clusterpb "github.com/skshohagmiah/gomsg/api/generated/cluster"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

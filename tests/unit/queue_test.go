@@ -7,8 +7,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
-	"github.com/skshohagmiah/fluxdl/tests/testutil"
+	queuepb "github.com/skshohagmiah/gomsg/api/generated/queue"
+	"github.com/skshohagmiah/gomsg/tests/testutil"
 )
 
 func setupQueueClient(t *testing.T) queuepb.QueueServiceClient {

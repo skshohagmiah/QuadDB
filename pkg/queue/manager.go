@@ -3,7 +3,7 @@ package queue
 import (
 	"context"
 
-	"github.com/skshohagmiah/fluxdl/storage"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // Manager provides queue management operations (list, purge, delete, stats).

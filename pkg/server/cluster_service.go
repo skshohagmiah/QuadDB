@@ -7,10 +7,10 @@ import (
 
 	"google.golang.org/grpc/codes"
 
-	clusterpb "github.com/skshohagmiah/fluxdl/api/generated/cluster"
-	commonpb "github.com/skshohagmiah/fluxdl/api/generated/common"
-	"github.com/skshohagmiah/fluxdl/pkg/cluster"
-	"github.com/skshohagmiah/fluxdl/storage"
+	clusterpb "github.com/skshohagmiah/gomsg/api/generated/cluster"
+	commonpb "github.com/skshohagmiah/gomsg/api/generated/common"
+	"github.com/skshohagmiah/gomsg/pkg/cluster"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // ClusterService implements the Cluster gRPC service

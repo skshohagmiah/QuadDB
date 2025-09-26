@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/skshohagmiah/fluxdl/storage"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // Producer publishes messages into a queue.

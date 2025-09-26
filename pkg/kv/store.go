@@ -3,7 +3,7 @@ package kv
 import (
 	"context"
 
-	"github.com/skshohagmiah/fluxdl/storage"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // Store provides a high-level KV API over the storage backend.

@@ -7,7 +7,7 @@
 package kv
 
 import (
-	common "github.com/skshohagmiah/fluxdl/api/generated/common"
+	common "github.com/skshohagmiah/gomsg/api/generated/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -1210,89 +1210,89 @@ var File_kv_proto protoreflect.FileDescriptor
 
 const file_kv_proto_rawDesc = "" +
 	"\n" +
-	"\bkv.proto\x12\tfluxdl.kv\x1a\fcommon.proto\"F\n" +
+	"\bkv.proto\x12\bgomsg.kv\x1a\fcommon.proto\"F\n" +
 	"\n" +
 	"SetRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\fR\x05value\x12\x10\n" +
-	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\"<\n" +
-	"\vSetResponse\x12-\n" +
-	"\x06status\x18\x01 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"\x1e\n" +
+	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\";\n" +
+	"\vSetResponse\x12,\n" +
+	"\x06status\x18\x01 \x01(\v2\x14.gomsg.common.StatusR\x06status\"\x1e\n" +
 	"\n" +
 	"GetRequest\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\"h\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\"g\n" +
 	"\vGetResponse\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\fR\x05value\x12\x14\n" +
-	"\x05found\x18\x02 \x01(\bR\x05found\x12-\n" +
-	"\x06status\x18\x03 \x01(\v2\x15.fluxdl.common.StatusR\x06status\" \n" +
+	"\x05found\x18\x02 \x01(\bR\x05found\x12,\n" +
+	"\x06status\x18\x03 \x01(\v2\x14.gomsg.common.StatusR\x06status\" \n" +
 	"\n" +
 	"DelRequest\x12\x12\n" +
-	"\x04keys\x18\x01 \x03(\tR\x04keys\"a\n" +
+	"\x04keys\x18\x01 \x03(\tR\x04keys\"`\n" +
 	"\vDelResponse\x12#\n" +
-	"\rdeleted_count\x18\x01 \x01(\x05R\fdeletedCount\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"!\n" +
+	"\rdeleted_count\x18\x01 \x01(\x05R\fdeletedCount\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"!\n" +
 	"\rExistsRequest\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\"W\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\"V\n" +
 	"\x0eExistsResponse\x12\x16\n" +
-	"\x06exists\x18\x01 \x01(\bR\x06exists\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"/\n" +
+	"\x06exists\x18\x01 \x01(\bR\x06exists\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"/\n" +
 	"\vIncrRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x0e\n" +
-	"\x02by\x18\x02 \x01(\x03R\x02by\"S\n" +
+	"\x02by\x18\x02 \x01(\x03R\x02by\"R\n" +
 	"\fIncrResponse\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\x03R\x05value\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"/\n" +
+	"\x05value\x18\x01 \x01(\x03R\x05value\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"/\n" +
 	"\vDecrRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x0e\n" +
-	"\x02by\x18\x02 \x01(\x03R\x02by\"S\n" +
+	"\x02by\x18\x02 \x01(\x03R\x02by\"R\n" +
 	"\fDecrResponse\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\x03R\x05value\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"!\n" +
+	"\x05value\x18\x01 \x01(\x03R\x05value\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"!\n" +
 	"\vMGetRequest\x12\x12\n" +
-	"\x04keys\x18\x01 \x03(\tR\x04keys\"n\n" +
-	"\fMGetResponse\x12/\n" +
-	"\x06values\x18\x01 \x03(\v2\x17.fluxdl.common.KeyValueR\x06values\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\">\n" +
-	"\vMSetRequest\x12/\n" +
-	"\x06values\x18\x01 \x03(\v2\x17.fluxdl.common.KeyValueR\x06values\"=\n" +
-	"\fMSetResponse\x12-\n" +
-	"\x06status\x18\x01 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"=\n" +
+	"\x04keys\x18\x01 \x03(\tR\x04keys\"l\n" +
+	"\fMGetResponse\x12.\n" +
+	"\x06values\x18\x01 \x03(\v2\x16.gomsg.common.KeyValueR\x06values\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"=\n" +
+	"\vMSetRequest\x12.\n" +
+	"\x06values\x18\x01 \x03(\v2\x16.gomsg.common.KeyValueR\x06values\"<\n" +
+	"\fMSetResponse\x12,\n" +
+	"\x06status\x18\x01 \x01(\v2\x14.gomsg.common.StatusR\x06status\"=\n" +
 	"\vKeysRequest\x12\x18\n" +
 	"\apattern\x18\x01 \x01(\tR\apattern\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\"Q\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\"P\n" +
 	"\fKeysResponse\x12\x12\n" +
-	"\x04keys\x18\x01 \x03(\tR\x04keys\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"3\n" +
+	"\x04keys\x18\x01 \x03(\tR\x04keys\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"3\n" +
 	"\rExpireRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x10\n" +
-	"\x03ttl\x18\x02 \x01(\x03R\x03ttl\"?\n" +
-	"\x0eExpireResponse\x12-\n" +
-	"\x06status\x18\x01 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"\x1e\n" +
+	"\x03ttl\x18\x02 \x01(\x03R\x03ttl\">\n" +
+	"\x0eExpireResponse\x12,\n" +
+	"\x06status\x18\x01 \x01(\v2\x14.gomsg.common.StatusR\x06status\"\x1e\n" +
 	"\n" +
 	"TTLRequest\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\"N\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\"M\n" +
 	"\vTTLResponse\x12\x10\n" +
-	"\x03ttl\x18\x01 \x01(\x03R\x03ttl\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status\"-\n" +
+	"\x03ttl\x18\x01 \x01(\x03R\x03ttl\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status\"-\n" +
 	"\x11DelPatternRequest\x12\x18\n" +
-	"\apattern\x18\x01 \x01(\tR\apattern\"h\n" +
+	"\apattern\x18\x01 \x01(\tR\apattern\"g\n" +
 	"\x12DelPatternResponse\x12#\n" +
-	"\rdeleted_count\x18\x01 \x01(\x05R\fdeletedCount\x12-\n" +
-	"\x06status\x18\x02 \x01(\v2\x15.fluxdl.common.StatusR\x06status2\xc9\x05\n" +
-	"\tKVService\x124\n" +
-	"\x03Set\x12\x15.fluxdl.kv.SetRequest\x1a\x16.fluxdl.kv.SetResponse\x124\n" +
-	"\x03Get\x12\x15.fluxdl.kv.GetRequest\x1a\x16.fluxdl.kv.GetResponse\x124\n" +
-	"\x03Del\x12\x15.fluxdl.kv.DelRequest\x1a\x16.fluxdl.kv.DelResponse\x12I\n" +
+	"\rdeleted_count\x18\x01 \x01(\x05R\fdeletedCount\x12,\n" +
+	"\x06status\x18\x02 \x01(\v2\x14.gomsg.common.StatusR\x06status2\xb1\x05\n" +
+	"\tKVService\x122\n" +
+	"\x03Set\x12\x14.gomsg.kv.SetRequest\x1a\x15.gomsg.kv.SetResponse\x122\n" +
+	"\x03Get\x12\x14.gomsg.kv.GetRequest\x1a\x15.gomsg.kv.GetResponse\x122\n" +
+	"\x03Del\x12\x14.gomsg.kv.DelRequest\x1a\x15.gomsg.kv.DelResponse\x12G\n" +
 	"\n" +
-	"DelPattern\x12\x1c.fluxdl.kv.DelPatternRequest\x1a\x1d.fluxdl.kv.DelPatternResponse\x12=\n" +
-	"\x06Exists\x12\x18.fluxdl.kv.ExistsRequest\x1a\x19.fluxdl.kv.ExistsResponse\x127\n" +
-	"\x04Incr\x12\x16.fluxdl.kv.IncrRequest\x1a\x17.fluxdl.kv.IncrResponse\x127\n" +
-	"\x04Decr\x12\x16.fluxdl.kv.DecrRequest\x1a\x17.fluxdl.kv.DecrResponse\x127\n" +
-	"\x04MGet\x12\x16.fluxdl.kv.MGetRequest\x1a\x17.fluxdl.kv.MGetResponse\x127\n" +
-	"\x04MSet\x12\x16.fluxdl.kv.MSetRequest\x1a\x17.fluxdl.kv.MSetResponse\x127\n" +
-	"\x04Keys\x12\x16.fluxdl.kv.KeysRequest\x1a\x17.fluxdl.kv.KeysResponse\x12=\n" +
-	"\x06Expire\x12\x18.fluxdl.kv.ExpireRequest\x1a\x19.fluxdl.kv.ExpireResponse\x124\n" +
-	"\x03TTL\x12\x15.fluxdl.kv.TTLRequest\x1a\x16.fluxdl.kv.TTLResponseB1Z/github.com/skshohagmiah/fluxdl/api/generated/kvb\x06proto3"
+	"DelPattern\x12\x1b.gomsg.kv.DelPatternRequest\x1a\x1c.gomsg.kv.DelPatternResponse\x12;\n" +
+	"\x06Exists\x12\x17.gomsg.kv.ExistsRequest\x1a\x18.gomsg.kv.ExistsResponse\x125\n" +
+	"\x04Incr\x12\x15.gomsg.kv.IncrRequest\x1a\x16.gomsg.kv.IncrResponse\x125\n" +
+	"\x04Decr\x12\x15.gomsg.kv.DecrRequest\x1a\x16.gomsg.kv.DecrResponse\x125\n" +
+	"\x04MGet\x12\x15.gomsg.kv.MGetRequest\x1a\x16.gomsg.kv.MGetResponse\x125\n" +
+	"\x04MSet\x12\x15.gomsg.kv.MSetRequest\x1a\x16.gomsg.kv.MSetResponse\x125\n" +
+	"\x04Keys\x12\x15.gomsg.kv.KeysRequest\x1a\x16.gomsg.kv.KeysResponse\x12;\n" +
+	"\x06Expire\x12\x17.gomsg.kv.ExpireRequest\x1a\x18.gomsg.kv.ExpireResponse\x122\n" +
+	"\x03TTL\x12\x14.gomsg.kv.TTLRequest\x1a\x15.gomsg.kv.TTLResponseB0Z.github.com/skshohagmiah/gomsg/api/generated/kvb\x06proto3"
 
 var (
 	file_kv_proto_rawDescOnce sync.Once
@@ -1308,72 +1308,72 @@ func file_kv_proto_rawDescGZIP() []byte {
 
 var file_kv_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_kv_proto_goTypes = []any{
-	(*SetRequest)(nil),         // 0: fluxdl.kv.SetRequest
-	(*SetResponse)(nil),        // 1: fluxdl.kv.SetResponse
-	(*GetRequest)(nil),         // 2: fluxdl.kv.GetRequest
-	(*GetResponse)(nil),        // 3: fluxdl.kv.GetResponse
-	(*DelRequest)(nil),         // 4: fluxdl.kv.DelRequest
-	(*DelResponse)(nil),        // 5: fluxdl.kv.DelResponse
-	(*ExistsRequest)(nil),      // 6: fluxdl.kv.ExistsRequest
-	(*ExistsResponse)(nil),     // 7: fluxdl.kv.ExistsResponse
-	(*IncrRequest)(nil),        // 8: fluxdl.kv.IncrRequest
-	(*IncrResponse)(nil),       // 9: fluxdl.kv.IncrResponse
-	(*DecrRequest)(nil),        // 10: fluxdl.kv.DecrRequest
-	(*DecrResponse)(nil),       // 11: fluxdl.kv.DecrResponse
-	(*MGetRequest)(nil),        // 12: fluxdl.kv.MGetRequest
-	(*MGetResponse)(nil),       // 13: fluxdl.kv.MGetResponse
-	(*MSetRequest)(nil),        // 14: fluxdl.kv.MSetRequest
-	(*MSetResponse)(nil),       // 15: fluxdl.kv.MSetResponse
-	(*KeysRequest)(nil),        // 16: fluxdl.kv.KeysRequest
-	(*KeysResponse)(nil),       // 17: fluxdl.kv.KeysResponse
-	(*ExpireRequest)(nil),      // 18: fluxdl.kv.ExpireRequest
-	(*ExpireResponse)(nil),     // 19: fluxdl.kv.ExpireResponse
-	(*TTLRequest)(nil),         // 20: fluxdl.kv.TTLRequest
-	(*TTLResponse)(nil),        // 21: fluxdl.kv.TTLResponse
-	(*DelPatternRequest)(nil),  // 22: fluxdl.kv.DelPatternRequest
-	(*DelPatternResponse)(nil), // 23: fluxdl.kv.DelPatternResponse
-	(*common.Status)(nil),      // 24: fluxdl.common.Status
-	(*common.KeyValue)(nil),    // 25: fluxdl.common.KeyValue
+	(*SetRequest)(nil),         // 0: gomsg.kv.SetRequest
+	(*SetResponse)(nil),        // 1: gomsg.kv.SetResponse
+	(*GetRequest)(nil),         // 2: gomsg.kv.GetRequest
+	(*GetResponse)(nil),        // 3: gomsg.kv.GetResponse
+	(*DelRequest)(nil),         // 4: gomsg.kv.DelRequest
+	(*DelResponse)(nil),        // 5: gomsg.kv.DelResponse
+	(*ExistsRequest)(nil),      // 6: gomsg.kv.ExistsRequest
+	(*ExistsResponse)(nil),     // 7: gomsg.kv.ExistsResponse
+	(*IncrRequest)(nil),        // 8: gomsg.kv.IncrRequest
+	(*IncrResponse)(nil),       // 9: gomsg.kv.IncrResponse
+	(*DecrRequest)(nil),        // 10: gomsg.kv.DecrRequest
+	(*DecrResponse)(nil),       // 11: gomsg.kv.DecrResponse
+	(*MGetRequest)(nil),        // 12: gomsg.kv.MGetRequest
+	(*MGetResponse)(nil),       // 13: gomsg.kv.MGetResponse
+	(*MSetRequest)(nil),        // 14: gomsg.kv.MSetRequest
+	(*MSetResponse)(nil),       // 15: gomsg.kv.MSetResponse
+	(*KeysRequest)(nil),        // 16: gomsg.kv.KeysRequest
+	(*KeysResponse)(nil),       // 17: gomsg.kv.KeysResponse
+	(*ExpireRequest)(nil),      // 18: gomsg.kv.ExpireRequest
+	(*ExpireResponse)(nil),     // 19: gomsg.kv.ExpireResponse
+	(*TTLRequest)(nil),         // 20: gomsg.kv.TTLRequest
+	(*TTLResponse)(nil),        // 21: gomsg.kv.TTLResponse
+	(*DelPatternRequest)(nil),  // 22: gomsg.kv.DelPatternRequest
+	(*DelPatternResponse)(nil), // 23: gomsg.kv.DelPatternResponse
+	(*common.Status)(nil),      // 24: gomsg.common.Status
+	(*common.KeyValue)(nil),    // 25: gomsg.common.KeyValue
 }
 var file_kv_proto_depIdxs = []int32{
-	24, // 0: fluxdl.kv.SetResponse.status:type_name -> fluxdl.common.Status
-	24, // 1: fluxdl.kv.GetResponse.status:type_name -> fluxdl.common.Status
-	24, // 2: fluxdl.kv.DelResponse.status:type_name -> fluxdl.common.Status
-	24, // 3: fluxdl.kv.ExistsResponse.status:type_name -> fluxdl.common.Status
-	24, // 4: fluxdl.kv.IncrResponse.status:type_name -> fluxdl.common.Status
-	24, // 5: fluxdl.kv.DecrResponse.status:type_name -> fluxdl.common.Status
-	25, // 6: fluxdl.kv.MGetResponse.values:type_name -> fluxdl.common.KeyValue
-	24, // 7: fluxdl.kv.MGetResponse.status:type_name -> fluxdl.common.Status
-	25, // 8: fluxdl.kv.MSetRequest.values:type_name -> fluxdl.common.KeyValue
-	24, // 9: fluxdl.kv.MSetResponse.status:type_name -> fluxdl.common.Status
-	24, // 10: fluxdl.kv.KeysResponse.status:type_name -> fluxdl.common.Status
-	24, // 11: fluxdl.kv.ExpireResponse.status:type_name -> fluxdl.common.Status
-	24, // 12: fluxdl.kv.TTLResponse.status:type_name -> fluxdl.common.Status
-	24, // 13: fluxdl.kv.DelPatternResponse.status:type_name -> fluxdl.common.Status
-	0,  // 14: fluxdl.kv.KVService.Set:input_type -> fluxdl.kv.SetRequest
-	2,  // 15: fluxdl.kv.KVService.Get:input_type -> fluxdl.kv.GetRequest
-	4,  // 16: fluxdl.kv.KVService.Del:input_type -> fluxdl.kv.DelRequest
-	22, // 17: fluxdl.kv.KVService.DelPattern:input_type -> fluxdl.kv.DelPatternRequest
-	6,  // 18: fluxdl.kv.KVService.Exists:input_type -> fluxdl.kv.ExistsRequest
-	8,  // 19: fluxdl.kv.KVService.Incr:input_type -> fluxdl.kv.IncrRequest
-	10, // 20: fluxdl.kv.KVService.Decr:input_type -> fluxdl.kv.DecrRequest
-	12, // 21: fluxdl.kv.KVService.MGet:input_type -> fluxdl.kv.MGetRequest
-	14, // 22: fluxdl.kv.KVService.MSet:input_type -> fluxdl.kv.MSetRequest
-	16, // 23: fluxdl.kv.KVService.Keys:input_type -> fluxdl.kv.KeysRequest
-	18, // 24: fluxdl.kv.KVService.Expire:input_type -> fluxdl.kv.ExpireRequest
-	20, // 25: fluxdl.kv.KVService.TTL:input_type -> fluxdl.kv.TTLRequest
-	1,  // 26: fluxdl.kv.KVService.Set:output_type -> fluxdl.kv.SetResponse
-	3,  // 27: fluxdl.kv.KVService.Get:output_type -> fluxdl.kv.GetResponse
-	5,  // 28: fluxdl.kv.KVService.Del:output_type -> fluxdl.kv.DelResponse
-	23, // 29: fluxdl.kv.KVService.DelPattern:output_type -> fluxdl.kv.DelPatternResponse
-	7,  // 30: fluxdl.kv.KVService.Exists:output_type -> fluxdl.kv.ExistsResponse
-	9,  // 31: fluxdl.kv.KVService.Incr:output_type -> fluxdl.kv.IncrResponse
-	11, // 32: fluxdl.kv.KVService.Decr:output_type -> fluxdl.kv.DecrResponse
-	13, // 33: fluxdl.kv.KVService.MGet:output_type -> fluxdl.kv.MGetResponse
-	15, // 34: fluxdl.kv.KVService.MSet:output_type -> fluxdl.kv.MSetResponse
-	17, // 35: fluxdl.kv.KVService.Keys:output_type -> fluxdl.kv.KeysResponse
-	19, // 36: fluxdl.kv.KVService.Expire:output_type -> fluxdl.kv.ExpireResponse
-	21, // 37: fluxdl.kv.KVService.TTL:output_type -> fluxdl.kv.TTLResponse
+	24, // 0: gomsg.kv.SetResponse.status:type_name -> gomsg.common.Status
+	24, // 1: gomsg.kv.GetResponse.status:type_name -> gomsg.common.Status
+	24, // 2: gomsg.kv.DelResponse.status:type_name -> gomsg.common.Status
+	24, // 3: gomsg.kv.ExistsResponse.status:type_name -> gomsg.common.Status
+	24, // 4: gomsg.kv.IncrResponse.status:type_name -> gomsg.common.Status
+	24, // 5: gomsg.kv.DecrResponse.status:type_name -> gomsg.common.Status
+	25, // 6: gomsg.kv.MGetResponse.values:type_name -> gomsg.common.KeyValue
+	24, // 7: gomsg.kv.MGetResponse.status:type_name -> gomsg.common.Status
+	25, // 8: gomsg.kv.MSetRequest.values:type_name -> gomsg.common.KeyValue
+	24, // 9: gomsg.kv.MSetResponse.status:type_name -> gomsg.common.Status
+	24, // 10: gomsg.kv.KeysResponse.status:type_name -> gomsg.common.Status
+	24, // 11: gomsg.kv.ExpireResponse.status:type_name -> gomsg.common.Status
+	24, // 12: gomsg.kv.TTLResponse.status:type_name -> gomsg.common.Status
+	24, // 13: gomsg.kv.DelPatternResponse.status:type_name -> gomsg.common.Status
+	0,  // 14: gomsg.kv.KVService.Set:input_type -> gomsg.kv.SetRequest
+	2,  // 15: gomsg.kv.KVService.Get:input_type -> gomsg.kv.GetRequest
+	4,  // 16: gomsg.kv.KVService.Del:input_type -> gomsg.kv.DelRequest
+	22, // 17: gomsg.kv.KVService.DelPattern:input_type -> gomsg.kv.DelPatternRequest
+	6,  // 18: gomsg.kv.KVService.Exists:input_type -> gomsg.kv.ExistsRequest
+	8,  // 19: gomsg.kv.KVService.Incr:input_type -> gomsg.kv.IncrRequest
+	10, // 20: gomsg.kv.KVService.Decr:input_type -> gomsg.kv.DecrRequest
+	12, // 21: gomsg.kv.KVService.MGet:input_type -> gomsg.kv.MGetRequest
+	14, // 22: gomsg.kv.KVService.MSet:input_type -> gomsg.kv.MSetRequest
+	16, // 23: gomsg.kv.KVService.Keys:input_type -> gomsg.kv.KeysRequest
+	18, // 24: gomsg.kv.KVService.Expire:input_type -> gomsg.kv.ExpireRequest
+	20, // 25: gomsg.kv.KVService.TTL:input_type -> gomsg.kv.TTLRequest
+	1,  // 26: gomsg.kv.KVService.Set:output_type -> gomsg.kv.SetResponse
+	3,  // 27: gomsg.kv.KVService.Get:output_type -> gomsg.kv.GetResponse
+	5,  // 28: gomsg.kv.KVService.Del:output_type -> gomsg.kv.DelResponse
+	23, // 29: gomsg.kv.KVService.DelPattern:output_type -> gomsg.kv.DelPatternResponse
+	7,  // 30: gomsg.kv.KVService.Exists:output_type -> gomsg.kv.ExistsResponse
+	9,  // 31: gomsg.kv.KVService.Incr:output_type -> gomsg.kv.IncrResponse
+	11, // 32: gomsg.kv.KVService.Decr:output_type -> gomsg.kv.DecrResponse
+	13, // 33: gomsg.kv.KVService.MGet:output_type -> gomsg.kv.MGetResponse
+	15, // 34: gomsg.kv.KVService.MSet:output_type -> gomsg.kv.MSetResponse
+	17, // 35: gomsg.kv.KVService.Keys:output_type -> gomsg.kv.KeysResponse
+	19, // 36: gomsg.kv.KVService.Expire:output_type -> gomsg.kv.ExpireResponse
+	21, // 37: gomsg.kv.KVService.TTL:output_type -> gomsg.kv.TTLResponse
 	26, // [26:38] is the sub-list for method output_type
 	14, // [14:26] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name

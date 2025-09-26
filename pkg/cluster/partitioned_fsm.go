@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/skshohagmiah/fluxdl/storage"
+	"github.com/skshohagmiah/gomsg/storage"
 
 	hraft "github.com/hashicorp/raft"
 )

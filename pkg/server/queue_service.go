@@ -6,9 +6,9 @@ import (
 
 	"google.golang.org/grpc/codes"
 
-	commonpb "github.com/skshohagmiah/fluxdl/api/generated/common"
-	queuepb "github.com/skshohagmiah/fluxdl/api/generated/queue"
-	"github.com/skshohagmiah/fluxdl/storage"
+	commonpb "github.com/skshohagmiah/gomsg/api/generated/common"
+	queuepb "github.com/skshohagmiah/gomsg/api/generated/queue"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // QueueService implements the Queue gRPC service

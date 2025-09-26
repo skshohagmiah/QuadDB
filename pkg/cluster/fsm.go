@@ -8,7 +8,7 @@ import (
 	"time"
 
 	hraft "github.com/hashicorp/raft"
-	"github.com/skshohagmiah/fluxdl/storage"
+	"github.com/skshohagmiah/gomsg/storage"
 )
 
 // fsm implements hashicorp/raft.FSM and applies replicated commands to storage.
