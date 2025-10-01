@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	fluxdl "github.com/skshohagmiah/gomsg/sdks/go"
+	fluxdl "github.com/skshohagmiah/fluxdl-go-sdk"
 )
 
 func main() {

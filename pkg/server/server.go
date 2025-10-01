@@ -33,6 +33,10 @@ type Server struct {
 	dbService *DBService
 	clusterService  *ClusterService
 	cluster         *cluster.Cluster
+	
+	// For async cluster initialization
+	pendingClusterConfig *cluster.Config
+	pendingStore         storage.Storage
 }
 
 // nodeProviderAdapter adapts the cluster to storage.NodeProvider
@@ -87,21 +91,46 @@ func NewServer(cfg *config.Config, store storage.Storage) (*Server, error) {
 
 	// Initialize cluster if enabled
 	if cfg.Cluster.Enabled {
+		log.Printf("Initializing cluster for node %s", cfg.Cluster.NodeID)
+		bindAddr := cfg.Cluster.BindAddr
+		if bindAddr == "" {
+			// Use server host with a different port for Raft
+			bindAddr = fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port+1000)
+		}
+		log.Printf("Cluster bind address: %s", bindAddr)
+		
+		clusterDataDir := cfg.Cluster.DataDir
+		if clusterDataDir == "" {
+			clusterDataDir = cfg.Storage.DataDir + "/cluster"
+		}
+		log.Printf("Cluster data directory: %s", clusterDataDir)
+		
 		clusterConfig := cluster.Config{
-			NodeID:            cfg.Cluster.NodeID,
-			BindAddr:          cfg.Cluster.BindAddr,
-			DataDir:           cfg.Storage.DataDir,
-			Bootstrap:         cfg.Cluster.Bootstrap,
-			Partitions:        32,         // Default partitions
-			ReplicationFactor: 3,          // Default replication
-			SeedNodes:         []string{}, // Would be populated from config
+			NodeID:    cfg.Cluster.NodeID,
+			BindAddr:  bindAddr,
+			DataDir:   clusterDataDir,
+			Bootstrap: cfg.Cluster.Bootstrap,
+			SeedNodes: cfg.Cluster.JoinAddresses,
 		}
 
-		clstr, err := cluster.New(context.Background(), store, clusterConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to start cluster: %w", err)
+		if cfg.Cluster.Bootstrap {
+			// Bootstrap nodes need synchronous initialization
+			log.Printf("Creating bootstrap cluster with config: %+v", clusterConfig)
+			clstr, err := cluster.New(context.Background(), store, clusterConfig)
+			if err != nil {
+				return nil, fmt.Errorf("failed to start cluster: %w", err)
+			}
+			log.Printf("Bootstrap cluster initialized successfully")
+			server.cluster = clstr
+		} else {
+			// Non-bootstrap nodes: initialize cluster asynchronously after server starts
+			log.Printf("Scheduling async cluster initialization for joining node")
+			server.cluster = nil // Will be set when cluster initialization completes
+			
+			// Store config for later initialization
+			server.pendingClusterConfig = &clusterConfig
+			server.pendingStore = store
 		}
-		server.cluster = clstr
 	} else {
 		server.cluster = nil
 	}
@@ -167,10 +196,46 @@ func (s *Server) Start(ctx context.Context) error {
 		}
 	}()
 
+	// Initialize cluster asynchronously after server is running
+	if s.pendingClusterConfig != nil {
+		go s.initializeClusterAsync()
+	}
+
 	// Wait for context cancellation
 	<-ctx.Done()
 
 	return s.Stop()
+}
+
+// initializeClusterAsync initializes the cluster after the gRPC server is running
+func (s *Server) initializeClusterAsync() {
+	log.Printf("Starting async cluster initialization")
+	
+	// Wait for gRPC server to be fully ready
+	time.Sleep(2 * time.Second)
+	
+	log.Printf("Creating joining cluster with config: %+v", *s.pendingClusterConfig)
+	clstr, err := cluster.New(context.Background(), s.pendingStore, *s.pendingClusterConfig)
+	if err != nil {
+		log.Printf("Failed to initialize cluster: %v", err)
+		return
+	}
+	
+	log.Printf("Joining cluster initialized successfully")
+	s.cluster = clstr
+	
+	// Update cluster service with the new cluster instance
+	if s.clusterService != nil {
+		s.clusterService.SetCluster(clstr)
+	}
+	
+	// Update storage adapter
+	if bs, ok := s.pendingStore.(*storage.BadgerStorage); ok {
+		bs.SetNodeProvider(nodeProviderAdapter{c: clstr})
+		if s.config.Cluster.Replicas > 0 {
+			bs.SetReplicationFactor(s.config.Cluster.Replicas)
+		}
+	}
 }
 
 // Stop stops the server gracefully

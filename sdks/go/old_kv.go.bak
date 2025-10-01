@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	kvpb "github.com/skshohagmiah/gomsg/api/generated/kv"
+	kvpb "github.com/skshohagmiah/fluxdl-go-sdk/api/generated/kv"
 	"google.golang.org/grpc"
 )
 

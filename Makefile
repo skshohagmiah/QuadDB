@@ -3,7 +3,7 @@ PROTO_VERSION := 25.1
 BINARY_NAME := gomsg
 CLI_BINARY_NAME := gomsg-cli
 
-.PHONY: help build test clean install proto docker deps
+.PHONY: help build test clean install proto docker deps setup check-tools quick-start
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -15,33 +15,66 @@ deps: ## Install dependencies
 	go mod download
 	go mod tidy
 
-proto: ## Generate protobuf code
+setup: ## One-time setup - install all required tools
+	@echo "🔧 Setting up development environment..."
+	@echo "📦 Installing protobuf Go plugins..."
+	@go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	@echo "✅ Setup complete! You can now run 'make build' to build the project."
+
+check-tools: ## Check if required tools are installed
+	@echo "🔍 Checking required tools..."
+	@command -v protoc >/dev/null 2>&1 || { echo "❌ protoc is not installed. Please install Protocol Buffers compiler."; echo "   macOS: brew install protobuf"; echo "   Ubuntu: apt-get install protobuf-compiler"; exit 1; }
+	@export PATH="$(shell go env GOPATH)/bin:$$PATH"; command -v protoc-gen-go >/dev/null 2>&1 || { echo "⚠️  protoc-gen-go not found. Installing..."; go install google.golang.org/protobuf/cmd/protoc-gen-go@latest; }
+	@export PATH="$(shell go env GOPATH)/bin:$$PATH"; command -v protoc-gen-go-grpc >/dev/null 2>&1 || { echo "⚠️  protoc-gen-go-grpc not found. Installing..."; go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest; }
+	@echo "✅ All tools are available!"
+
+quick-start: setup build ## First-time setup and build (recommended for new users)
+	@echo ""
+	@echo "🎉 GoMsg is ready to use!"
+	@echo ""
+	@echo "Quick commands:"
+	@echo "  make run          - Start the server"
+	@echo "  make test-quick   - Run quick tests"
+	@echo "  ./bin/$(CLI_BINARY_NAME) --help - See CLI options"
+	@echo ""
+
+proto: check-tools ## Generate protobuf code
 	@echo "Generating protobuf code..."
 	@mkdir -p api/generated/{common,kv,queue,stream,cluster,document}
+	@export PATH="$(shell go env GOPATH)/bin:$$PATH"; \
 	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
 		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
 		api/proto/common.proto
+	@export PATH="$(shell go env GOPATH)/bin:$$PATH"; \
 	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
 		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
 		-I api/proto api/proto/kv.proto
+	@export PATH="$(shell go env GOPATH)/bin:$$PATH"; \
 	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
 		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
 		-I api/proto api/proto/queue.proto
+	@export PATH="$(shell go env GOPATH)/bin:$$PATH"; \
 	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
 		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
 		-I api/proto api/proto/stream.proto
+	@export PATH="$(shell go env GOPATH)/bin:$$PATH"; \
 	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
 		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
 		-I api/proto api/proto/cluster.proto
+	@export PATH="$(shell go env GOPATH)/bin:$$PATH"; \
 	protoc --go_out=. --go_opt=module=github.com/skshohagmiah/gomsg \
 		--go-grpc_out=. --go-grpc_opt=module=github.com/skshohagmiah/gomsg \
 		-I api/proto api/proto/db.proto
 
 build: deps proto ## Build the server and CLI binaries
-	@echo "Building server..."
-	go build -ldflags="-s -w" -o bin/$(BINARY_NAME) ./cmd/gomsg
-	@echo "Building CLI..."
-	go build -ldflags="-s -w" -o bin/$(CLI_BINARY_NAME) ./cmd/cli
+	@echo "🔨 Building server..."
+	@go build -ldflags="-s -w" -o bin/$(BINARY_NAME) ./cmd/gomsg
+	@echo "🔨 Building CLI..."
+	@go build -ldflags="-s -w" -o bin/$(CLI_BINARY_NAME) ./cmd/cli
+	@echo "✅ Build complete! Binaries are in ./bin/"
+	@echo "   Server: ./bin/$(BINARY_NAME)"
+	@echo "   CLI:    ./bin/$(CLI_BINARY_NAME)"
 
 test: ## Run all tests
 	cd tests && ./run_tests.sh all

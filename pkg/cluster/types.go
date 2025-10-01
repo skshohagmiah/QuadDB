@@ -1,6 +1,9 @@
 package cluster
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // NodeState indicates the node's current state
 type NodeState string
@@ -14,52 +17,45 @@ const (
 
 // Node represents a cluster member
 type Node struct {
-	ID       string
-	Address  string
-	State    NodeState
-	LastSeen time.Time
+	ID       string    `json:"id"`
+	Address  string    `json:"address"`
+	State    NodeState `json:"state"`
+	LastSeen time.Time `json:"last_seen"`
 }
 
-// ClusterInfo provides cluster topology information
-type ClusterInfo struct {
-	NodeID            string
-	TotalPartitions   int32
-	ReplicationFactor int32
-	TotalNodes        int32
-	ActiveNodes       int32
-	Partitions        []*PartitionInfo
-}
-
-// PartitionInfo provides information about a partition
-type PartitionInfo struct {
-	ID       int32
-	Primary  string
-	Replicas []string
-}
-
-// PartitionStats provides partition distribution statistics
-type PartitionStats struct {
-	TotalPartitions      int32
-	UnassignedPartitions int32
-	NodeStats            map[string]*NodePartitionStats
-}
-
-// NodePartitionStats provides partition statistics for a node
-type NodePartitionStats struct {
-	TotalPartitions   int32
-	PrimaryPartitions int32
-	ReplicaPartitions int32
-}
-
-// ClusterHealth provides comprehensive cluster health information
+// ClusterHealth provides cluster health information
 type ClusterHealth struct {
-	Status        string // "healthy", "no-quorum", "no-leader"
-	TotalNodes    int32
-	ActiveNodes   int32
-	HasQuorum     bool
-	IsLeader      bool
-	LeaderID      string
-	CanWrite      bool
-	ReadOnlyMode  bool
+	Status      string `json:"status"`       // "healthy", "no-quorum", "no-leader"
+	TotalNodes  int32  `json:"total_nodes"`
+	ActiveNodes int32  `json:"active_nodes"`
+	HasQuorum   bool   `json:"has_quorum"`
+	IsLeader    bool   `json:"is_leader"`
+	LeaderID    string `json:"leader_id"`
+	CanWrite    bool   `json:"can_write"`
 }
 
+// Config defines cluster configuration
+type Config struct {
+	NodeID    string   `json:"node_id"`
+	BindAddr  string   `json:"bind_addr"`
+	DataDir   string   `json:"data_dir"`
+	Bootstrap bool     `json:"bootstrap"`
+	SeedNodes []string `json:"seed_nodes"`
+}
+
+// CommandType describes the replicated operation type
+type CommandType string
+
+const (
+	CmdKVSet    CommandType = "KV_SET"
+	CmdKVDelete CommandType = "KV_DELETE"
+	CmdNodeJoin CommandType = "NODE_JOIN"
+	CmdNodeLeave CommandType = "NODE_LEAVE"
+)
+
+// Command is the envelope replicated via Raft
+type Command struct {
+	Version int             `json:"v"`
+	Type    CommandType     `json:"t"`
+	Payload json.RawMessage `json:"p"`
+}

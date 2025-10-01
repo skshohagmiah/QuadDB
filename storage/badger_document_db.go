@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 	"sync"
+	"time"
 
 	"github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
@@ -18,12 +18,12 @@ import (
 
 const (
 	// Document operation optimization constants
-	docBatchSize        = 1000   // Batch size for bulk operations
-	docCacheSize        = 10000  // Cache frequently accessed documents
-	indexCacheSize      = 5000   // Cache index entries
-	queryPrefetchSize   = 200    // Prefetch documents for queries
-	aggregationBatch    = 500    // Batch size for aggregation operations
-	docCompressionThreshold = 2048 // Compress documents larger than 2KB
+	docBatchSize            = 1000  // Batch size for bulk operations
+	docCacheSize            = 10000 // Cache frequently accessed documents
+	indexCacheSize          = 5000  // Cache index entries
+	queryPrefetchSize       = 200   // Prefetch documents for queries
+	aggregationBatch        = 500   // Batch size for aggregation operations
+	docCompressionThreshold = 2048  // Compress documents larger than 2KB
 )
 
 // Document cache for frequently accessed documents
@@ -46,7 +46,7 @@ func (bs *BadgerStorage) DocCreateCollection(ctx context.Context, collection str
 
 	// Check if collection already exists
 	collectionKey := fmt.Sprintf("doc:collection:%s", collection)
-	
+
 	return bs.db.Update(func(txn *badger.Txn) error {
 		_, err := txn.Get([]byte(collectionKey))
 		if err == nil {
@@ -153,7 +153,7 @@ func (bs *BadgerStorage) DocGetCollectionInfo(ctx context.Context, collection st
 	var info CollectionInfo
 
 	collectionKey := fmt.Sprintf("doc:collection:%s", collection)
-	
+
 	err := bs.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(collectionKey))
 		if err != nil {
@@ -314,7 +314,7 @@ func (bs *BadgerStorage) DocFindOne(ctx context.Context, collection string, filt
 
 		for it.Seek([]byte(prefix)); it.ValidForPrefix([]byte(prefix)); it.Next() {
 			item := it.Item()
-			
+
 			err := item.Value(func(val []byte) error {
 				var document map[string]interface{}
 				if err := json.Unmarshal(val, &document); err != nil {
@@ -361,10 +361,10 @@ func (bs *BadgerStorage) DocFindMany(ctx context.Context, collection string, que
 		defer it.Close()
 
 		var allMatches []DocumentResult
-		
+
 		for it.Seek([]byte(prefix)); it.ValidForPrefix([]byte(prefix)); it.Next() {
 			item := it.Item()
-			
+
 			err := item.Value(func(val []byte) error {
 				var document map[string]interface{}
 				if err := json.Unmarshal(val, &document); err != nil {
@@ -440,7 +440,7 @@ func (bs *BadgerStorage) ensureCollectionExists(txn *badger.Txn, collection stri
 
 func (bs *BadgerStorage) updateCollectionStats(txn *badger.Txn, collection string, docDelta int64, sizeDelta int64) error {
 	collectionKey := fmt.Sprintf("doc:collection:%s", collection)
-	
+
 	item, err := txn.Get([]byte(collectionKey))
 	if err != nil {
 		return err
@@ -542,7 +542,7 @@ func (bs *BadgerStorage) compareValues(a, b interface{}, operator string) bool {
 	// Convert to comparable types
 	aStr := fmt.Sprintf("%v", a)
 	bStr := fmt.Sprintf("%v", b)
-	
+
 	// Try numeric comparison first
 	if aNum, aErr := strconv.ParseFloat(aStr, 64); aErr == nil {
 		if bNum, bErr := strconv.ParseFloat(bStr, 64); bErr == nil {
@@ -580,7 +580,7 @@ func (bs *BadgerStorage) applyProjection(document map[string]interface{}, projec
 	}
 
 	result := make(map[string]interface{})
-	
+
 	// Check if it's an inclusion or exclusion projection
 	isInclusion := false
 	for _, value := range projection {
@@ -626,7 +626,7 @@ func (bs *BadgerStorage) sortDocuments(documents []DocumentResult, sortSpec map[
 		for field, order := range sortSpec {
 			aVal := bs.getFieldValue(documents[i].Data, field)
 			bVal := bs.getFieldValue(documents[j].Data, field)
-			
+
 			cmp := bs.compareForSort(aVal, bVal)
 			if cmp != 0 {
 				if order == -1 {
@@ -646,7 +646,7 @@ func (bs *BadgerStorage) getFieldValue(document map[string]interface{}, field st
 func (bs *BadgerStorage) compareForSort(a, b interface{}) int {
 	aStr := fmt.Sprintf("%v", a)
 	bStr := fmt.Sprintf("%v", b)
-	
+
 	// Try numeric comparison first
 	if aNum, aErr := strconv.ParseFloat(aStr, 64); aErr == nil {
 		if bNum, bErr := strconv.ParseFloat(bStr, 64); bErr == nil {
@@ -702,35 +702,35 @@ func (bs *BadgerStorage) DocUpdateOne(ctx context.Context, collection string, fi
 	}
 
 	var result DocumentWriteResult
-	
+
 	err := bs.db.Update(func(txn *badger.Txn) error {
 		// Find the document to update
 		var foundDoc map[string]interface{}
 		var docID string
 		var found bool
-		
+
 		// Iterate through documents to find matching one
 		prefix := fmt.Sprintf("doc:collection:%s:", collection)
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		
+
 		for it.Seek([]byte(prefix)); it.ValidForPrefix([]byte(prefix)); it.Next() {
 			item := it.Item()
 			key := string(item.Key())
-			
+
 			// Skip collection metadata
 			if key == fmt.Sprintf("doc:collection:%s", collection) {
 				continue
 			}
-			
+
 			err := item.Value(func(val []byte) error {
 				var doc map[string]interface{}
 				if err := json.Unmarshal(val, &doc); err != nil {
 					return err
 				}
-				
+
 				if bs.matchesFilter(doc, filter) {
 					foundDoc = doc
 					// Extract document ID from key
@@ -743,20 +743,20 @@ func (bs *BadgerStorage) DocUpdateOne(ctx context.Context, collection string, fi
 				}
 				return nil
 			})
-			
+
 			if err != nil && err.Error() == "found" {
 				break
 			} else if err != nil {
 				return err
 			}
 		}
-		
+
 		if !found {
 			if upsert {
 				// Create new document
 				docID = uuid.New().String()
 				foundDoc = make(map[string]interface{})
-				
+
 				// Apply filter as initial values for upsert
 				for k, v := range filter {
 					foundDoc[k] = v
@@ -769,10 +769,10 @@ func (bs *BadgerStorage) DocUpdateOne(ctx context.Context, collection string, fi
 		} else {
 			result.MatchedCount = 1
 		}
-		
+
 		// Apply update operations
 		updatedDoc := bs.applyUpdate(foundDoc, update)
-		
+
 		// Add system fields
 		now := time.Now()
 		updatedDoc["_updatedAt"] = now
@@ -787,27 +787,27 @@ func (bs *BadgerStorage) DocUpdateOne(ctx context.Context, collection string, fi
 				updatedDoc["_version"] = int64(1)
 			}
 		}
-		
+
 		// Save updated document
 		docKey := fmt.Sprintf("doc:collection:%s:%s", collection, docID)
 		docData, err := json.Marshal(updatedDoc)
 		if err != nil {
 			return err
 		}
-		
+
 		if err := txn.Set([]byte(docKey), docData); err != nil {
 			return err
 		}
-		
+
 		if found {
 			result.ModifiedCount = 1
 		} else {
 			result.UpsertedIDs = []string{docID}
 		}
-		
+
 		return nil
 	})
-	
+
 	return result, err
 }
 
@@ -818,7 +818,7 @@ func (bs *BadgerStorage) DocUpdateMany(ctx context.Context, collection string, f
 	}
 
 	var result DocumentWriteResult
-	
+
 	err := bs.db.Update(func(txn *badger.Txn) error {
 		// Find all matching documents
 		var docsToUpdate []struct {
@@ -826,28 +826,28 @@ func (bs *BadgerStorage) DocUpdateMany(ctx context.Context, collection string, f
 			doc map[string]interface{}
 			id  string
 		}
-		
+
 		prefix := fmt.Sprintf("doc:collection:%s:", collection)
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		
+
 		for it.Seek([]byte(prefix)); it.ValidForPrefix([]byte(prefix)); it.Next() {
 			item := it.Item()
 			key := string(item.Key())
-			
+
 			// Skip collection metadata
 			if key == fmt.Sprintf("doc:collection:%s", collection) {
 				continue
 			}
-			
+
 			err := item.Value(func(val []byte) error {
 				var doc map[string]interface{}
 				if err := json.Unmarshal(val, &doc); err != nil {
 					return err
 				}
-				
+
 				if bs.matchesFilter(doc, filter) {
 					// Extract document ID from key
 					parts := strings.Split(key, ":")
@@ -855,7 +855,7 @@ func (bs *BadgerStorage) DocUpdateMany(ctx context.Context, collection string, f
 					if len(parts) >= 4 {
 						docID = parts[3]
 					}
-					
+
 					docsToUpdate = append(docsToUpdate, struct {
 						key string
 						doc map[string]interface{}
@@ -864,18 +864,18 @@ func (bs *BadgerStorage) DocUpdateMany(ctx context.Context, collection string, f
 				}
 				return nil
 			})
-			
+
 			if err != nil {
 				return err
 			}
 		}
-		
+
 		result.MatchedCount = int64(len(docsToUpdate))
-		
+
 		// Update all matching documents
 		for _, docInfo := range docsToUpdate {
 			updatedDoc := bs.applyUpdate(docInfo.doc, update)
-			
+
 			// Update system fields
 			now := time.Now()
 			updatedDoc["_updatedAt"] = now
@@ -884,23 +884,23 @@ func (bs *BadgerStorage) DocUpdateMany(ctx context.Context, collection string, f
 			} else {
 				updatedDoc["_version"] = int64(1)
 			}
-			
+
 			// Save updated document
 			docData, err := json.Marshal(updatedDoc)
 			if err != nil {
 				return err
 			}
-			
+
 			if err := txn.Set([]byte(docInfo.key), docData); err != nil {
 				return err
 			}
-			
+
 			result.ModifiedCount++
 		}
-		
+
 		return nil
 	})
-	
+
 	return result, err
 }
 
@@ -911,7 +911,7 @@ func (bs *BadgerStorage) DocDeleteOne(ctx context.Context, collection string, fi
 	}
 
 	var result DocumentWriteResult
-	
+
 	err := bs.db.Update(func(txn *badger.Txn) error {
 		// Find the document to delete
 		prefix := fmt.Sprintf("doc:collection:%s:", collection)
@@ -919,33 +919,33 @@ func (bs *BadgerStorage) DocDeleteOne(ctx context.Context, collection string, fi
 		opts.PrefetchSize = 10
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		
+
 		for it.Seek([]byte(prefix)); it.ValidForPrefix([]byte(prefix)); it.Next() {
 			item := it.Item()
 			key := string(item.Key())
-			
+
 			// Skip collection metadata
 			if key == fmt.Sprintf("doc:collection:%s", collection) {
 				continue
 			}
-			
+
 			var shouldDelete bool
 			err := item.Value(func(val []byte) error {
 				var doc map[string]interface{}
 				if err := json.Unmarshal(val, &doc); err != nil {
 					return err
 				}
-				
+
 				if bs.matchesFilter(doc, filter) {
 					shouldDelete = true
 				}
 				return nil
 			})
-			
+
 			if err != nil {
 				return err
 			}
-			
+
 			if shouldDelete {
 				if err := txn.Delete([]byte(key)); err != nil {
 					return err
@@ -954,10 +954,10 @@ func (bs *BadgerStorage) DocDeleteOne(ctx context.Context, collection string, fi
 				break
 			}
 		}
-		
+
 		return nil
 	})
-	
+
 	return result, err
 }
 
@@ -968,43 +968,43 @@ func (bs *BadgerStorage) DocDeleteMany(ctx context.Context, collection string, f
 	}
 
 	var result DocumentWriteResult
-	
+
 	err := bs.db.Update(func(txn *badger.Txn) error {
 		// Find all matching documents to delete
 		var keysToDelete []string
-		
+
 		prefix := fmt.Sprintf("doc:collection:%s:", collection)
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		
+
 		for it.Seek([]byte(prefix)); it.ValidForPrefix([]byte(prefix)); it.Next() {
 			item := it.Item()
 			key := string(item.Key())
-			
+
 			// Skip collection metadata
 			if key == fmt.Sprintf("doc:collection:%s", collection) {
 				continue
 			}
-			
+
 			err := item.Value(func(val []byte) error {
 				var doc map[string]interface{}
 				if err := json.Unmarshal(val, &doc); err != nil {
 					return err
 				}
-				
+
 				if bs.matchesFilter(doc, filter) {
 					keysToDelete = append(keysToDelete, key)
 				}
 				return nil
 			})
-			
+
 			if err != nil {
 				return err
 			}
 		}
-		
+
 		// Delete all matching documents
 		for _, key := range keysToDelete {
 			if err := txn.Delete([]byte(key)); err != nil {
@@ -1012,10 +1012,10 @@ func (bs *BadgerStorage) DocDeleteMany(ctx context.Context, collection string, f
 			}
 			result.DeletedCount++
 		}
-		
+
 		return nil
 	})
-	
+
 	return result, err
 }
 
@@ -1026,34 +1026,34 @@ func (bs *BadgerStorage) DocReplaceOne(ctx context.Context, collection string, f
 	}
 
 	var result DocumentWriteResult
-	
+
 	err := bs.db.Update(func(txn *badger.Txn) error {
 		// Find the document to replace
 		var docKey string
 		var docID string
 		var found bool
-		
+
 		prefix := fmt.Sprintf("doc:collection:%s:", collection)
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		
+
 		for it.Seek([]byte(prefix)); it.ValidForPrefix([]byte(prefix)); it.Next() {
 			item := it.Item()
 			key := string(item.Key())
-			
+
 			// Skip collection metadata
 			if key == fmt.Sprintf("doc:collection:%s", collection) {
 				continue
 			}
-			
+
 			err := item.Value(func(val []byte) error {
 				var doc map[string]interface{}
 				if err := json.Unmarshal(val, &doc); err != nil {
 					return err
 				}
-				
+
 				if bs.matchesFilter(doc, filter) {
 					docKey = key
 					// Extract document ID from key
@@ -1066,14 +1066,14 @@ func (bs *BadgerStorage) DocReplaceOne(ctx context.Context, collection string, f
 				}
 				return nil
 			})
-			
+
 			if err != nil && err.Error() == "found" {
 				break
 			} else if err != nil {
 				return err
 			}
 		}
-		
+
 		if !found {
 			if upsert {
 				// Create new document
@@ -1087,13 +1087,13 @@ func (bs *BadgerStorage) DocReplaceOne(ctx context.Context, collection string, f
 		} else {
 			result.MatchedCount = 1
 		}
-		
+
 		// Create replacement document
 		newDoc := make(map[string]interface{})
 		for k, v := range replacement {
 			newDoc[k] = v
 		}
-		
+
 		// Add system fields
 		now := time.Now()
 		newDoc["_id"] = docID
@@ -1104,26 +1104,26 @@ func (bs *BadgerStorage) DocReplaceOne(ctx context.Context, collection string, f
 		} else {
 			newDoc["_version"] = int64(1) // Reset version for replacement
 		}
-		
+
 		// Save replacement document
 		docData, err := json.Marshal(newDoc)
 		if err != nil {
 			return err
 		}
-		
+
 		if err := txn.Set([]byte(docKey), docData); err != nil {
 			return err
 		}
-		
+
 		if found {
 			result.ModifiedCount = 1
 		} else {
 			result.UpsertedIDs = []string{docID}
 		}
-		
+
 		return nil
 	})
-	
+
 	return result, err
 }
 
@@ -1134,26 +1134,26 @@ func (bs *BadgerStorage) DocAggregate(ctx context.Context, collection string, pi
 	}
 
 	var results []map[string]interface{}
-	
+
 	err := bs.db.View(func(txn *badger.Txn) error {
 		// Start with all documents in the collection
 		var documents []map[string]interface{}
-		
+
 		prefix := fmt.Sprintf("doc:collection:%s:", collection)
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		
+
 		for it.Seek([]byte(prefix)); it.ValidForPrefix([]byte(prefix)); it.Next() {
 			item := it.Item()
 			key := string(item.Key())
-			
+
 			// Skip collection metadata
 			if key == fmt.Sprintf("doc:collection:%s", collection) {
 				continue
 			}
-			
+
 			err := item.Value(func(val []byte) error {
 				var doc map[string]interface{}
 				if err := json.Unmarshal(val, &doc); err != nil {
@@ -1162,22 +1162,22 @@ func (bs *BadgerStorage) DocAggregate(ctx context.Context, collection string, pi
 				documents = append(documents, doc)
 				return nil
 			})
-			
+
 			if err != nil {
 				return err
 			}
 		}
-		
+
 		// Apply pipeline stages
 		currentDocs := documents
 		for _, stage := range pipeline {
 			currentDocs = bs.applyAggregationStage(currentDocs, stage)
 		}
-		
+
 		results = currentDocs
 		return nil
 	})
-	
+
 	return results, err
 }
 
@@ -1188,43 +1188,43 @@ func (bs *BadgerStorage) DocCount(ctx context.Context, collection string, filter
 	}
 
 	var count int64
-	
+
 	err := bs.db.View(func(txn *badger.Txn) error {
 		prefix := fmt.Sprintf("doc:collection:%s:", collection)
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		
+
 		for it.Seek([]byte(prefix)); it.ValidForPrefix([]byte(prefix)); it.Next() {
 			item := it.Item()
 			key := string(item.Key())
-			
+
 			// Skip collection metadata
 			if key == fmt.Sprintf("doc:collection:%s", collection) {
 				continue
 			}
-			
+
 			err := item.Value(func(val []byte) error {
 				var doc map[string]interface{}
 				if err := json.Unmarshal(val, &doc); err != nil {
 					return err
 				}
-				
+
 				if bs.matchesFilter(doc, filter) {
 					count++
 				}
 				return nil
 			})
-			
+
 			if err != nil {
 				return err
 			}
 		}
-		
+
 		return nil
 	})
-	
+
 	return count, err
 }
 
@@ -1239,29 +1239,29 @@ func (bs *BadgerStorage) DocDistinct(ctx context.Context, collection string, fie
 
 	distinctValues := make(map[interface{}]bool)
 	var results []interface{}
-	
+
 	err := bs.db.View(func(txn *badger.Txn) error {
 		prefix := fmt.Sprintf("doc:collection:%s:", collection)
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		
+
 		for it.Seek([]byte(prefix)); it.ValidForPrefix([]byte(prefix)); it.Next() {
 			item := it.Item()
 			key := string(item.Key())
-			
+
 			// Skip collection metadata
 			if key == fmt.Sprintf("doc:collection:%s", collection) {
 				continue
 			}
-			
+
 			err := item.Value(func(val []byte) error {
 				var doc map[string]interface{}
 				if err := json.Unmarshal(val, &doc); err != nil {
 					return err
 				}
-				
+
 				if bs.matchesFilter(doc, filter) {
 					if value, exists := doc[field]; exists {
 						if !distinctValues[value] {
@@ -1272,15 +1272,15 @@ func (bs *BadgerStorage) DocDistinct(ctx context.Context, collection string, fie
 				}
 				return nil
 			})
-			
+
 			if err != nil {
 				return err
 			}
 		}
-		
+
 		return nil
 	})
-	
+
 	return results, err
 }
 
@@ -1300,7 +1300,7 @@ func (bs *BadgerStorage) DocCreateIndex(ctx context.Context, collection string, 
 		if err != nil {
 			return err
 		}
-		
+
 		return txn.Set([]byte(indexKey), indexData)
 	})
 }
@@ -1327,17 +1327,17 @@ func (bs *BadgerStorage) DocListIndexes(ctx context.Context, collection string) 
 	}
 
 	var indexes []IndexSpec
-	
+
 	err := bs.db.View(func(txn *badger.Txn) error {
 		prefix := fmt.Sprintf("doc:index:%s:", collection)
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		
+
 		for it.Seek([]byte(prefix)); it.ValidForPrefix([]byte(prefix)); it.Next() {
 			item := it.Item()
-			
+
 			err := item.Value(func(val []byte) error {
 				var index IndexSpec
 				if err := json.Unmarshal(val, &index); err != nil {
@@ -1346,41 +1346,41 @@ func (bs *BadgerStorage) DocListIndexes(ctx context.Context, collection string) 
 				indexes = append(indexes, index)
 				return nil
 			})
-			
+
 			if err != nil {
 				return err
 			}
 		}
-		
+
 		return nil
 	})
-	
+
 	return indexes, err
 }
 
 // Helper method to apply update operations
 func (bs *BadgerStorage) applyUpdate(doc map[string]interface{}, update DocumentUpdate) map[string]interface{} {
 	result := make(map[string]interface{})
-	
+
 	// Copy original document
 	for k, v := range doc {
 		result[k] = v
 	}
-	
+
 	// Apply $set operations
 	if update.Set != nil {
 		for k, v := range update.Set {
 			result[k] = v
 		}
 	}
-	
+
 	// Apply $unset operations
 	if update.Unset != nil {
 		for k := range update.Unset {
 			delete(result, k)
 		}
 	}
-	
+
 	// Apply $inc operations
 	if update.Inc != nil {
 		for k, v := range update.Inc {
@@ -1395,7 +1395,7 @@ func (bs *BadgerStorage) applyUpdate(doc map[string]interface{}, update Document
 			}
 		}
 	}
-	
+
 	return result
 }
 
@@ -1461,7 +1461,7 @@ func (bs *BadgerStorage) isDocumentCached(cacheKey string) bool {
 func (bs *BadgerStorage) cacheDocument(cacheKey string, data []byte) {
 	globalDocCache.mu.Lock()
 	defer globalDocCache.mu.Unlock()
-	
+
 	// Implement simple LRU eviction
 	if len(globalDocCache.docs) >= docCacheSize {
 		// Remove least accessed document
@@ -1478,7 +1478,7 @@ func (bs *BadgerStorage) cacheDocument(cacheKey string, data []byte) {
 			delete(globalDocCache.stats, leastUsed)
 		}
 	}
-	
+
 	// Cache the document
 	globalDocCache.docs[cacheKey] = append([]byte{}, data...)
 	globalDocCache.stats[cacheKey] = 1
@@ -1488,7 +1488,7 @@ func (bs *BadgerStorage) cacheDocument(cacheKey string, data []byte) {
 func (bs *BadgerStorage) getCachedDocument(cacheKey string) ([]byte, bool) {
 	globalDocCache.mu.Lock()
 	defer globalDocCache.mu.Unlock()
-	
+
 	data, exists := globalDocCache.docs[cacheKey]
 	if exists {
 		// Update access count
@@ -1503,7 +1503,7 @@ func (bs *BadgerStorage) compressDocumentIfNeeded(data []byte) []byte {
 	if len(data) < docCompressionThreshold {
 		return data
 	}
-	
+
 	// Simple compression marker + data (placeholder for real compression)
 	// In production, use LZ4 or Snappy for better performance
 	compressed := make([]byte, len(data)+1)
@@ -1517,7 +1517,7 @@ func (bs *BadgerStorage) decompressDocumentIfNeeded(data []byte) []byte {
 	if len(data) == 0 {
 		return data
 	}
-	
+
 	// Check compression marker
 	if data[0] == 1 {
 		// Decompress (placeholder - return original data minus marker)
@@ -1533,7 +1533,7 @@ func (bs *BadgerStorage) optimizeDocumentQuery(collection string, filter map[str
 	for k, v := range filter {
 		optimized[k] = v
 	}
-	
+
 	// Add collection-specific optimizations
 	_ = collection
 	return optimized
@@ -1550,11 +1550,11 @@ func (bs *BadgerStorage) batchDocumentOperations(operations []func(*badger.Txn) 
 			return nil
 		})
 	}
-	
+
 	// Multiple operations - use write batch for better performance
 	wb := bs.db.NewWriteBatch()
 	defer wb.Cancel()
-	
+
 	// Execute operations in batch
 	for _, op := range operations {
 		// Note: WriteBatch doesn't support transactions, so we'll use regular Update
@@ -1565,6 +1565,6 @@ func (bs *BadgerStorage) batchDocumentOperations(operations []func(*badger.Txn) 
 			return err
 		}
 	}
-	
+
 	return nil
 }

@@ -20,6 +20,11 @@ type ClusterService struct {
 	storage storage.Storage
 }
 
+// SetCluster updates the cluster instance (used for async initialization)
+func (s *ClusterService) SetCluster(clstr *cluster.Cluster) {
+	s.cluster = clstr
+}
+
 // NewClusterService creates a new Cluster service
 func NewClusterService(clstr *cluster.Cluster, store storage.Storage) *ClusterService {
 	return &ClusterService{
@@ -217,16 +222,13 @@ func (s *ClusterService) Leave(ctx context.Context, req *clusterpb.LeaveRequest)
 
 // GetStats returns cluster statistics
 func (s *ClusterService) GetStats(ctx context.Context, req *clusterpb.GetStatsRequest) (*clusterpb.GetStatsResponse, error) {
-	stats := &clusterpb.ClusterStats{}
-
-	if s.cluster != nil {
-		metrics := s.cluster.GetMetrics()
-		stats.TotalOperations = int64(metrics.KVOps + metrics.QueueOps + metrics.StreamOps)
-		stats.KeysCount = int64(metrics.KVOps)       // Approximation
-		stats.QueuesCount = int64(metrics.QueueOps)  // Approximation
-		stats.TopicsCount = int64(metrics.StreamOps) // Approximation
-		stats.MemoryUsage = int64(metrics.MemoryUsageMB * 1024 * 1024)
-		stats.DiskUsage = int64(metrics.DiskUsageGB * 1024 * 1024 * 1024)
+	stats := &clusterpb.ClusterStats{
+		TotalOperations: 0, // TODO: Implement basic metrics
+		KeysCount:       0,
+		QueuesCount:     0,
+		TopicsCount:     0,
+		MemoryUsage:     0,
+		DiskUsage:       0,
 	}
 
 	return &clusterpb.GetStatsResponse{
@@ -260,24 +262,13 @@ func (s *ClusterService) GetClusterInfo(ctx context.Context, req *clusterpb.GetC
 	}
 
 	health := s.cluster.GetClusterHealth()
-	info := s.cluster.GetClusterInfo()
-
-	var partitions []*clusterpb.PartitionInfo
-	for _, p := range info.Partitions {
-		partitions = append(partitions, &clusterpb.PartitionInfo{
-			Id:       p.ID,
-			Primary:  p.Primary,
-			Replicas: p.Replicas,
-		})
-	}
-
 	clusterInfo := &clusterpb.ClusterInfo{
-		NodeId:            info.NodeID,
-		TotalPartitions:   info.TotalPartitions,
-		ReplicationFactor: info.ReplicationFactor,
+		NodeId:            s.cluster.GetLeaderID(),
+		TotalPartitions:   1, // Simplified - no complex partitioning
+		ReplicationFactor: 1, // Simplified
 		TotalNodes:        health.TotalNodes,
 		ActiveNodes:       health.ActiveNodes,
-		Partitions:        partitions,
+		Partitions:        []*clusterpb.PartitionInfo{}, // Empty for now
 	}
 
 	return &clusterpb.GetClusterInfoResponse{

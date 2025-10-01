@@ -3,7 +3,6 @@ package cluster
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"time"
 
@@ -11,33 +10,44 @@ import (
 	"github.com/skshohagmiah/gomsg/storage"
 )
 
-// fsm implements hashicorp/raft.FSM and applies replicated commands to storage.
-type fsm struct{ st storage.Storage }
+// FSM implements hashicorp/raft.FSM and applies replicated commands to storage
+type FSM struct {
+	storage storage.Storage
+	cluster *Cluster
+}
 
-// NewFSM constructs the storage-backed FSM.
-func NewFSM(st storage.Storage) *fsm { return &fsm{st: st} }
+// NewFSM constructs the storage-backed FSM
+func NewFSM(storage storage.Storage, cluster *Cluster) *FSM {
+	return &FSM{
+		storage: storage,
+		cluster: cluster,
+	}
+}
 
-func (f *fsm) Apply(l *hraft.Log) interface{} {
+// Apply applies a Raft log entry to the FSM
+func (f *FSM) Apply(l *hraft.Log) interface{} {
 	var cmd Command
 	if err := json.Unmarshal(l.Data, &cmd); err != nil {
 		return err
 	}
+
 	ctx := context.TODO()
 	switch cmd.Type {
 	case CmdKVSet:
 		var req struct {
-			Key        string `json:"k"`
-			Value      []byte `json:"v"`
-			TTLSeconds int64  `json:"ttl"`
+			Key   string `json:"k"`
+			Value []byte `json:"v"`
+			TTL   int64  `json:"ttl"`
 		}
 		if err := json.Unmarshal(cmd.Payload, &req); err != nil {
 			return err
 		}
 		var ttl time.Duration
-		if req.TTLSeconds > 0 {
-			ttl = time.Duration(req.TTLSeconds) * time.Second
+		if req.TTL > 0 {
+			ttl = time.Duration(req.TTL) * time.Second
 		}
-		return f.st.Set(ctx, req.Key, req.Value, ttl)
+		return f.storage.Set(ctx, req.Key, req.Value, ttl)
+
 	case CmdKVDelete:
 		var req struct {
 			Keys []string `json:"ks"`
@@ -45,61 +55,45 @@ func (f *fsm) Apply(l *hraft.Log) interface{} {
 		if err := json.Unmarshal(cmd.Payload, &req); err != nil {
 			return err
 		}
-		_, err := f.st.Delete(ctx, req.Keys...)
+		_, err := f.storage.Delete(ctx, req.Keys...)
 		return err
-	case CmdStreamCreate:
+
+	case CmdNodeJoin:
+		var node Node
+		if err := json.Unmarshal(cmd.Payload, &node); err != nil {
+			return err
+		}
+		return f.cluster.addNode(&node)
+
+	case CmdNodeLeave:
 		var req struct {
-			Topic      string `json:"topic"`
-			Partitions int32  `json:"parts"`
+			NodeID string `json:"node_id"`
 		}
 		if err := json.Unmarshal(cmd.Payload, &req); err != nil {
 			return err
 		}
-		return f.st.StreamCreateTopic(ctx, req.Topic, req.Partitions)
-	case CmdStreamDelete:
-		var req struct {
-			Topic string `json:"topic"`
-		}
-		if err := json.Unmarshal(cmd.Payload, &req); err != nil {
-			return err
-		}
-		return f.st.StreamDeleteTopic(ctx, req.Topic)
-	case CmdPartitionAssign:
-		var req struct {
-			Partition int32    `json:"partition"`
-			Owners    []string `json:"owners"`
-		}
-		if err := json.Unmarshal(cmd.Payload, &req); err != nil {
-			return err
-		}
-		// Apply partition assignment - this would update the partition map
-		// For now, we'll store it as a special key in storage
-		assignmentKey := fmt.Sprintf("__partition_assignment_%d", req.Partition)
-		assignmentData, _ := json.Marshal(req.Owners)
-		return f.st.Set(ctx, assignmentKey, assignmentData, 0)
-	case CmdPartitionMigrate:
-		var req struct {
-			Partition int32  `json:"partition"`
-			FromNode  string `json:"from"`
-			ToNode    string `json:"to"`
-		}
-		if err := json.Unmarshal(cmd.Payload, &req); err != nil {
-			return err
-		}
-		// Apply partition migration - this would trigger data movement
-		// For now, we'll store the migration record
-		migrationKey := fmt.Sprintf("__partition_migration_%d", req.Partition)
-		migrationData, _ := json.Marshal(req)
-		return f.st.Set(ctx, migrationKey, migrationData, 0)
+		return f.cluster.removeNode(req.NodeID)
+
 	default:
 		return nil
 	}
 }
 
-func (f *fsm) Snapshot() (hraft.FSMSnapshot, error) { return noopSnapshot{}, nil }
-func (f *fsm) Restore(r io.ReadCloser) error        { return r.Close() }
+// Snapshot returns a snapshot of the FSM state
+func (f *FSM) Snapshot() (hraft.FSMSnapshot, error) {
+	return &snapshot{}, nil
+}
 
-type noopSnapshot struct{}
+// Restore restores the FSM state from a snapshot
+func (f *FSM) Restore(r io.ReadCloser) error {
+	return r.Close()
+}
 
-func (noopSnapshot) Persist(sink hraft.SnapshotSink) error { return sink.Close() }
-func (noopSnapshot) Release()                              {}
+// snapshot implements hraft.FSMSnapshot
+type snapshot struct{}
+
+func (s *snapshot) Persist(sink hraft.SnapshotSink) error {
+	return sink.Close()
+}
+
+func (s *snapshot) Release() {}
